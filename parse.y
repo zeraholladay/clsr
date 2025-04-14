@@ -1,0 +1,92 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "debug.h"
+#include "mach.h"
+
+void yyerror(const char *s);
+int yylex(void);
+
+extern int yylineno;
+%}
+
+%union {
+    int num;
+    int op_code;
+}
+
+%type <op_code> op
+
+%token ERROR HALT EOL
+%token <num> INT_LITERAL
+%token <op_code> ADD SUB MUL DIV
+
+%%
+
+program:
+    instructions
+;
+
+instructions:
+        /* empty */
+    | instructions instruction
+;
+
+instruction:
+    ERROR {
+        printf("syntax error on line %d\n", yylineno);
+    }
+    HALT EOL {
+        YYACCEPT;  // causes yyparse() to return 0
+    }
+    | op args EOL {
+        run_operator($1);
+    }
+;
+
+op:
+    ADD
+    | SUB
+    | MUL
+    | DIV {
+        $$ = $1;
+    }
+;
+
+args:
+      enter_frame
+    | enter_frame arg_list
+;
+enter_frame:
+    /* nothing */ {
+        DEBUG("[ENTER_FRAME] entering frame before args\n");
+        enter_frame();
+    }
+;
+arg_list:
+      arg
+    | arg_list arg
+;
+arg:
+    INT_LITERAL {
+        DEBUG("[PUSHING INT_LITERAL] %d (line %d)\n", $1, yylineno);
+        push($1);
+    }
+;
+
+%%
+
+void yyerror(const char *s) {
+    fprintf(stderr, "[YYERROR] line %d: %s\n", yylineno, s);
+}
+
+int main(void) {
+    yyparse();
+    printf("Final stack: ");
+    /* for (int i = 0; i < sp; ++i) {
+        printf("%d ", stack[i]);
+    } */
+    printf("\n");
+    return 0;
+}

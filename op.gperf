@@ -1,0 +1,33 @@
+%{
+#include "parse.tab.h"
+#include "op.h"
+%}
+
+%includes
+%language=ANSI-C
+%readonly-tables
+%struct-type
+%ignore-case
+%define slot-name op_name
+
+struct _op {
+    const char *op_name;
+    struct op op;
+};
+
+%%
+ADD,   {ADD}
+SUB,   {SUB}
+MUL,   {MUL}
+DIV,   {DIV}
+HALT,  {HALT}
+%%
+
+const struct op * lookup_op(register const char *str, register unsigned int len) {
+    const struct _op *_op = in_word_set(str, len);
+    if (_op) {
+        return &_op->op;
+    } else {
+        return 0;
+    }
+}

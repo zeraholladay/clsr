@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "debug.h"
+#include "op.h"
 #include "mach.h"
 
 void yyerror(const char *s);
@@ -13,14 +14,14 @@ extern int yylineno;
 
 %union {
     int num;
-    int op_code;
+    const struct op *op_ptr;
 }
 
-%type <op_code> op
+%type <op_ptr> op
 
 %token ERROR HALT EOL
 %token <num> INT_LITERAL
-%token <op_code> ADD SUB MUL DIV
+%token <op_ptr> ADD SUB MUL DIV
 
 %%
 
@@ -41,7 +42,7 @@ instruction:
         YYACCEPT;  // causes yyparse() to return 0
     }
     | op args EOL {
-        run_operator($1);
+        run_operator($1->op_code);
     }
 ;
 

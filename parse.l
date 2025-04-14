@@ -25,7 +25,7 @@ EOL         \r?\n
     const struct op *op = lookup_op(yytext, strlen(yytext));
     if (op) {
         BEGIN(ARG);
-        yylval.op_code = op->op_code;
+        yylval.op_ptr = op;
         DEBUG("[LEX] returning opcode = '%d'\n", op->op_code);
         return op->op_code;
     } else {

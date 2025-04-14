@@ -28,12 +28,14 @@ void enter_frame() {
     fp = sp;
 }
 
-void run_operator(int op_code) {
+void run_operator(const struct op *op_ptr) {
     // b = pop();    // right operand
     // a = pop();    // left operand
     // res = a OP b
     // and:
     // A OP= B → A = A OP B;
+
+    int op_code = op_ptr->op_code;
 
     int res;
 

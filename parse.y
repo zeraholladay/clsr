@@ -42,7 +42,7 @@ instruction:
         YYACCEPT;  // causes yyparse() to return 0
     }
     | op args EOL {
-        run_operator($1->op_code);
+        run_operator($1);
     }
 ;
 

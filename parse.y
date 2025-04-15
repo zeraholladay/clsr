@@ -21,7 +21,7 @@ extern int yylineno;
 
 %token ERROR HALT EOL
 %token <num> INT_LITERAL
-%token <op_ptr> ADD SUB MUL DIV
+%token <op_ptr> CALL APPLY CLOSURE RETURN PUSH ADD SUB MUL DIV
 
 %%
 
@@ -47,7 +47,8 @@ instruction:
 ;
 
 op:
-    ADD
+    PUSH
+    | ADD
     | SUB
     | MUL
     | DIV {
@@ -56,23 +57,19 @@ op:
 ;
 
 args:
-      enter_frame
-    | enter_frame arg_list
+      /* empty */
+    | arg_list
 ;
-enter_frame:
-    /* nothing */ {
-        DEBUG("[ENTER_FRAME] entering frame before args\n");
-        enter_frame();
-    }
-;
+
 arg_list:
       arg
     | arg_list arg
 ;
+
 arg:
     INT_LITERAL {
         DEBUG("[PUSHING INT_LITERAL] %d (line %d)\n", $1, yylineno);
-        push($1);
+        push($1);  // or push_to(caller_fp) if needed
     }
 ;
 

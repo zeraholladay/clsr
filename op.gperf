@@ -16,11 +16,12 @@ struct _op {
 };
 
 %%
-ADD,   {ADD}
-SUB,   {SUB}
-MUL,   {MUL}
-DIV,   {DIV}
-HALT,  {HALT}
+PUSH,  {PUSH, 1}
+ADD,   {ADD,  0}
+SUB,   {SUB,  0}
+MUL,   {MUL,  0}
+DIV,   {DIV,  0}
+HALT,  {HALT, 0}
 %%
 
 const struct op * lookup_op(register const char *str, register unsigned int len) {

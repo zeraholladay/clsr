@@ -9,7 +9,7 @@
 
 void push(int val);
 int pop();
-void enter_frame();
+int eval(const struct op *op_ptr);
 void run_operator(const struct op *op_ptr);
 
 #endif

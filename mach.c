@@ -17,18 +17,32 @@ void push(int val) {
 
 int pop() {
     if (sp <= 0) {
-        fprintf(stderr, "Stack underflow");
+        fprintf(stderr, "Stack underflow\n");
         return 0;
     }
     return stack[--sp];
 }
 
-void enter_frame() {
-    push(fp);
-    fp = sp;
+void run_operator(const struct op *op_ptr) {
+    int old_fp = fp;
+
+    if (op_ptr->creates_frame) {
+        DEBUG("[FRAME] Entering new frame for %d\n", op_ptr->op_code);
+        push(fp);
+        fp = sp;
+    }
+
+    int result = eval(op_ptr);
+
+    if (op_ptr->creates_frame) {
+        sp = fp;
+        fp = pop();  // restore caller frame
+    }
+
+    push(result);
 }
 
-void run_operator(const struct op *op_ptr) {
+int eval(const struct op *op_ptr) {
     // b = pop();    // right operand
     // a = pop();    // left operand
     // res = a OP b
@@ -39,21 +53,24 @@ void run_operator(const struct op *op_ptr) {
 
     int res;
 
-    DEBUG("run_operator called with opcode = %d\n", op_code);
+    DEBUG("[EVAL] run_operator called with opcode = %d\n", op_code);
 
     switch (op_code) {
+        case PUSH:
+            return 0;
+            break;
+
         case ADD:
             res = 0;
             while (sp > fp) res += pop();  // res = res + pop() 
             printf("ADD → %d\n", res);
-            fp = pop();
-            push(res);
+            return res;
             break;
 
         case SUB:
             if (sp - fp < 1) {
                 fprintf(stderr, "SUB error: not enough values\n");
-                return;
+                return 0; //XXX Fix me
             }
             
             res = pop();  // rightmost argument
@@ -61,24 +78,21 @@ void run_operator(const struct op *op_ptr) {
             while (sp > fp) {
                 res = pop() - res;  // left-associative
             }
-            
-            fp = pop();  // restore previous frame pointer
-            push(res);
             printf("SUB → %d\n", res);
+            return res;
             break;        
 
         case MUL:
             res = 1;
             while (sp > fp) res *= pop(); // res = res * pop() 
             printf("MUL → %d\n", res);
-            fp = pop();
-            push(res);
+            return res;
             break;
 
         case DIV:
             if (sp - fp < 1) {
                 fprintf(stderr, "DIV error: not enough values\n");
-                return;
+                return 0;  //XXX FIX ME
             }
             
             int res = pop();  // first value popped is the last argument (right-most)
@@ -86,19 +100,19 @@ void run_operator(const struct op *op_ptr) {
             while (sp > fp) {
                 if (res == 0) {
                     fprintf(stderr, "Division by zero\n");
-                    return;
+                    return 0;  //XXX FIX ME
                 }
                 res = pop() / res;  // do pop() / res, so evaluation is left-to-right
             }
             
-            fp = pop();
-            push(res);
             printf("DIV → %d\n", res);
+            return res;
             break;
         
 
         default:
-            fprintf(stderr, "Unknown op_code");
+            fprintf(stderr, "Unknown op_code\n");
+            return 0;  //XXX FIX ME
             break;
     }
 }

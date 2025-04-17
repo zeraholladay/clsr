@@ -6,9 +6,9 @@
 #include <stdlib.h>
 
 #include "parse.tab.h"
-#include "op.h"
-#include "debug.h"
-#include "str_intern.h"
+#include "operator.h"
+#include "log.h"
+#include "sym_intern.h"
 
 extern int yylineno;
 %}
@@ -46,8 +46,7 @@ NL \r?\n
     return INT_LITERAL;
 }
 <ARG>[a-zA-Z][a-zA-Z0-9]* {
-    // yylval.str = strndup(yytext, yyleng);  //TO DO: Use symbol table
-    yylval.str = str_intern(yytext, yyleng);
+    yylval.str = sym_intern(yytext, yyleng);
     return SYM_LITERAL;
 }
 <ARG>{NL} {

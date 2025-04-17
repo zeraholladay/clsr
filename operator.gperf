@@ -1,6 +1,6 @@
 %{
 #include "parse.tab.h"
-#include "op.h"
+#include "operator.h"
 %}
 
 %includes

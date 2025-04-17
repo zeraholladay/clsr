@@ -6,16 +6,15 @@ GPERF=gperf
 
 LEX_SRC=parse.l
 YACC_SRC=parse.y
-GPERF_SCR=op.gperf
+GPERF_SCR=operator.gperf
 
 LEX_OUT=lex.yy.c
 YACC_OUT=parse.tab.c
 YACC_HEADER=parse.tab.h
-GPERF_OUT=op.c
+GPERF_OUT=operator.c
 
-CFILES=mach.c sym_intern.c
+CFILES=mach.c sym_intern.c object.c stack.c
 OBJS=$(CFILES:.c=.o)
-HEADERS=*.h
 
 BIN=vm
 
@@ -42,8 +41,9 @@ $(GPERF_OUT): $(GPERF_SCR) $(YACC_HEADER)
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
-format: clean
-	clang-format -i $(CFILES) $(HEADERS)
+lint: clean
+	clang-format -i $(CFILES) *.h
+	cppcheck $(CFILES) *.h
 
 clean:
 	rm -f $(BIN) $(LEX_OUT) $(YACC_OUT) $(YACC_HEADER) $(GPERF_OUT) $(OBJS)

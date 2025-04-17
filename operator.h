@@ -1,5 +1,5 @@
-#ifndef OP_H
-#define OP_H
+#ifndef OPERATOR_H
+#define OPERATOR_H
 
 struct op {
   int op_code;

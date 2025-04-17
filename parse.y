@@ -2,9 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "debug.h"
-#include "op.h"
+#include "log.h"
+#include "operator.h"
 #include "mach.h"
+#include "object.h"
+#include "stack.h"
 
 void yyerror(const char *s);
 int yylex(void);
@@ -72,11 +74,11 @@ arg_list:
 arg:
     INT_LITERAL {
         DEBUG("[PUSHING INT_LITERAL] %d (line %d)\n", $1, yylineno);
-        push($1);  // or push_to(caller_fp) if needed
+        push($1);
     }
     | SYM_LITERAL {
         int addr;
-        object_t *obj = alloc_object(OBJ_SYMBOL, &addr);  //TO DO: fix me: error handling
+        object_t *obj = ALLOC_SYM(&addr);  //TO DO: fix me: error handling
         obj->symbol = $1;
         DEBUG("[PUSHING SYM_LITERAL] '%s':%d (line %d)\n", $1, addr, yylineno);
         push(addr);
@@ -86,7 +88,7 @@ arg:
 %%
 
 void yyerror(const char *s) {
-    fprintf(stderr, "[YYERROR] line %d: %s\n", yylineno, s);
+    ERRMSG("[YYERROR] line %d: %s\n", yylineno, s);
 }
 
 int main(void) {

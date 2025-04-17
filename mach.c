@@ -1,46 +1,9 @@
 #include "mach.h"
+#include "log.h"
+#include "parse.tab.h"
+#include "stack.h"
 
-#ifndef STACK_SIZE
-#define STACK_SIZE 1024
-#endif
-
-int stack[STACK_SIZE];
-int sp = 0; // stack pointer
-int fp = 0; // frame pointer
-
-void push(int val) {
-  if (sp >= STACK_SIZE) {
-    fprintf(stderr, "Stack overflow");
-    return;
-  }
-  stack[sp++] = val;
-}
-
-int pop() {
-  if (sp <= 0) {
-    fprintf(stderr, "Stack underflow\n");
-    return 0;
-  }
-  return stack[--sp];
-}
-
-#ifndef HEAP_SIZE
-#define HEAP_SIZE 1024 * 4
-#endif
-
-object_t heap[HEAP_SIZE];
-int heap_top = 0;
-
-object_t *alloc_object(object_t_enum type, int *addr) {
-  if (heap_top >= HEAP_SIZE) {
-    DEBUG("[HEAP] Heap overflow\n"); // TO DO: fix me
-    return 0;
-  }
-  *addr = heap_top;
-  object_t *obj = &heap[heap_top++];
-  obj->type = type;
-  return obj;
-}
+extern int fp, sp;
 
 void run_operator(const struct op *op_ptr) {
   int old_fp = fp;
@@ -74,7 +37,7 @@ int eval(const struct op *op_ptr) {
     break;
 
   default:
-    fprintf(stderr, "Unknown op_code\n");
+    ERRMSG("Unknown op_code\n");
     return 0; // XXX FIX ME
     break;
   }

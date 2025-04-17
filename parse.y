@@ -14,14 +14,16 @@ extern int yylineno;
 
 %union {
     int num;
+    const char *str;
     const struct op *op_ptr;
 }
 
 %type <op_ptr> op
 
-%token ERROR HALT EOL
+%token ERROR HALT NL
 %token <num> INT_LITERAL
-%token <op_ptr> CALL APPLY CLOSURE RETURN PUSH ADD SUB MUL DIV
+%token <str> SYM_LITERAL
+%token <op_ptr> PUSH LOOKUP CLOSURE APPLY RETURN
 
 %%
 
@@ -38,20 +40,21 @@ instruction:
     ERROR {
         printf("syntax error on line %d\n", yylineno);
     }
-    HALT EOL {
+    HALT {
         YYACCEPT;  // causes yyparse() to return 0
     }
-    | op args EOL {
+    | op args NL {
+        DEBUG("[YACC] run_operator\n");
         run_operator($1);
     }
 ;
 
 op:
-    PUSH
-    | ADD
-    | SUB
-    | MUL
-    | DIV {
+      PUSH
+    | LOOKUP
+    | CLOSURE
+    | APPLY
+    | RETURN {
         $$ = $1;
     }
 ;
@@ -70,6 +73,13 @@ arg:
     INT_LITERAL {
         DEBUG("[PUSHING INT_LITERAL] %d (line %d)\n", $1, yylineno);
         push($1);  // or push_to(caller_fp) if needed
+    }
+    | SYM_LITERAL {
+        int addr;
+        object_t *obj = alloc_object(OBJ_SYMBOL, &addr);  //TO DO: fix me: error handling
+        obj->symbol = $1;
+        DEBUG("[PUSHING SYM_LITERAL] '%s':%d (line %d)\n", $1, addr, yylineno);
+        push(addr);
     }
 ;
 

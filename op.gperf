@@ -7,7 +7,6 @@
 %language=ANSI-C
 %readonly-tables
 %struct-type
-%ignore-case
 %define slot-name op_name
 
 struct _op {
@@ -16,12 +15,11 @@ struct _op {
 };
 
 %%
-PUSH,  {PUSH, 1}
-ADD,   {ADD,  0}
-SUB,   {SUB,  0}
-MUL,   {MUL,  0}
-DIV,   {DIV,  0}
-HALT,  {HALT, 0}
+PUSH,    {PUSH,    0}
+LOOKUP,  {LOOKUP,  0}
+CLOSURE, {CLOSURE, 0}
+APPLY,   {APPLY,   1}
+RETURN,  {RETURN,  0}
 %%
 
 const struct op * lookup_op(register const char *str, register unsigned int len) {

@@ -8,19 +8,20 @@
 #include "parse.tab.h"
 #include "op.h"
 #include "debug.h"
+#include "str_intern.h"
 
 extern int yylineno;
 %}
 
-OPCODE      [A-Za-z]+
-WS          [ \t]+
-EOL         \r?\n
+OP (PUSH|LOOKUP|CLOSURE|APPLY|RETURN)
+WS [ \t]+
+NL \r?\n
 
 %x ARG
 
 %%
 
-<INITIAL>{OPCODE} {
+<INITIAL>{OP} {
     DEBUG("[LEX] opcode matched: yytext = '%s'\n", yytext);
     const struct op *op = lookup_op(yytext, strlen(yytext));
     if (op) {
@@ -33,8 +34,8 @@ EOL         \r?\n
         return ERROR;  // fallback if not found
     }
 }
-<INITIAL>{WS}|{WS}*{EOL} {
-    ; // ignore leading whitespace or EOLs
+<INITIAL>{WS}|{WS}*{NL} {
+    ; // ignore leading whitespace or NL
 }
 
 <ARG>{WS} {
@@ -44,9 +45,14 @@ EOL         \r?\n
     yylval.num = atoi(yytext);
     return INT_LITERAL;
 }
-<ARG>{EOL} {
+<ARG>[a-zA-Z][a-zA-Z0-9]* {
+    // yylval.str = strndup(yytext, yyleng);  //TO DO: Use symbol table
+    yylval.str = str_intern(yytext, yyleng);
+    return SYM_LITERAL;
+}
+<ARG>{NL} {
     BEGIN(INITIAL);
-    return EOL;
+    return NL;
 }
 
 %%

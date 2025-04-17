@@ -3,3 +3,4 @@ vm
 parse.tab.c
 parse.tab.h
 op.c
+*.o

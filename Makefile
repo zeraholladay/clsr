@@ -41,5 +41,8 @@ $(GPERF_OUT): $(GPERF_SCR) $(YACC_HEADER)
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
+format: clean
+	clang-format -i $(CFILES)
+
 clean:
 	rm -f $(BIN) $(LEX_OUT) $(YACC_OUT) $(YACC_HEADER) $(GPERF_OUT) $(OBJS)

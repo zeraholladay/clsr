@@ -5,79 +5,79 @@
 #endif
 
 int stack[STACK_SIZE];
-int sp = 0;  // stack pointer
-int fp = 0;  // frame pointer
+int sp = 0; // stack pointer
+int fp = 0; // frame pointer
 
 void push(int val) {
-    if (sp >= STACK_SIZE) {
-        fprintf(stderr, "Stack overflow");
-        return;
-    }
-    stack[sp++] = val;
+  if (sp >= STACK_SIZE) {
+    fprintf(stderr, "Stack overflow");
+    return;
+  }
+  stack[sp++] = val;
 }
 
 int pop() {
-    if (sp <= 0) {
-        fprintf(stderr, "Stack underflow\n");
-        return 0;
-    }
-    return stack[--sp];
+  if (sp <= 0) {
+    fprintf(stderr, "Stack underflow\n");
+    return 0;
+  }
+  return stack[--sp];
 }
 
 #ifndef HEAP_SIZE
-#define HEAP_SIZE 1024*4
+#define HEAP_SIZE 1024 * 4
 #endif
 
 object_t heap[HEAP_SIZE];
 int heap_top = 0;
 
 object_t *alloc_object(object_t_enum type, int *addr) {
-    if (heap_top >= HEAP_SIZE) {
-        DEBUG("[HEAP] Heap overflow\n");  //TO DO: fix me
-        return 0;
-    }
-    *addr = heap_top;
-    object_t *obj = &heap[heap_top++];
-    obj->type = type;
-    return obj;
+  if (heap_top >= HEAP_SIZE) {
+    DEBUG("[HEAP] Heap overflow\n"); // TO DO: fix me
+    return 0;
+  }
+  *addr = heap_top;
+  object_t *obj = &heap[heap_top++];
+  obj->type = type;
+  return obj;
 }
 
 void run_operator(const struct op *op_ptr) {
-    int old_fp = fp;
+  int old_fp = fp;
 
-    if (op_ptr->creates_frame) {
-        DEBUG("[FRAME] Entering new frame for %d\n", op_ptr->op_code);
-        push(fp);
-        fp = sp;
-    }
+  if (op_ptr->creates_frame) {
+    DEBUG("[FRAME] Entering new frame for %d\n", op_ptr->op_code);
+    push(fp);
+    fp = sp;
+  }
 
-    int result = eval(op_ptr);
+  int result = eval(op_ptr);
 
-    if (op_ptr->creates_frame) {
-        sp = fp;
-        fp = pop();  // restore caller frame
-    }
+  if (op_ptr->creates_frame) {
+    sp = fp;
+    fp = pop(); // restore caller frame
+  }
 
-    push(result);
+  push(result);
 }
 
 int eval(const struct op *op_ptr) {
-    int op_code = op_ptr->op_code;
+  int op_code = op_ptr->op_code;
 
-    int res;
+  int res;
 
-    DEBUG("[EVAL] run_operator called with opcode = %d\n", op_code);
+  DEBUG("[EVAL] run_operator called with opcode = %d\n", op_code);
 
-    switch (op_code) {
-        case PUSH:
-            return 0;
-            break;
-        
-        default:
-            fprintf(stderr, "Unknown op_code\n");
-            return 0;  //XXX FIX ME
-            break;
-    }
+  switch (op_code) {
+  case PUSH:
+    return 0;
+    break;
+
+  default:
+    fprintf(stderr, "Unknown op_code\n");
+    return 0; // XXX FIX ME
+    break;
+  }
 }
 
 // // b = pop();    // right operand

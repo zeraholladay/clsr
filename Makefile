@@ -13,7 +13,7 @@ YACC_OUT=parse.tab.c
 YACC_HEADER=parse.tab.h
 GPERF_OUT=op.c
 
-CFILES=mach.c str_intern.c
+CFILES=mach.c sym_intern.c
 OBJS=$(CFILES:.c=.o)
 HEADERS=*.h
 

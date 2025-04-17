@@ -1,7 +1,7 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#include <stdio.h> // Always include this explicitly
+#include <stdio.h>
 
 #define DEBUG_ENABLED 1
 #if DEBUG_ENABLED

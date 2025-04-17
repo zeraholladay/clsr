@@ -1,6 +1,6 @@
 lex.yy.c
 vm
-parse.tab.c
-parse.tab.h
-op.c
+parser.tab.c
+parser.tab.h
+operator.c
 *.o

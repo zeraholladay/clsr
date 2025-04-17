@@ -1,6 +1,6 @@
 #include "mach.h"
 #include "log.h"
-#include "parse.tab.h"
+#include "parser.tab.h"
 #include "stack.h"
 
 extern int fp, sp;

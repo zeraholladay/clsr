@@ -4,13 +4,13 @@ LEX=flex
 YACC=bison
 GPERF=gperf
 
-LEX_SRC=parse.l
-YACC_SRC=parse.y
+LEX_SRC=parser.l
+YACC_SRC=parser.y
 GPERF_SCR=operator.gperf
 
 LEX_OUT=lex.yy.c
-YACC_OUT=parse.tab.c
-YACC_HEADER=parse.tab.h
+YACC_OUT=parser.tab.c
+YACC_HEADER=parser.tab.h
 GPERF_OUT=operator.c
 
 CFILES=mach.c sym_intern.c object.c stack.c

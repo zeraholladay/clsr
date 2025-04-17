@@ -20,7 +20,7 @@ extern int yylineno;
     const struct op *op_ptr;
 }
 
-%type <op_ptr> op
+%type <op_ptr> operator
 
 %token ERROR HALT NL
 %token <num> INT_LITERAL
@@ -45,13 +45,13 @@ instruction:
     HALT {
         YYACCEPT;  // causes yyparse() to return 0
     }
-    | op args NL {
+    | operator args NL {
         DEBUG("[YACC] run_operator\n");
         run_operator($1);
     }
 ;
 
-op:
+operator:
       PUSH
     | LOOKUP
     | CLOSURE

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "parse.tab.h"
+#include "parser.tab.h"
 #include "operator.h"
 #include "log.h"
 #include "sym_intern.h"

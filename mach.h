@@ -8,18 +8,18 @@
 #include "parse.tab.h"
 
 typedef enum {
-    OBJ_INT,
-    // OBJ_CLOSURE,
-    OBJ_SYMBOL,
-    // OBJ_NIL
+  OBJ_INT,
+  // OBJ_CLOSURE,
+  OBJ_SYMBOL,
+  // OBJ_NIL
 } object_t_enum;
 
 typedef struct object {
-    object_t_enum type;
-    union {
-        int i;
-        const char *symbol;
-    };
+  object_t_enum type;
+  union {
+    int i;
+    const char *symbol;
+  };
 } object_t;
 
 void push(int val);

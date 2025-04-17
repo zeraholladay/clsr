@@ -46,7 +46,7 @@ NL \r?\n
     return INT_LITERAL;
 }
 <ARG>[a-zA-Z][a-zA-Z0-9]* {
-    yylval.str = sym_intern(yytext, yyleng);
+    yylval.sym = sym_intern(yytext, yyleng);
     return SYM_LITERAL;
 }
 <ARG>{NL} {

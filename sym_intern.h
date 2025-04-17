@@ -3,6 +3,6 @@
 
 #include <string.h>
 
-const char *sym_intern(const char *s, size_t len);
+const char *sym_intern(const char *s, size_t s_len);
 
 #endif

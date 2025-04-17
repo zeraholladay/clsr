@@ -16,7 +16,7 @@ extern int yylineno;
 
 %union {
     int num;
-    const char *str;
+    const char *sym;
     const struct op *op_ptr;
 }
 
@@ -24,7 +24,7 @@ extern int yylineno;
 
 %token ERROR HALT NL
 %token <num> INT_LITERAL
-%token <str> SYM_LITERAL
+%token <sym> SYM_LITERAL
 %token <op_ptr> PUSH LOOKUP CLOSURE APPLY RETURN
 
 %%

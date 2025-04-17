@@ -1,7 +1,7 @@
 #include "sym_intern.h"
-#include "log.h"
+// #include "log.h"
+// #include "strutil.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 struct _node {
@@ -13,9 +13,7 @@ const char *sym_intern(const char *s, size_t s_len) {
   struct _node *cur = &intern_root;
 
   while (cur) {
-    int len = strlen(cur->str) + 1;
-    int min_len = s_len < len ? s_len : len;
-    int cmp = strncmp(s, cur->str, min_len);
+    int cmp = strncmp_minlen(s, cur->str, s_len);
     if (cmp == 0)
       return cur->str;
     cur = (cmp < 0) ? cur->left : cur->right;

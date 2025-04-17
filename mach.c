@@ -8,18 +8,18 @@ extern int fp, sp;
 void run_operator(const struct op *op_ptr) {
   int old_fp = fp;
 
-  if (op_ptr->creates_frame) {
-    DEBUG("[FRAME] Entering new frame for %d\n", op_ptr->op_code);
-    push(fp);
-    fp = sp;
-  }
+  // if (op_ptr->creates_frame) {
+  //   DEBUG("[FRAME] Entering new frame for %d\n", op_ptr->op_code);
+  //   push(fp);
+  //   fp = sp;
+  // }
 
   int result = eval(op_ptr);
 
-  if (op_ptr->creates_frame) {
-    sp = fp;
-    fp = pop(); // restore caller frame
-  }
+  // if (op_ptr->creates_frame) {
+  //   sp = fp;
+  //   fp = pop(); // restore caller frame
+  // }
 
   push(result);
 }

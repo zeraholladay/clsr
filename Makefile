@@ -13,7 +13,7 @@ YACC_OUT=parser.tab.c
 YACC_HEADER=parser.tab.h
 GPERF_OUT=operator.c
 
-CFILES=mach.c sym_intern.c object.c stack.c environ.c
+CFILES=mach.c object.c stack.c environ.c strutil.c
 OBJS=$(CFILES:.c=.o)
 
 BIN=vm

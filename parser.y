@@ -73,14 +73,14 @@ arg_list:
 
 arg:
     INT_LITERAL {
-        DEBUG("[PUSHING INT_LITERAL] %d (line %d)\n", $1, yylineno);
+        DEBUG("[YACC PUSHING INT_LITERAL] %d (line %d)\n", $1, yylineno);
         push($1);
     }
     | SYM_LITERAL {
         int addr;
         object_t *obj = ALLOC_SYM(&addr);  //TO DO: fix me: error handling
         obj->symbol = $1;
-        DEBUG("[PUSHING SYM_LITERAL] '%s':%d (line %d)\n", $1, addr, yylineno);
+        DEBUG("[YACC PUSHING SYM_LITERAL] '%s':%d (line %d)\n", $1, addr, yylineno);
         push(addr);
     }
 ;

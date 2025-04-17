@@ -3,7 +3,7 @@
 
 struct op {
   int op_code;
-  int creates_frame;
+  int nargs;
 };
 
 const struct op *lookup_op(register const char *str, register unsigned int len);

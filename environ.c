@@ -1,5 +1,6 @@
 #include "environ.h"
 #include "log.h"
+#include "strutil.h"
 
 #include <stdlib.h>
 #include <strings.h>
@@ -15,34 +16,34 @@ env_t *env_new(env_t *parent) {
   return env;
 }
 
+/* perf really matters here. */
 env_entry_t *_lookup_env(env_t *env, const char *sym, size_t sym_len) {
-  for (env_t *frame = env; frame != NULL; frame = frame->parent) {
-    for (int i = 0; i < frame->count; i++) {
-      int len = strlen(frame->entries[i].symbol) + 1;
-      int min_leng = sym_len < len ? sym_len : len;
-
-      if (0 == strncmp(sym, frame->entries[i].symbol, min_leng))
+  for (env_t *frame = env; frame != NULL; frame = frame->parent)
+    for (int i = 0; i < frame->count; i++)
+      if (0 == strncmp_minlen(sym, frame->entries[i].symbol, sym_len))
         return &(frame->entries[i]);
-    }
-  }
   return NULL;
 }
 
-int env_set(env_t *env, const char *sym, int addr) {
-  return 0;
+int env_set(env_t *env, const char *sym, size_t sym_len, int addr) {
+  if (env->count >= MAX_ENTRIES) {
+    ERRMSG("Environment full\n");
+    return -1;
+  }
+  env_entry_t *entity = _lookup_env(env, sym, addr);
+  if (entity)
+    entity->addr = addr;
+  else {
+    env->entries[env->count].symbol = sym;
+    env->entries[env->count].addr = addr;
+    env->count++;
+  }
+  return 1;
 }
 
 int lookup_env(env_t *env, const char *sym, size_t sym_len) {
-  // for (env_t *frame = env; frame != NULL; frame = frame->parent) {
-  //   for (int i = 0; i < frame->count; i++) {
-  //     int len = strlen(frame->entries[i].symbol) + 1;
-  //     int min_leng = sym_len < len ? sym_len : len;
-
-  //     if (0 == strncmp(sym, frame->entries[i].symbol, min_leng))
-  //       return frame->entries[i].addr;  //addr
-  //   }
-  // }
   env_entry_t *entity = _lookup_env(env, sym, sym_len);
-  if (entity) return entity->addr;
+  if (entity)
+    return entity->addr;
   return -1;
 }

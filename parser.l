@@ -8,7 +8,7 @@
 #include "parser.tab.h"
 #include "operator.h"
 #include "log.h"
-#include "sym_intern.h"
+#include "strutil.h"
 
 extern int yylineno;
 %}

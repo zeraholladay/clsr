@@ -1,7 +1,6 @@
-vm
 src/lexer.c
 src/parser.c
 include/parser.h
 src/operator.c
-*.o
+bin/
 .vscode/

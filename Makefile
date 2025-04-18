@@ -17,7 +17,7 @@ YACC_OUT=src/parser.c
 YACC_HEADER=include/parser.h
 GPERF_OUT=src/operator.c
 
-BIN=vm
+BIN=bin/vm
 
 OS:=$(shell uname)
 
@@ -30,7 +30,7 @@ endif
 all: $(BIN)
 
 $(BIN): $(YACC_OUT) $(LEX_OUT) $(GPERF_OUT) src
-	$(CC) $(CFLAGS) -o $(BIN) src/*.o $(FLEX_LIB)
+	$(CC) $(CFLAGS) -o $(BIN) bin/*.o $(FLEX_LIB)
 
 $(LEX_OUT): $(LEX_SRC) $(YACC_HEADER)
 	$(LEX) -o $(LEX_OUT) $(LEX_SRC)

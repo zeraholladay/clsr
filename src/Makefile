@@ -2,23 +2,27 @@
 TARGET := main
 
 # Compiler and flags
-CC := gcc
-CFLAGS := -I../include -Wall -Wextra -O2
-CPPFLAGS :=
+CC ?= gcc
+CFLAGS ?= -I../include -Wall -Wextra -O2
+CPPFLAGS ?=
 
 # Source and object files
 SRCS := $(wildcard *.c)
-OBJS := $(SRCS:.c=.o)
+OBJS := $(patsubst %.c,../bin/%.o,$(SRCS))
 
 # Default target
 $(TARGET): $(OBJS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^
 
-# Compile .c to .o
-%.o: %.c
+# Compile .c to ../bin/.o
+../bin/%.o: %.c | ../bin/
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+# Ensure ../bin/ exists before compiling
+../bin/:
+	mkdir -p bin
 
 # Clean up
 .PHONY: clean
 clean:
-	rm -f *.o
+	rm -rf bin $(TARGET)

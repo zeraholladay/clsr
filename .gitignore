@@ -1,7 +1,7 @@
-lex.yy.c
 vm
-parser.tab.c
-parser.tab.h
-operator.c
+src/lexer.c
+src/parser.c
+include/parser.h
+src/operator.c
 *.o
 .vscode/

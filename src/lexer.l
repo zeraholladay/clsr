@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "parser.tab.h"
+#include "parser.h"
 #include "operator.h"
 #include "log.h"
 #include "strutil.h"

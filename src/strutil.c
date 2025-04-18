@@ -5,7 +5,7 @@
 struct _node {
   struct _node *left, *right;
   char str[];
-} intern_root = {NULL, NULL, ""};
+} intern_root = {.left = NULL, .right = NULL, .str = ""};
 
 const char *sym_intern(const char *s, size_t s_len) {
   struct _node *cur = &intern_root;

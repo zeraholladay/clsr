@@ -25,7 +25,7 @@ extern int yylineno;
 %token ERROR HALT NL
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
-%token <op_ptr> PUSH LOOKUP CLOSURE APPLY RETURN
+%token <op_ptr> APPLY CLOSURE LOOKUP PUSH RETURN SET
 
 %%
 
@@ -52,11 +52,12 @@ instruction:
 ;
 
 operator:
-      PUSH
-    | LOOKUP
+    APPLY
     | CLOSURE
-    | APPLY
-    | RETURN {
+    | LOOKUP
+    | PUSH
+    | RETURN
+    | SET {
         $$ = $1;
     }
 ;
@@ -89,14 +90,4 @@ arg:
 
 void yyerror(const char *s) {
     ERRMSG("[YYERROR] line %d: %s\n", yylineno, s);
-}
-
-int main(void) {
-    yyparse();
-    printf("Final stack: ");
-    /* for (int i = 0; i < sp; ++i) {
-        printf("%d ", stack[i]);
-    } */
-    printf("\n");
-    return 0;
 }

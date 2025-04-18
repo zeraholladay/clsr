@@ -4,13 +4,14 @@ This virtual machine uses a simple stack-based architecture with support for clo
 
 ## Instructions
 
-### `PUSH x`
-Push a variable `x` onto the stack.
+### `PUSH [arg ...]`
+Pushes one or more arguments onto the stack. This is a variadic instruction: it accepts zero or more arguments.
 
-- `x` may refer to:
-  - A variable name (resolved later via `LOOKUP`)
-  - A literal value (if literals are supported in your extension)
+Each arg may refer to:
+  - A symbol (i.e. a variable name to be resolved later via LOOKUP)
+  - A literal value (e.g. integers)
 
+Arguments are pushed in right-to-left order, so the first argument becomes the top of the stack.
 ---
 
 ### `LOOKUP i`

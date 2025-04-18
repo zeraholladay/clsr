@@ -15,11 +15,12 @@ struct _op {
 };
 
 %%
-PUSH,    {PUSH,    0}
-LOOKUP,  {LOOKUP,  0}
-CLOSURE, {CLOSURE, 0}
 APPLY,   {APPLY,   1}
+CLOSURE, {CLOSURE, 0}
+LOOKUP,  {LOOKUP,  1}
+PUSH,    {PUSH,   -1}
 RETURN,  {RETURN,  0}
+SET,     {SET,     2}
 %%
 
 const struct op * lookup_op(register const char *str, register unsigned int len) {

@@ -13,7 +13,7 @@
 extern int yylineno;
 %}
 
-OP (PUSH|LOOKUP|CLOSURE|APPLY|RETURN)
+OP (APPLY|CLOSURE|LOOKUP|PUSH|RETURN|SET)
 WS [ \t]+
 NL \r?\n
 

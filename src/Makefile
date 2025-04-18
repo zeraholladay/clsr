@@ -1,28 +1,26 @@
-# Name of the final executable
-TARGET := main
-
 # Compiler and flags
 CC ?= gcc
 CFLAGS ?= -I../include -Wall -Wextra -O2
 CPPFLAGS ?=
+BIN = ../bin/
 
 # Source and object files
 SRCS := $(wildcard *.c)
-OBJS := $(patsubst %.c,../bin/%.o,$(SRCS))
+OBJS := $(patsubst %.c,$(BIN)%.o,$(SRCS))
 
 # Default target
-$(TARGET): $(OBJS)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^
+.PHONY: all
+all: $(OBJS)
 
-# Compile .c to ../bin/.o
-../bin/%.o: %.c | ../bin/
+# Compile .c to $(BIN).o
+$(BIN)%.o: %.c | $(BIN)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-# Ensure ../bin/ exists before compiling
-../bin/:
-	mkdir -p bin
+# Ensure $(BIN) exists before compiling
+$(BIN):
+	@mkdir -p ../bin
 
 # Clean up
 .PHONY: clean
 clean:
-	rm -rf bin $(TARGET)
+	@rm -rf ..bin/*.o $(TARGET)

@@ -25,7 +25,7 @@ env_entry_t *_lookup_env(env_t *env, const char *sym, size_t sym_len) {
   return NULL;
 }
 
-int env_set(env_t *env, const char *sym, size_t sym_len, int addr) {
+int env_set(env_t *env, const char *sym, int addr) {
   if (env->count >= MAX_ENTRIES) {
     ERRMSG("Environment full\n");
     return -1;

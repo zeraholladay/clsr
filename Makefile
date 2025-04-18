@@ -39,15 +39,15 @@ $(YACC_OUT): $(YACC_SRC)
 	$(YACC) -o $(YACC_OUT) --defines=$(YACC_HEADER) $(YACC_SRC)
 
 $(GPERF_OUT): $(GPERF_SCR) $(YACC_HEADER)
-	$(GPERF) $(GPERF_SCR) > $(GPERF_OUT)
+	$(GPERF) $(GPERF_SCR) --output-file=$(GPERF_OUT)
 
 src:
-	$(MAKE) -C src/
+	@$(MAKE) -C src/
 
 lint: clean
 	clang-format -i src/*.c include/*.h
 	cppcheck src/*.c include/*.h
 
 clean:
-	rm -f $(BIN) $(LEX_OUT) $(YACC_OUT) $(YACC_HEADER) $(GPERF_OUT) $(OBJS)
-	$(MAKE) -C src/ clean
+	@rm -f $(BIN) $(LEX_OUT) $(YACC_OUT) $(YACC_HEADER) $(GPERF_OUT) $(OBJS)
+	@$(MAKE) -C src/ clean

@@ -5,7 +5,7 @@
 
 extern int fp, sp;
 
-void run_operator(const prim_op *op_ptr) {
+void run_operator(const prim_op_t *op_ptr) {
   // int old_fp = fp;
 
   // if (op_ptr->creates_frame) {
@@ -15,16 +15,18 @@ void run_operator(const prim_op *op_ptr) {
   // }
 
   int result = eval(op_ptr);
+  result++; result--; //make compiler happy
+
 
   // if (op_ptr->creates_frame) {
   //   sp = fp;
   //   fp = pop(); // restore caller frame
   // }
 
-  push(result);
+  // push(result);
 }
 
-int eval(const prim_op *op_ptr) {
+int eval(const prim_op_t *op_ptr) {
   int code = op_ptr->code;
 
   // int res;
@@ -32,7 +34,7 @@ int eval(const prim_op *op_ptr) {
   DEBUG("[EVAL] run_operator called with opcode = %d\n", code);
 
   switch (code) {
-  case PUSH:
+  case TOK_PUSH:
     return 0;
     break;
 

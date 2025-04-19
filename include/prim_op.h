@@ -1,10 +1,12 @@
 #ifndef PRIM_OP_H
 #define PRIM_OP_H
 
-typedef struct prim_op {
-  int code;
-  int nargs;
-} prim_op;
+#include "parser.h"
 
-const prim_op *prim_op_lookup(register const char *str, register unsigned int len);
+typedef struct _prim_op {
+  yytoken_kind_t code;
+  int nargs;
+} PrimOp;
+
+const prim_op_t *prim_op_lookup(register const char *str, register unsigned int len);
 #endif

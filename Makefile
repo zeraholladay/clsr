@@ -1,12 +1,11 @@
 .PHONY: all src clean
 
-# Compiler and flags
+# Compilers and flags
 CC := gcc
 CFLAGS := -Iinclude -Wall
-
-LEX = flex
-YACC = bison
-GPERF = gperf
+LEX := flex
+YACC := bison
+GPERF := gperf
 
 LEX_SRC = src/lexer.l
 YACC_SRC = src/parser.y

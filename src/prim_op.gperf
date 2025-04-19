@@ -1,5 +1,4 @@
 %{
-#include "parser.h"
 #include "prim_op.h"
 %}
 
@@ -12,19 +11,19 @@
 
 struct _prim_op {
     const char *name;
-    prim_op op;
+    prim_op_t op;
 };
 
 %%
-APPLY,   {APPLY,   0}
-CLOSURE, {CLOSURE, 0}
-LOOKUP,  {LOOKUP,  0}
-PUSH,    {PUSH,   -1}
-RETURN,  {RETURN,  0}
-SET,     {SET,     2}
+APPLY,   {TOK_APPLY,   0}
+CLOSURE, {TOK_CLOSURE, 0}
+LOOKUP,  {TOK_LOOKUP,  0}
+PUSH,    {TOK_PUSH,   -1}
+RETURN,  {TOK_RETURN,  0}
+SET,     {TOK_SET,     2}
 %%
 
-const prim_op * prim_op_lookup(register const char *str, register unsigned int len) {
+const prim_op_t * prim_op_lookup(register const char *str, register unsigned int len) {
     const struct _prim_op *_op = in_word_set(str, len);
     if (_op) {
         return &_op->op;

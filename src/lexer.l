@@ -30,7 +30,7 @@ NL \r?\n
 
     {OP} {
         DEBUG("[LEX] prim_op matched: yytext = '%s'\n", yytext);
-        const prim_op *p = prim_op_lookup(yytext, strlen(yytext));
+        const prim_op_t *p = prim_op_lookup(yytext, strlen(yytext));
         if (p) {
             BEGIN(ARG);
             yylval.prim = p;
@@ -38,7 +38,7 @@ NL \r?\n
             return p->code;
         } else {
             DEBUG("[GPERF] prim not found = '%s'\n", yytext);
-            return ERROR;  // fallback if not found
+            return TOK_ERROR;  // fallback if not found
         }
     }
 
@@ -66,11 +66,11 @@ NL \r?\n
     }
     -*[0-9]+ {
         yylval.num = atoi(yytext);
-        return INT_LITERAL;
+        return TOK_INT_LITERAL;
     }
     [a-zA-Z][a-zA-Z0-9]* {
         yylval.sym = sym_intern(yytext, yyleng);
-        return SYM_LITERAL;
+        return TOK_SYM_LITERAL;
     }
     {NL} {
         BEGIN(INITIAL);

@@ -18,7 +18,7 @@ extern Stack STACK;
 %union {
     int num;
     const char *sym;
-    const struct prim_op *prim;
+    const struct PrimOp *prim;
 }
 
 %type <prim> nullary_prim_op

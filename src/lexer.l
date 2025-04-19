@@ -8,7 +8,6 @@
 #include "parser.h"
 #include "prim_op.h"
 #include "common.h"
-#include "strutil.h"
 
 extern int yylineno;
 %}
@@ -69,7 +68,7 @@ NL \r?\n
         return TOK_INT_LITERAL;
     }
     [a-zA-Z][a-zA-Z0-9]* {
-        yylval.sym = sym_intern(yytext, yyleng);
+        yylval.sym = str_intern(yytext);
         return TOK_SYM_LITERAL;
     }
     {NL} {

@@ -21,15 +21,15 @@ REPL = bin/repl
 OS := $(shell uname)
 
 ifeq ($(OS), Darwin)
-    FLEX_LIB=-ll
+	LIBS := $(shell pkg-config --libs glib-2.0) -ll
 else
-    FLEX_LIB=-lfl
+    LIBS = -lfl
 endif
 
 all: $(REPL)
 
 $(REPL): $(YACC_OUT) $(LEX_OUT) $(GPERF_OUT) src
-	$(CC) $(CFLAGS) -o $(REPL) bin/*.o $(FLEX_LIB)
+	$(CC) $(CFLAGS) -o $(REPL) bin/*.o $(FLEX_LIB) $(LIBS)
 
 $(LEX_OUT): $(LEX_SRC) $(YACC_HEADER)
 	$(LEX) -o $(LEX_OUT) $(LEX_SRC)

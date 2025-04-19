@@ -1,8 +1,14 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+/*
+debugging
+*/
 
 #define INFO_ENABLED 1
 #define DEBUG_ENABLED 1
@@ -38,7 +44,9 @@
 #define STRINGIFY2(x) #x
 #define LOCATION __FILE__ ":" STRINGIFY(__LINE__)
 
-/* Gnulib - The GNU Portability Library
+/*
+Heap
+Gnulib - The GNU Portability Library
 https://git.savannah.gnu.org/git/gnulib.git
 */
 
@@ -61,6 +69,15 @@ static inline void die(const char *msg) {
   perror(msg);
   exit(1);
   abort();
+}
+
+/* Strings */
+
+#define str_intern(s) ((const char *)g_intern_static_string(s))
+
+inline static int strncmp_minlen(const char *s1, const char *s2, size_t s1_n) {
+  size_t len = strlen(s2) + 1;
+  return strncmp(s1, s2, s1_n < len ? s1_n : len);
 }
 
 #endif

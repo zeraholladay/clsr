@@ -52,7 +52,4 @@ typedef struct stack {
     (out) = (s_ptr)->stack[--(s_ptr)->sp];                                     \
   } while (0)
 
-// void push(int val);
-// int pop();
-
 #endif

@@ -3,7 +3,6 @@
 
 #include "common.h"
 #include "environ.h"
-#include "strutil.h"
 
 EnvironEntry *_env_lookup(Environ *env, const char *sym, size_t sym_len);
 

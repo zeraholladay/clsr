@@ -108,8 +108,8 @@ Applies a closure to a sequence of argument values by evaluating its body in a n
 A consumer + producer instruction:
 
 Consumes:
-1. A closure object (on top of the stack).
-1. N arguments, already on the stack beneath the closure (left-to-right).
+1. N arguments, already on the stack above the closure (left-to-right).
+1. A closure object (on bottom of the stack).
 
 Produces:
 1. The result of evaluating the closure with its parameters bound to the arguments.
@@ -121,8 +121,7 @@ Example with anonymous clousre:
 
 ```
 CLOSURE a b c (
-  PUSH bar
-  RETURN
+  ; returns NIL
 )
 ; STACK:
 ; #clsr-id

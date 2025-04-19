@@ -14,6 +14,8 @@ typedef struct stack {
   int stack[STACK_SIZE];
 } Stack;
 
+// GPtrArray instead of malloc/realloc?
+
 #define ENTER_FRAME(s_ptr)                                                     \
   do {                                                                         \
     if ((s_ptr)->sp >= STACK_SIZE) {                                           \

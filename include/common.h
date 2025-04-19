@@ -73,6 +73,10 @@ static inline void die(const char *msg) {
 
 /* Strings */
 
+// char *input = g_strdup("user_input");
+// const gchar *interned = g_intern_string(input);
+// g_free(input);
+
 #define str_intern(s) ((const char *)g_intern_static_string(s))
 
 inline static int strncmp_minlen(const char *s1, const char *s2, size_t s1_n) {

@@ -4,7 +4,7 @@
 
 #include "common.h"
 #include "prim_op.h"
-#include "mach.h"
+#include "vm.h"
 #include "object.h"
 #include "stack.h"
 
@@ -31,10 +31,6 @@ extern Stack STACK;
 %token <prim> APPLY CLOSURE LOOKUP PUSH RETURN SET
 
 %%
-
-program:
-    expressions
-;
 
 expressions:
         /* empty */

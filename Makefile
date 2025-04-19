@@ -16,15 +16,17 @@ YACC_OUT = src/parser.c
 YACC_HEADER = include/parser.h
 GPERF_OUT = src/prim_op.c
 
-REPL = bin/repl
+GLIB := glib-2.0
 
 OS := $(shell uname)
 
 ifeq ($(OS), Darwin)
-	LIBS := $(shell pkg-config --libs glib-2.0) -ll
+	LIBS := $(shell pkg-config --libs $(GLIB)) -ll
 else
     LIBS = -lfl
 endif
+
+REPL = bin/repl
 
 all: $(REPL)
 

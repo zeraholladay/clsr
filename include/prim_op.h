@@ -8,5 +8,6 @@ typedef struct PrimOp {
   int nargs;
 } PrimOp;
 
-const PrimOp *prim_op_lookup(register const char *str, register unsigned int len);
+const PrimOp *prim_op_lookup(register const char *str,
+                             register unsigned int len);
 #endif

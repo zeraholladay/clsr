@@ -1,3 +1,3 @@
 #include "stack.h"
 
-Stack STACK = {0};  // temporary
+Stack STACK = {0}; // temporary

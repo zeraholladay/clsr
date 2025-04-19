@@ -15,8 +15,8 @@ void run_operator(const PrimOp *op_ptr) {
   // }
 
   int result = eval(op_ptr);
-  result++; result--; //make compiler happy
-
+  result++;
+  result--; // make compiler happy
 
   // if (op_ptr->creates_frame) {
   //   sp = fp;
@@ -40,6 +40,7 @@ int eval(const PrimOp *op_ptr) {
 
   default:
     die(LOCATION);
+    return -1;
     break;
   }
 }

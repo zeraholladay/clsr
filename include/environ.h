@@ -9,19 +9,19 @@
 
 #include "object.h"
 
-typedef struct env_entry_t {
+typedef struct EnvironEntry {
   const char *symbol; // symbol name
   int addr;           // heap address
-} env_entry_t;
+} EnvironEntry;
 
-typedef struct env_t {
-  env_entry_t entries[MAX_ENTRIES];
+typedef struct Environ {
+  EnvironEntry entries[MAX_ENTRIES];
   int count;
-  struct env_t *parent;
-} env_t;
+  struct Environ *parent;
+} Environ;
 
-env_t *env_new(env_t *parent);
-int env_set(env_t *env, const char *sym, int addr);
-int env_lookup(env_t *env, const char *s, size_t s_len);
+Environ *env_new(Environ *parent);
+int env_set(Environ *env, const char *sym, int addr);
+int env_lookup(Environ *env, const char *s, size_t s_len);
 
 #endif

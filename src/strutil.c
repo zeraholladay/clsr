@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "strutil.h"
 #include "common.h"
+#include "strutil.h"
 
 struct _node {
   struct _node *left, *right;

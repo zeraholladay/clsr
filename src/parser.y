@@ -23,7 +23,7 @@ extern int yylineno;
 %type <prim> nullary_prim_op
 %type <prim> nary_prim_op
 
-%token ERROR HALT
+%token ERROR
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
 %token <prim> APPLY CLOSURE LOOKUP PUSH RETURN SET

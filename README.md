@@ -2,58 +2,175 @@
 
 This virtual machine uses a simple stack-based architecture with support for closures, lexical environments, and basic function application.
 
-## Instructions
+## Atoms
 
-### `PUSH [arg ...]`
-Pushes one or more arguments onto the stack. This is a variadic instruction: it accepts zero or more arguments.
+- A *symbol* (i.e. a variable name to be resolved later via LOOKUP)
+- A literal value (e.g. integers)
 
-Each arg may refer to:
-  - A symbol (i.e. a variable name to be resolved later via LOOKUP)
-  - A literal value (e.g. integers)
+## Primitives (or Operators)
 
-Arguments are pushed in right-to-left order, so the first argument becomes the top of the stack.
+### `PUSH arg0 arg1 ... argN`
+Pushes one or more atoms onto the stack.
+
+This is a variadic producer instruction — it accepts zero or more arguments and *produces* values by pushing them onto the stack.
+
+Example:
+
+```
+PUSH a b c
+; STACK:
+; c
+; b
+; a
+```
+
 ---
 
-### `LOOKUP i`
-Look up a variable at **depth `i`** in the current environment chain and push its value onto the stack.
+### `SET`
+Assigns a value to a symbol in the current environment.
 
-- Environment depth is zero-indexed:
-  - `0` = current frame
-  - `1` = immediate parent
-  - `2` = grandparent, etc.
+A pure consumer that establishes a new variable binding. This operation does not return a value — it only mutates the environment.
+
+Example:
+
+```
+PUSH a 1
+; STACK:
+; 1
+; a
+SET ; env={ a=1 }
+```
 
 ---
 
-### `CLOSURE body, env`
+### `LOOKUP`
+A pure *producer* instruction.
+
+Produces: the value bound to that symbol in the environment.
+
+The original symbol is discarded, and the resolved value is pushed in its place.
+
+Example:
+
+```
+PUSH a 1 
+; STACK:
+; 1
+; a
+SET ; env={ a=1 }
+PUSH a
+; STACK:
+; a
+LOOKUP
+; STACK:
+; 1
+```
+
+---
+
+### `CLOSURE arg0 arg1 ... argN (expression)`
 Create a **closure** from a function `body` and its **captured environment `env`**, and push it onto the stack.
 
-- The closure captures the lexical environment for future execution.
+A pure producer that builds a closure object.
+
+Consumes:
+1. A parameter list (list of symbols)
+1. A function body AST (another ast_node *)
+
+Produces:
+1. A closure that contains:
+  - The parameter list
+  - The body AST node
+  - The current environment, captured by reference (for lexical scope)
+
+Example with cloure named `foo`:
+
+```
+PUSH foo
+CLOSURE a b c (
+  PUSH bar
+  RETURN
+)
+; STACK:
+; #clsr-id
+PUSH foo
+; STACK:
+; #clsr-id
+; foo
+SET  ;  env={ foo=#clsr-id }
+```
 
 ---
 
 ### `APPLY`
-Pop a **function** and an **argument** from the stack and invoke the function with the argument.
+Applies a closure to a sequence of argument values by evaluating its body in a new stack frame, with each argument bound to the corresponding parameter.
 
-- Creates a new stack frame for the function call.
-- Can be used to apply either a user-defined closure or a built-in.
+A consumer + producer instruction:
+
+Consumes:
+1. A closure object (on top of the stack).
+1. N arguments, already on the stack beneath the closure (left-to-right).
+
+Produces:
+1. The result of evaluating the closure with its parameters bound to the arguments.
+
+Side effect:
+1. Pushes a new *stack frame*.
+
+Example with anonymous clousre:
+
+```
+CLOSURE a b c (
+  PUSH bar
+  RETURN
+)
+; STACK:
+; #clsr-id
+PUSH 1 2 3
+; STACK:
+; 3
+; 2
+; 1
+; #clsr-id
+APPLY
+```
+
+Example with closure named `foo`:
+
+```
+PUSH foo
+CLOSURE a b c (
+  PUSH bar
+  RETURN
+)
+; STACK:
+; #clsr-id
+; foo
+SET  ;  env={ foo=#clsr-id }
+; call foo(1,2,3)
+LOOKUP foo
+; STACK:
+; 3
+; 2
+; 1
+; #clsr-id
+PUSH 1 2 3
+APPLY
+```
 
 ---
 
 ### `RETURN`
-Return from the current function call.
+Ends evaluation of the current function or closure and returns a value to the caller.
 
-- Pops the current stack frame.
-- Pushes the result value back onto the previous frame’s stack.
+A consumer + producer instruction that:
 
+Consumes:
+1. A single value from the top of the current stack frame (the return value)
+
+Produces:
+1. That value, pushed onto the previous stack frame
+
+Side effect:
+1. Pops the current stack frame, restoring the caller’s environment
 ---
-
-## Example Execution (Conceptual)
-
-Given an expression like:
-
-```
-PUSH 42
-CLOSURE <body>, <env>
-APPLY
-RETURN
-```

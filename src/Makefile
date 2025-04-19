@@ -23,4 +23,4 @@ $(BIN):
 # Clean up
 .PHONY: clean
 clean:
-	@rm -rf ..bin/*.o $(TARGET)
+	@rm -rf $(BIN)*.o

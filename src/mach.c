@@ -5,11 +5,11 @@
 
 extern int fp, sp;
 
-void run_operator(const struct op *op_ptr) {
-  int old_fp = fp;
+void run_operator(const prim_op *op_ptr) {
+  // int old_fp = fp;
 
   // if (op_ptr->creates_frame) {
-  //   DEBUG("[FRAME] Entering new frame for %d\n", op_ptr->op_code);
+  //   DEBUG("[FRAME] Entering new frame for %d\n", op_ptr->code);
   //   push(fp);
   //   fp = sp;
   // }
@@ -24,20 +24,20 @@ void run_operator(const struct op *op_ptr) {
   push(result);
 }
 
-int eval(const struct op *op_ptr) {
-  int op_code = op_ptr->op_code;
+int eval(const prim_op *op_ptr) {
+  int code = op_ptr->code;
 
-  int res;
+  // int res;
 
-  DEBUG("[EVAL] run_operator called with opcode = %d\n", op_code);
+  DEBUG("[EVAL] run_operator called with opcode = %d\n", code);
 
-  switch (op_code) {
+  switch (code) {
   case PUSH:
     return 0;
     break;
 
   default:
-    ERRMSG("Unknown op_code\n");
+    ERRMSG("Unknown code\n");
     return 0; // XXX FIX ME
     break;
   }

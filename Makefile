@@ -1,25 +1,25 @@
 .PHONY: all src clean
 
 # Compiler and flags
-CC:=gcc
-CFLAGS:=-Iinclude -Wall
+CC := gcc
+CFLAGS := -Iinclude -Wall
 
-LEX=flex
-YACC=bison
-GPERF=gperf
+LEX = flex
+YACC = bison
+GPERF = gperf
 
-LEX_SRC=src/lexer.l
-YACC_SRC=src/parser.y
-GPERF_SCR=src/operator.gperf
+LEX_SRC = src/lexer.l
+YACC_SRC = src/parser.y
+GPERF_SCR = src/prim_op.gperf
 
-LEX_OUT=src/lexer.c
-YACC_OUT=src/parser.c
-YACC_HEADER=include/parser.h
-GPERF_OUT=src/operator.c
+LEX_OUT = src/lexer.c
+YACC_OUT = src/parser.c
+YACC_HEADER = include/parser.h
+GPERF_OUT = src/prim_op.c
 
-BIN=bin/vm
+EXCUTABLE = bin/vm
 
-OS:=$(shell uname)
+OS := $(shell uname)
 
 ifeq ($(OS), Darwin)
     FLEX_LIB=-ll
@@ -27,10 +27,10 @@ else
     FLEX_LIB=-lfl
 endif
 
-all: $(BIN)
+all: $(EXCUTABLE)
 
-$(BIN): $(YACC_OUT) $(LEX_OUT) $(GPERF_OUT) src
-	$(CC) $(CFLAGS) -o $(BIN) bin/*.o $(FLEX_LIB)
+$(EXCUTABLE): $(YACC_OUT) $(LEX_OUT) $(GPERF_OUT) src
+	$(CC) $(CFLAGS) -o $(EXCUTABLE) bin/*.o $(FLEX_LIB)
 
 $(LEX_OUT): $(LEX_SRC) $(YACC_HEADER)
 	$(LEX) -o $(LEX_OUT) $(LEX_SRC)
@@ -49,5 +49,5 @@ lint: clean
 	cppcheck src/*.c include/*.h
 
 clean:
-	@rm -f $(BIN) $(LEX_OUT) $(YACC_OUT) $(YACC_HEADER) $(GPERF_OUT) $(OBJS)
+	@rm -f $(EXCUTABLE) $(LEX_OUT) $(YACC_OUT) $(YACC_HEADER) $(GPERF_OUT) $(OBJS)
 	@$(MAKE) -C src/ clean

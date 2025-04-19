@@ -1,6 +1,6 @@
 %{
 #include "parser.h"
-#include "operator.h"
+#include "prim_op.h"
 %}
 
 %includes
@@ -8,24 +8,24 @@
 %readonly-tables
 %struct-type
 %define initializer-suffix ,{0,0}
-%define slot-name op_name
+%define slot-name name
 
-struct _op {
-    const char *op_name;
-    struct op op;
+struct _prim_op {
+    const char *name;
+    prim_op op;
 };
 
 %%
-APPLY,   {APPLY,   1}
+APPLY,   {APPLY,   0}
 CLOSURE, {CLOSURE, 0}
-LOOKUP,  {LOOKUP,  1}
+LOOKUP,  {LOOKUP,  0}
 PUSH,    {PUSH,   -1}
 RETURN,  {RETURN,  0}
 SET,     {SET,     2}
 %%
 
-const struct op * lookup_op(register const char *str, register unsigned int len) {
-    const struct _op *_op = in_word_set(str, len);
+const prim_op * prim_op_lookup(register const char *str, register unsigned int len) {
+    const struct _prim_op *_op = in_word_set(str, len);
     if (_op) {
         return &_op->op;
     } else {

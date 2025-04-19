@@ -6,12 +6,14 @@
 #include <stdlib.h>
 
 #include "parser.h"
-#include "operator.h"
+#include "prim_op.h"
 #include "log.h"
 #include "strutil.h"
 
 extern int yylineno;
 %}
+
+COMMENT ;[^\n]*
 
 OP (APPLY|CLOSURE|LOOKUP|PUSH|RETURN|SET)
 WS [ \t]+
@@ -21,26 +23,24 @@ NL \r?\n
 
 %%
 
+<INITIAL>{COMMENT}|{WS}|{WS}*{NL}  { /* skip comment, whitespace, or empty lines*/ }
 <INITIAL>{OP} {
-    DEBUG("[LEX] opcode matched: yytext = '%s'\n", yytext);
-    const struct op *op = lookup_op(yytext, strlen(yytext));
-    if (op) {
+    DEBUG("[LEX] prim_op matched: yytext = '%s'\n", yytext);
+    const prim_op *prim = prim_op_lookup(yytext, strlen(yytext));
+    if (prim) {
         BEGIN(ARG);
-        yylval.op_ptr = op;
-        DEBUG("[LEX] returning opcode = '%d'\n", op->op_code);
-        return op->op_code;
+        yylval.prim = prim;
+        DEBUG("[LEX] returning prim code = '%d'\n", prim->code);
+        return prim->code;
     } else {
-        DEBUG("[GPERF] opcode not found = '%s'\n", yytext);
+        DEBUG("[GPERF] prim not found = '%s'\n", yytext);
         return ERROR;  // fallback if not found
     }
 }
-<INITIAL>{WS}|{WS}*{NL} {
-    ; // ignore leading whitespace or NL
-}
 
-<ARG>{WS} {
-    ; // ignore
-}
+<ARG>{COMMENT}|{WS} { /* skip comment or whitespace */ }
+<ARG>\( { return '('; }
+<ARG>\) { return ')'; }
 <ARG>-*[0-9]+ {
     yylval.num = atoi(yytext);
     return INT_LITERAL;

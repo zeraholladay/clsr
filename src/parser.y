@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "log.h"
-#include "operator.h"
+#include "prim_op.h"
 #include "mach.h"
 #include "object.h"
 #include "stack.h"
@@ -17,15 +17,15 @@ extern int yylineno;
 %union {
     int num;
     const char *sym;
-    const struct op *op_ptr;
+    const struct prim_op *prim;
 }
 
-%type <op_ptr> operator
+%type <prim> primitive
 
 %token ERROR HALT NL
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
-%token <op_ptr> APPLY CLOSURE LOOKUP PUSH RETURN SET
+%token <prim> APPLY CLOSURE LOOKUP PUSH RETURN SET
 
 %%
 
@@ -45,13 +45,13 @@ instruction:
     HALT {
         YYACCEPT;  // causes yyparse() to return 0
     }
-    | operator args NL {
-        DEBUG("[YACC] run_operator\n");
+    | primitive args NL {
+        DEBUG("[YACC] run_primitive\n");
         run_operator($1);
     }
 ;
 
-operator:
+primitive:
     APPLY
     | CLOSURE
     | LOOKUP

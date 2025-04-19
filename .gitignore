@@ -1,6 +1,6 @@
 src/lexer.c
 src/parser.c
 include/parser.h
-src/operator.c
+src/prim_op.c
 bin/
 .vscode/

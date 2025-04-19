@@ -26,21 +26,26 @@ NL \r?\n
 <INITIAL>{COMMENT}|{WS}|{WS}*{NL}  { /* skip comment, whitespace, or empty lines*/ }
 <INITIAL>{OP} {
     DEBUG("[LEX] prim_op matched: yytext = '%s'\n", yytext);
-    const prim_op *prim = prim_op_lookup(yytext, strlen(yytext));
-    if (prim) {
+    const prim_op *p = prim_op_lookup(yytext, strlen(yytext));
+    if (p) {
         BEGIN(ARG);
-        yylval.prim = prim;
-        DEBUG("[LEX] returning prim code = '%d'\n", prim->code);
-        return prim->code;
+        yylval.prim = p;
+        DEBUG("[LEX] returning prim code = '%d'\n", p->code);
+        return p->code;
     } else {
         DEBUG("[GPERF] prim not found = '%s'\n", yytext);
         return ERROR;  // fallback if not found
     }
 }
+<INITIAL>\) {
+    return ')';
+}
 
 <ARG>{COMMENT}|{WS} { /* skip comment or whitespace */ }
-<ARG>\( { return '('; }
-<ARG>\) { return ')'; }
+<ARG>\( {
+    BEGIN(INITIAL);
+    return '(';
+}
 <ARG>-*[0-9]+ {
     yylval.num = atoi(yytext);
     return INT_LITERAL;
@@ -51,7 +56,7 @@ NL \r?\n
 }
 <ARG>{NL} {
     BEGIN(INITIAL);
-    return NL;
+    return '\n';
 }
 
 %%

@@ -20,9 +20,10 @@ extern int yylineno;
     const struct prim_op *prim;
 }
 
-%type <prim> primitive
+%type <prim> nullary_prim_op
+%type <prim> nary_prim_op
 
-%token ERROR HALT NL
+%token ERROR HALT
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
 %token <prim> APPLY CLOSURE LOOKUP PUSH RETURN SET
@@ -30,46 +31,46 @@ extern int yylineno;
 %%
 
 program:
-    instructions
+    expressions
 ;
 
-instructions:
+expressions:
         /* empty */
-    | instructions instruction
+    | expressions expression
 ;
 
-instruction:
+expression:
     ERROR {
         printf("syntax error on line %d\n", yylineno);
     }
-    HALT {
-        YYACCEPT;  // causes yyparse() to return 0
+    | nullary_prim_op '\n' {
+        DEBUG("[YACC] nullary_prim_op \n");
     }
-    | primitive args NL {
-        DEBUG("[YACC] run_primitive\n");
-        run_operator($1);
+    | nary_prim_op args '\n' {
+        DEBUG("[YACC] nary_prim_op\n");
+    }
+    | CLOSURE args '(' expressions ')' '\n' {
+        DEBUG("[YACC] CLOSURE\n");
     }
 ;
 
-primitive:
+nullary_prim_op:
     APPLY
-    | CLOSURE
     | LOOKUP
-    | PUSH
     | RETURN
     | SET {
         $$ = $1;
     }
 ;
 
+nary_prim_op:
+    PUSH {
+        $$ = $1
+    }
+
 args:
       /* empty */
-    | arg_list
-;
-
-arg_list:
-      arg
-    | arg_list arg
+    | args arg
 ;
 
 arg:
@@ -89,5 +90,5 @@ arg:
 %%
 
 void yyerror(const char *s) {
-    ERRMSG("[YYERROR] line %d: %s\n", yylineno, s);
+    ERRMSG("[YACC yyerror] line %d: %s\n", yylineno, s);
 }

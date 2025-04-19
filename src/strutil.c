@@ -1,10 +1,11 @@
-#include "strutil.h"
-
 #include <stdlib.h>
+
+#include "strutil.h"
+#include "common.h"
 
 struct _node {
   struct _node *left, *right;
-  char str[];
+  char *str;
 } intern_root = {.left = NULL, .right = NULL, .str = ""};
 
 const char *sym_intern(const char *s, size_t s_len) {
@@ -17,9 +18,10 @@ const char *sym_intern(const char *s, size_t s_len) {
     cur = (cmp < 0) ? cur->left : cur->right;
   }
 
-  struct _node *n = malloc(sizeof(struct _node) + s_len + 1);
-  if (!n)
-    return NULL;
+  struct _node *n = NULL;
+
+  if (ALLOC(n) || ALLOC_N(n->str, s_len + 1))
+    die(LOCATION);
 
   n->left = n->right = NULL;
 

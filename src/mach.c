@@ -1,11 +1,11 @@
 #include "mach.h"
-#include "log.h"
+#include "common.h"
 #include "parser.h"
 #include "stack.h"
 
 extern int fp, sp;
 
-void run_operator(const prim_op_t *op_ptr) {
+void run_operator(const PrimOp *op_ptr) {
   // int old_fp = fp;
 
   // if (op_ptr->creates_frame) {
@@ -26,8 +26,8 @@ void run_operator(const prim_op_t *op_ptr) {
   // push(result);
 }
 
-int eval(const prim_op_t *op_ptr) {
-  int code = op_ptr->code;
+int eval(const PrimOp *op_ptr) {
+  int code = op_ptr->tok;
 
   // int res;
 
@@ -39,8 +39,7 @@ int eval(const prim_op_t *op_ptr) {
     break;
 
   default:
-    ERRMSG("Unknown code\n");
-    return 0; // XXX FIX ME
+    die(LOCATION);
     break;
   }
 }

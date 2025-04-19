@@ -1,24 +1,22 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-enum _object_t_enum {
-  OBJ_INT,
-  // OBJ_CLOSURE,
-  OBJ_SYM,
-  // OBJ_NIL
-};
+typedef enum ObjectType {
+  Object_Int,
+  Object_Sym,
+} ObjectType;
 
 typedef struct object {
-  enum _object_t_enum type;
+  ObjectType type;
   union {
-    int i;
+    int integr;
     const char *symbol;
-  };
-} object_t;
+  } as;
+} Object;
 
-#define ALLOC_INT(addr) alloc_object(OBJ_INT, addr)
-#define ALLOC_SYM(addr) alloc_object(OBJ_SYM, addr)
+#define ALLOC_INT(addr) object_alloc(Object_Int, addr)
+#define ALLOC_SYM(addr) object_alloc(Object_Sym, addr)
 
-object_t *alloc_object(enum _object_t_enum type, int *addr);
+Object *object_alloc(ObjectType type, int *addr);
 
 #endif

@@ -3,7 +3,7 @@
 
 #include "prim_op.h"
 
-int eval(const prim_op_t *op_ptr);
-void run_operator(const prim_op_t *op_ptr);
+int eval(const PrimOp *op_ptr);
+void run_operator(const PrimOp *op_ptr);
 
 #endif

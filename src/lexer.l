@@ -7,7 +7,7 @@
 
 #include "parser.h"
 #include "prim_op.h"
-#include "log.h"
+#include "common.h"
 #include "strutil.h"
 
 extern int yylineno;
@@ -30,12 +30,12 @@ NL \r?\n
 
     {OP} {
         DEBUG("[LEX] prim_op matched: yytext = '%s'\n", yytext);
-        const prim_op_t *p = prim_op_lookup(yytext, strlen(yytext));
+        const PrimOp *p = prim_op_lookup(yytext, strlen(yytext));
         if (p) {
             BEGIN(ARG);
             yylval.prim = p;
-            DEBUG("[LEX] returning prim code = '%d'\n", p->code);
-            return p->code;
+            DEBUG("[LEX] returning prim code = '%d'\n", p->tok);
+            return p->tok;
         } else {
             DEBUG("[GPERF] prim not found = '%s'\n", yytext);
             return TOK_ERROR;  // fallback if not found

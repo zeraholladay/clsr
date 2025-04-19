@@ -16,7 +16,7 @@ YACC_OUT = src/parser.c
 YACC_HEADER = include/parser.h
 GPERF_OUT = src/prim_op.c
 
-EXCUTABLE = bin/vm
+REPL = bin/repl
 
 OS := $(shell uname)
 
@@ -26,10 +26,10 @@ else
     FLEX_LIB=-lfl
 endif
 
-all: $(EXCUTABLE)
+all: $(REPL)
 
-$(EXCUTABLE): $(YACC_OUT) $(LEX_OUT) $(GPERF_OUT) src
-	$(CC) $(CFLAGS) -o $(EXCUTABLE) bin/*.o $(FLEX_LIB)
+$(REPL): $(YACC_OUT) $(LEX_OUT) $(GPERF_OUT) src
+	$(CC) $(CFLAGS) -o $(REPL) bin/*.o $(FLEX_LIB)
 
 $(LEX_OUT): $(LEX_SRC) $(YACC_HEADER)
 	$(LEX) -o $(LEX_OUT) $(LEX_SRC)
@@ -48,5 +48,5 @@ lint: clean
 	cppcheck src/*.c include/*.h
 
 clean:
-	@rm -f $(EXCUTABLE) $(LEX_OUT) $(YACC_OUT) $(YACC_HEADER) $(GPERF_OUT) $(OBJS)
+	@rm -f $(REPL) $(LEX_OUT) $(YACC_OUT) $(YACC_HEADER) $(GPERF_OUT) $(OBJS)
 	@$(MAKE) -C src/ clean

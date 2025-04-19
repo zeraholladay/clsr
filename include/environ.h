@@ -22,6 +22,6 @@ typedef struct env_t {
 
 env_t *env_new(env_t *parent);
 int env_set(env_t *env, const char *sym, int addr);
-int lookup_env(env_t *env, const char *s, size_t s_len);
+int env_lookup(env_t *env, const char *s, size_t s_len);
 
 #endif

@@ -9,9 +9,9 @@
 %define initializer-suffix ,{0,0}
 %define slot-name name
 
-struct _prim_op {
+struct _prim_op_gperf {
     const char *name;
-    prim_op_t op;
+    PrimOp op;
 };
 
 %%
@@ -23,8 +23,8 @@ RETURN,  {TOK_RETURN,  0}
 SET,     {TOK_SET,     2}
 %%
 
-const prim_op_t * prim_op_lookup(register const char *str, register unsigned int len) {
-    const struct _prim_op *_op = in_word_set(str, len);
+const PrimOp * prim_op_lookup(register const char *str, register unsigned int len) {
+    const struct _prim_op_gperf *_op = in_word_set(str, len);
     if (_op) {
         return &_op->op;
     } else {

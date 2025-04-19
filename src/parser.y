@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "log.h"
+#include "common.h"
 #include "prim_op.h"
 #include "mach.h"
 #include "object.h"
@@ -43,7 +43,8 @@ expressions:
 
 expression:
     ERROR {
-        ERRMSG("[YACC] syntax error on line %d\n", yylineno);
+        // PRINT_ERROR("[YACC] syntax error on line %d\n", yylineno);
+        YYACCEPT;
     }
     | nullary_prim_op '\n' {
         DEBUG("[YACC] nullary_prim_op \n");
@@ -82,8 +83,8 @@ arg:
     }
     | SYM_LITERAL {
         int addr;
-        object_t *obj = ALLOC_SYM(&addr);  //TO DO: fix me: error handling
-        obj->symbol = $1;
+        Object *obj = ALLOC_SYM(&addr);  //TO DO: fix me: error handling
+        obj->as.symbol = $1;
         DEBUG("[YACC PUSHING SYM_LITERAL] '%s':%d (line %d)\n", $1, addr, yylineno);
         PUSH(&STACK, addr);
     }
@@ -92,5 +93,5 @@ arg:
 %%
 
 void yyerror(const char *s) {
-    ERRMSG("[YACC yyerror] line %d: %s\n", yylineno, s);
+    fprintf(stderr, "[YACC yyerror] line %d: %s\n", yylineno, s);
 }

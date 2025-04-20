@@ -28,7 +28,8 @@ NL \r?\n
     {COMMENT}       { /* skip comment */ }
     {WS}            { /* skip whitespace */ }
     {WS}*{NL}       {
-        if (paren_cnt == 0) return TOK_END_PARSE;
+        if (paren_cnt == 0) 
+            return TOK_END_PARSE;
     }
 
     {OP} {

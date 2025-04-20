@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ast.h"
 #include "common.h"
+#include "obj.h"
 #include "prim_op.h"
 
 void yyerror(const char *s);
@@ -16,7 +16,7 @@ extern int yylineno;
     int num;
     const char *sym;
     const struct PrimOp *prim;
-    struct ASTNode *ast;
+    struct Obj *ast;
 }
 
 %type <prim> nullary_prim_op
@@ -33,38 +33,34 @@ extern int yylineno;
 
 expressions:
     /* empty */ {
-        $$ = ast_new_empty_expr_list();
+        $$ = obj_new_empty_expr_list();
     }
-  | expressions expression end_parse {
-        $$ = ast_expr_list_append($1, $2);
+  | expressions expression {
+        $$ = obj_expr_list_append($1, $2);
     }
 ;
-
-end_parse:
-    /* empty */ {}
-    | END_PARSE {
-        DEBUG("[YACC] END_PARSE\n");
-        YYACCEPT;
-    }
 
 expression:
     ERROR {
         // Not really returning an AST node — caller will handle failure.
         // PRINT_ERROR("[YACC] syntax error on line %d\n", yylineno);
-        $$ = 0;
+        YYACCEPT;
+    }
+    | END_PARSE {
+        DEBUG("[YACC] END_PARSE\n");
         YYACCEPT;
     }
     | nullary_prim_op '\n' {
         DEBUG("[YACC] nullary_prim_op\n");
-        $$ = ast_new_call($1, NULL);
+        $$ = obj_new_call($1, NULL);
     }
     | nary_prim_op args '\n' {
         DEBUG("[YACC] nary_prim_op\n");
-        $$ = ast_new_call($1, $2);
+        $$ = obj_new_call($1, $2);
     }
     | CLOSURE args '(' expressions ')' '\n' {
         DEBUG("[YACC] CLOSURE\n");
-        $$ = ast_new_closure($2, $4);
+        $$ = obj_new_closure($2, $4);
     }
 ;
 
@@ -84,21 +80,21 @@ nary_prim_op:
 
 args:
       /* empty */ {
-        $$ = ast_new_empty_expr_list();
+        $$ = obj_new_empty_expr_list();
       }
     | args arg {
-        $$ = ast_expr_list_append($1, $2);
+        $$ = obj_expr_list_append($1, $2);
     }
 ;
 
 arg:
     INT_LITERAL {
         DEBUG("[YACC INT_LITERAL] %d (line %d)\n", $1, yylineno);
-        $$ = ast_new_literal_int($1);
+        $$ = obj_new_literal_int($1);
     }
     | SYM_LITERAL {
         DEBUG("[YACC SYM_LITERAL] %s (line %d)\n", $1, yylineno);
-        $$ = ast_new_literal_sym($1);
+        $$ = obj_new_literal_sym($1);
     }
 ;
 

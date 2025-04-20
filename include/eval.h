@@ -6,7 +6,7 @@
 
 typedef struct EvalContext {
   Stack *stack;
-  Environ *environ;
+  Env *environ;
 } EvalContext;
 
 #endif

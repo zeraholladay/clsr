@@ -7,21 +7,21 @@
 #define MAX_ENTRIES 16
 #endif
 
-#include "object.h"
+#include "obj.h"
 
-typedef struct EnvironEntry {
+typedef struct EnvEntry {
   const char *symbol; // symbol name
   int addr;           // heap address
-} EnvironEntry;
+} EnvEntry;
 
-typedef struct Environ {
-  EnvironEntry entries[MAX_ENTRIES];
+typedef struct Env {
+  EnvEntry entries[MAX_ENTRIES];
   int count;
-  struct Environ *parent;
-} Environ;
+  struct Env *parent;
+} Env;
 
-Environ *env_new(Environ *parent);
-int env_set(Environ *env, const char *sym, int addr);
-int env_lookup(Environ *env, const char *s, size_t s_len);
+Env *env_new(Env *parent);
+int env_set(Env *env, const char *sym, int addr);
+int env_lookup(Env *env, const char *s, size_t s_len);
 
 #endif

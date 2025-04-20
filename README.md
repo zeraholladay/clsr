@@ -75,12 +75,12 @@ A pure producer that builds a closure object.
 
 Consumes:
 1. A parameter list (list of symbols)
-1. A function body AST (another ast_node *)
+1. A function body (an Obj *)
 
 Produces:
 1. A closure that contains:
   - The parameter list
-  - The body AST node
+  - The body Obj
   - The current environment, captured by reference (for lexical scope)
 
 Example with cloure named `foo`:

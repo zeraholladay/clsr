@@ -9,4 +9,3 @@ ASTNode *ast_expr_list_append(ASTNode *list, ASTNode *item);
 ASTNode *ast_new_call(const char *op_name, ASTNode *args);
 
 ASTNode *ast_new_closure(ASTNode *params, ASTNode *body);
-

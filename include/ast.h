@@ -4,47 +4,42 @@
 #include "common.h"
 #include "prim_op.h"
 
-typedef enum {
-    AST_Literal,
-    AST_List,
-    AST_Call,
-    AST_Closure
-} ASTNodeType;
+typedef enum { AST_Literal, AST_List, AST_Call, AST_Closure } ASTNodeType;
 
 typedef enum {
-    Literal_Int,
-    Literal_Sym,
+  Literal_Int,
+  Literal_Sym,
 } LiteralType;
 
 typedef struct {
-    LiteralType type;
-    union {
-        int integer;
-        const char *symbol;
-    } as;
+  LiteralType type;
+  union {
+    int integer;
+    const char *symbol;
+  } as;
 } Literal;
 
 typedef struct ASTNode {
-    ASTNodeType type;
+  ASTNodeType type;
 
-    union {
-        Literal literal;
+  union {
+    Literal literal;
 
-        struct {
-            struct ASTNode **nodes;
-            unsigned int count;
-        } list;
+    struct {
+      struct ASTNode **nodes;
+      unsigned int count;
+    } list;
 
-        struct {
-            const PrimOp prim;
-            struct ASTNode *args;
-        } call;
+    struct {
+      const PrimOp prim;
+      struct ASTNode *args;
+    } call;
 
-        struct {
-            struct ASTNode *params;
-            struct ASTNode *body;
-        } closure;
-    } as;
+    struct {
+      struct ASTNode *params;
+      struct ASTNode *body;
+    } closure;
+  } as;
 } ASTNode;
 
 ASTNode *ast_new_literal_int(int i);

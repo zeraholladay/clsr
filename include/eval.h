@@ -1,7 +1,7 @@
 #ifndef EVAL_H
 #define EVAL_H
 
-#include "environ.h"
+#include "env.h"
 #include "stack.h"
 
 typedef struct EvalContext {

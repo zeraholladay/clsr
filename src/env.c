@@ -2,7 +2,7 @@
 #include <strings.h>
 
 #include "common.h"
-#include "environ.h"
+#include "env.h"
 
 EnvEntry *_env_lookup(Env *env, const char *sym, size_t sym_len);
 

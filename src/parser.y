@@ -32,8 +32,12 @@ extern int yylineno;
 %%
 
 expressions:
-        /* empty */
-    | expressions expression
+    /* empty */ {
+        $$ = ast_new_empty_expr_list();
+    }
+  | expressions expression {
+        $$ = ast_expr_list_append($1, $2);
+    }
 ;
 
 expression:
@@ -44,13 +48,16 @@ expression:
         YYACCEPT;
     }
     | nullary_prim_op '\n' {
-        DEBUG("[YACC] nullary_prim_op \n");
+        DEBUG("[YACC] nullary_prim_op\n");
+        $$ = ast_new_call($1, NULL);
     }
     | nary_prim_op args '\n' {
         DEBUG("[YACC] nary_prim_op\n");
+        $$ = ast_new_call($1, $2);
     }
     | CLOSURE args '(' expressions ')' '\n' {
         DEBUG("[YACC] CLOSURE\n");
+        $$ = ast_new_closure($2, $4);
     }
 ;
 
@@ -70,50 +77,21 @@ nary_prim_op:
 
 args:
       /* empty */ {
-        //$$ = ast_new_expr_list(NULL, 0);
-        ASTNode *n = NULL;
-        if (ALLOC(n)) die(LOCATION);
-        n->type = AST_List;
-        n->as.list.nodes = NULL;
-        n->as.list.count++;
-        $$ = n;
+        $$ = ast_new_empty_expr_list();
       }
     | args arg {
-        //$$ = ast_expr_list_append($1, $2);
-
-        ASTNode *n1 = $1;
-        ASTNode *n2 = $2;
-
-        size_t count = n1->as.list.count;
-
-        ASTNode **new_items = NULL;
-        if (REALLOC_N(new_items, count + 1)) die(LOCATION);
-
-        new_items[count] = n2;
-
-        n1->as.list.nodes = new_items;
-        n1->as.list.count++;
-
-        $$ = n1;
-}
+        $$ = ast_expr_list_append($1, $2);
+    }
 ;
 
 arg:
     INT_LITERAL {
-        ASTNode *n = NULL;
-        if (ALLOC(n)) die(LOCATION);
-        n->type = AST_Literal;
-        n->as.literal.type = Literal_Int;
-        n->as.literal.as.integer = $1;
-        $$ = n;
+        DEBUG("[YACC INT_LITERAL] %d (line %d)\n", $1, yylineno);
+        $$ = ast_new_literal_int($1);
     }
     | SYM_LITERAL {
-        ASTNode *n = NULL;
-        if (ALLOC(n)) die(LOCATION);
-        n->type = AST_Literal;
-        n->as.literal.type = Literal_Sym;
-        n->as.literal.as.symbol = $1;
-        $$ = n;
+        DEBUG("[YACC SYM_LITERAL] %d (line %d)\n", $1, yylineno);
+        $$ = ast_new_literal_sym($1);
     }
 ;
 

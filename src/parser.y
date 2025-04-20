@@ -2,27 +2,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ast.h"
 #include "common.h"
 #include "prim_op.h"
-#include "vm.h"
-#include "object.h"
-#include "stack.h"
 
 void yyerror(const char *s);
 int yylex(void);
 
 extern int yylineno;
-extern Stack STACK;
 %}
 
 %union {
     int num;
     const char *sym;
     const struct PrimOp *prim;
+    struct ASTNode *ast;
 }
 
 %type <prim> nullary_prim_op
 %type <prim> nary_prim_op
+%type <ast> expression expressions args arg
 
 %define api.token.prefix {TOK_}
 %token ERROR
@@ -39,7 +38,9 @@ expressions:
 
 expression:
     ERROR {
+        // Not really returning an AST node — caller will handle failure.
         // PRINT_ERROR("[YACC] syntax error on line %d\n", yylineno);
+        $$ = 0;
         YYACCEPT;
     }
     | nullary_prim_op '\n' {
@@ -68,21 +69,51 @@ nary_prim_op:
     }
 
 args:
-      /* empty */
-    | args arg
+      /* empty */ {
+        //$$ = ast_new_expr_list(NULL, 0);
+        ASTNode *n = NULL;
+        if (ALLOC(n)) die(LOCATION);
+        n->type = AST_List;
+        n->as.list.nodes = NULL;
+        n->as.list.count++;
+        $$ = n;
+      }
+    | args arg {
+        //$$ = ast_expr_list_append($1, $2);
+
+        ASTNode *n1 = $1;
+        ASTNode *n2 = $2;
+
+        size_t count = n1->as.list.count;
+
+        ASTNode **new_items = NULL;
+        if (REALLOC_N(new_items, count + 1)) die(LOCATION);
+
+        new_items[count] = n2;
+
+        n1->as.list.nodes = new_items;
+        n1->as.list.count++;
+
+        $$ = n1;
+}
 ;
 
 arg:
     INT_LITERAL {
-        DEBUG("[YACC PUSHING INT_LITERAL] %d (line %d)\n", $1, yylineno);
-        PUSH(&STACK, $1);
+        ASTNode *n = NULL;
+        if (ALLOC(n)) die(LOCATION);
+        n->type = AST_Literal;
+        n->as.literal.type = Literal_Int;
+        n->as.literal.as.integer = $1;
+        $$ = n;
     }
     | SYM_LITERAL {
-        int addr;
-        Object *obj = ALLOC_SYM(&addr);  //TO DO: fix me: error handling
-        obj->as.symbol = $1;
-        DEBUG("[YACC PUSHING SYM_LITERAL] '%s':%d (line %d)\n", $1, addr, yylineno);
-        PUSH(&STACK, addr);
+        ASTNode *n = NULL;
+        if (ALLOC(n)) die(LOCATION);
+        n->type = AST_Literal;
+        n->as.literal.type = Literal_Sym;
+        n->as.literal.as.symbol = $1;
+        $$ = n;
     }
 ;
 

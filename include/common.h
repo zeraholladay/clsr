@@ -61,7 +61,7 @@ inline static int safe_alloc_check(void *ptr) {
   safe_alloc_check((ptr) = calloc(count, sizeof *(ptr)))
 
 #define REALLOC_N(ptr, count)                                                  \
-  safe_alloc_check((ptr) = realloc(count, sizeof *(ptr)))
+  safe_alloc_check((ptr) = realloc(ptr, count * sizeof *(ptr)))
 
 #define FREE(ptr) ((void)(free(ptr), (ptr) = NULL))
 

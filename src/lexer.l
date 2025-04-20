@@ -10,6 +10,7 @@
 #include "common.h"
 
 extern int yylineno;
+unsigned int paren_cnt;
 %}
 %option noinput nounput
 
@@ -42,7 +43,12 @@ NL \r?\n
         }
     }
 
+    {NL}{NL} {
+        if (paren_cnt == 0) return TOK_END_PARSE;
+    }
+
     \) {
+        paren_cnt--;
         BEGIN(END_CLOSURE);
         return ')';
     }
@@ -61,6 +67,7 @@ NL \r?\n
     {COMMENT}       { /* skip comment */ }
     {WS}            { /* skip whitespace */ }
     \( {
+        paren_cnt++;
         BEGIN(INITIAL);
         return '(';
     }

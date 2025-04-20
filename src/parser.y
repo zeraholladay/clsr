@@ -24,7 +24,7 @@ extern int yylineno;
 %type <ast> expression expressions args arg
 
 %define api.token.prefix {TOK_}
-%token ERROR
+%token END_PARSE ERROR
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
 %token <prim> APPLY CLOSURE LOOKUP PUSH RETURN SET
@@ -35,10 +35,17 @@ expressions:
     /* empty */ {
         $$ = ast_new_empty_expr_list();
     }
-  | expressions expression {
+  | expressions expression end_parse {
         $$ = ast_expr_list_append($1, $2);
     }
 ;
+
+end_parse:
+    /* empty */ {}
+    | END_PARSE {
+        DEBUG("[YACC] END_PARSE\n");
+        YYACCEPT;
+    }
 
 expression:
     ERROR {

@@ -27,7 +27,9 @@ NL \r?\n
 <INITIAL>{
     {COMMENT}       { /* skip comment */ }
     {WS}            { /* skip whitespace */ }
-    {WS}*{NL}       { /* skip empty or whitespace-only line */ }
+    {WS}*{NL}       {
+        if (paren_cnt == 0) return TOK_END_PARSE;
+    }
 
     {OP} {
         DEBUG("[LEX] prim_op matched: yytext = '%s'\n", yytext);
@@ -41,10 +43,6 @@ NL \r?\n
             DEBUG("[GPERF] prim not found = '%s'\n", yytext);
             return TOK_ERROR;  // fallback if not found
         }
-    }
-
-    {NL}{NL} {
-        if (paren_cnt == 0) return TOK_END_PARSE;
     }
 
     \) {

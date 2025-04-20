@@ -35,23 +35,19 @@ expressions:
     /* empty */ {
         $$ = ast_new_empty_expr_list();
     }
-  | expressions expression end_parse {
+  | expressions expression {
         $$ = ast_expr_list_append($1, $2);
     }
 ;
-
-end_parse:
-    /* empty */ {}
-    | END_PARSE {
-        DEBUG("[YACC] END_PARSE\n");
-        YYACCEPT;
-    }
 
 expression:
     ERROR {
         // Not really returning an AST node — caller will handle failure.
         // PRINT_ERROR("[YACC] syntax error on line %d\n", yylineno);
-        $$ = 0;
+        YYACCEPT;
+    }
+    | END_PARSE {
+        DEBUG("[YACC] END_PARSE\n");
         YYACCEPT;
     }
     | nullary_prim_op '\n' {

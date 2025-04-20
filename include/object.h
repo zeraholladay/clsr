@@ -1,22 +1,29 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-typedef enum ObjectType {
+#include "ast.h"
+#include "environ.h"
+
+typedef enum ObjectKind {
+  Object_AST,
   Object_Int,
   Object_Sym,
-} ObjectType;
+} ObjectKind;
 
 typedef struct object {
-  ObjectType type;
+  ObjectKind kind;
+
   union {
+    ASTNode *ast;
     int integr;
     const char *symbol;
+
   } as;
 } Object;
 
 #define ALLOC_INT(addr) object_alloc(Object_Int, addr)
 #define ALLOC_SYM(addr) object_alloc(Object_Sym, addr)
 
-Object *object_alloc(ObjectType type, int *addr);
+Object *object_alloc(ObjectKind kind, int *addr);
 
 #endif

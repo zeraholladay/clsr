@@ -19,6 +19,7 @@ GPERF_OUT = src/prim_op.c
 # GLIB := glib-2.0
 
 OS := $(shell uname)
+LIBS = -lreadline
 
 # ifeq ($(OS), Darwin)
 # 	LIBS := $(shell pkg-config --libs $(GLIB)) -ll

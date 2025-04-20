@@ -4,15 +4,15 @@
 #include "common.h"
 #include "prim_op.h"
 
-typedef enum { AST_Literal, AST_List, AST_Call, AST_Closure } ASTNodeType;
+typedef enum { AST_Literal, AST_List, AST_Call, AST_Closure } ASTKind;
 
 typedef enum {
   Literal_Int,
   Literal_Sym,
-} LiteralType;
+} LiteralKind;
 
 typedef struct {
-  LiteralType type;
+  LiteralKind kind;
   union {
     int integer;
     const char *symbol;
@@ -20,7 +20,7 @@ typedef struct {
 } Literal;
 
 typedef struct ASTNode {
-  ASTNodeType type;
+  ASTKind type;
 
   union {
     Literal literal;

@@ -5,7 +5,7 @@ ASTNode *ast_new_literal_int(int i) {
   if (ALLOC(n))
     die(LOCATION);
   n->type = AST_Literal;
-  n->as.literal.type = Literal_Int;
+  n->as.literal.kind = Literal_Int;
   n->as.literal.as.integer = i;
   return n;
 }
@@ -15,7 +15,7 @@ ASTNode *ast_new_literal_sym(const char *sym) {
   if (ALLOC(n))
     die(LOCATION);
   n->type = AST_Literal;
-  n->as.literal.type = Literal_Sym;
+  n->as.literal.kind = Literal_Sym;
   n->as.literal.as.symbol = sym;
   return n;
 }

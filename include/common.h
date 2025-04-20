@@ -1,7 +1,6 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,15 +72,11 @@ static inline void die(const char *msg) {
 
 /* Strings */
 
-// char *input = g_strdup("user_input");
-// const gchar *interned = g_intern_string(input);
-// g_free(input);
-
-#define str_intern(s) ((const char *)g_intern_static_string(s))
-
 inline static int strncmp_minlen(const char *s1, const char *s2, size_t s1_n) {
   size_t len = strlen(s2) + 1;
   return strncmp(s1, s2, s1_n < len ? s1_n : len);
 }
+
+const char *str_intern(const char *s, size_t s_len);
 
 #endif

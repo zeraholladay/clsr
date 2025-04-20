@@ -32,16 +32,12 @@ ASTNode *ast_new_empty_expr_list(void) {
 
 ASTNode *ast_expr_list_append(ASTNode *list, ASTNode *item) {
   size_t count = list->as.list.count;
-
-  ASTNode **new_items = NULL;
-  if (REALLOC_N(new_items, count + 1))
+  ASTNode **new_nodes = list->as.list.nodes;
+  if (REALLOC_N(new_nodes, count + 1))
     die(LOCATION);
-
-  new_items[count] = item;
-
-  list->as.list.nodes = new_items;
+  new_nodes[count] = item;
+  list->as.list.nodes = new_nodes;
   list->as.list.count++;
-
   return list;
 }
 

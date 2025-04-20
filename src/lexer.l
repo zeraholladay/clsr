@@ -11,6 +11,7 @@
 
 extern int yylineno;
 %}
+%option noinput nounput
 
 COMMENT ;[^\n]*
 
@@ -68,7 +69,7 @@ NL \r?\n
         return TOK_INT_LITERAL;
     }
     [a-zA-Z][a-zA-Z0-9]* {
-        yylval.sym = str_intern(yytext);
+        yylval.sym = str_intern(yytext, yyleng);
         return TOK_SYM_LITERAL;
     }
     {NL} {

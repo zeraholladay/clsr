@@ -90,7 +90,7 @@ arg:
         $$ = ast_new_literal_int($1);
     }
     | SYM_LITERAL {
-        DEBUG("[YACC SYM_LITERAL] %d (line %d)\n", $1, yylineno);
+        DEBUG("[YACC SYM_LITERAL] %s (line %d)\n", $1, yylineno);
         $$ = ast_new_literal_sym($1);
     }
 ;

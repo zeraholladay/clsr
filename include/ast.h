@@ -1,54 +1,55 @@
 #ifndef AST_H
 #define AST_H
 
-#include "object.h"
+#include "common.h"
 #include "prim_op.h"
 
+typedef enum { AST_Literal, AST_List, AST_Call, AST_Closure } ASTNodeType;
+
 typedef enum {
-    AST_LITERAL,     // An integer literal or interned symbol reference
-    AST_LIST,        // A list of AST nodes (used for args, body)
-    AST_CALL         // An operation and its arguments
-    AST_PRIM,        // A primitive operator: PUSH, SET, etc.
-} ASTNodeType;
+  Literal_Int,
+  Literal_Sym,
+} LiteralType;
 
-// typedef enum {
-//     VAL_INT,
-//     VAL_SYMBOL
-// } ValueType;
-
-// typedef struct {
-//     ValueType type;
-//     union {
-//         int i;
-//         const char *symbol;
-//     };
-// } Value;
+typedef struct {
+  LiteralType type;
+  union {
+    int integer;
+    const char *symbol;
+  } as;
+} Literal;
 
 typedef struct ASTNode {
-    ASTNodeType type;
+  ASTNodeType type;
 
-    union {
-        Object literal;              // for AST_LITERAL
-        PrimOp *prim;
+  union {
+    Literal literal;
 
-        struct {
-            struct ASTNode *op;     // AST_PRIM node
-            struct ASTNode *args;   // AST_LIST node
-        } call;
+    struct {
+      struct ASTNode **nodes;
+      unsigned int count;
+    } list;
 
-        struct {
-            struct ASTNode **items; // list of ASTNode*
-            unsigned int count;
-        } list;
-    } as;
+    struct {
+      const PrimOp *prim;
+      struct ASTNode *args;
+    } call;
+
+    struct {
+      struct ASTNode *params;
+      struct ASTNode *body;
+    } closure;
+  } as;
 } ASTNode;
 
 ASTNode *ast_new_literal_int(int i);
-ASTNode *ast_new_literal_sym(const char *symbol);
-ASTNode *ast_new_prim(const char *name);
-ASTNode *ast_new_call(ASTNode *prim, ASTNode *args);
-ASTNode *ast_new_list(ASTNode **items, unsigned int count);
+ASTNode *ast_new_literal_sym(const char *sym);
 
-void ast_free(ASTNode *node);
+ASTNode *ast_new_empty_expr_list(void);
+ASTNode *ast_expr_list_append(ASTNode *list, ASTNode *item);
+
+ASTNode *ast_new_call(const PrimOp *prim, ASTNode *args);
+
+ASTNode *ast_new_closure(ASTNode *params, ASTNode *body);
 
 #endif

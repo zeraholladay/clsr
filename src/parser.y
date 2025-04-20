@@ -2,27 +2,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ast.h"
 #include "common.h"
 #include "prim_op.h"
-#include "vm.h"
-#include "object.h"
-#include "stack.h"
 
 void yyerror(const char *s);
 int yylex(void);
 
 extern int yylineno;
-extern Stack STACK;
 %}
 
 %union {
     int num;
     const char *sym;
     const struct PrimOp *prim;
+    struct ASTNode *ast;
 }
 
 %type <prim> nullary_prim_op
 %type <prim> nary_prim_op
+%type <ast> expression expressions args arg
 
 %define api.token.prefix {TOK_}
 %token ERROR
@@ -33,23 +32,32 @@ extern Stack STACK;
 %%
 
 expressions:
-        /* empty */
-    | expressions expression
+    /* empty */ {
+        $$ = ast_new_empty_expr_list();
+    }
+  | expressions expression {
+        $$ = ast_expr_list_append($1, $2);
+    }
 ;
 
 expression:
     ERROR {
+        // Not really returning an AST node — caller will handle failure.
         // PRINT_ERROR("[YACC] syntax error on line %d\n", yylineno);
+        $$ = 0;
         YYACCEPT;
     }
     | nullary_prim_op '\n' {
-        DEBUG("[YACC] nullary_prim_op \n");
+        DEBUG("[YACC] nullary_prim_op\n");
+        $$ = ast_new_call($1, NULL);
     }
     | nary_prim_op args '\n' {
         DEBUG("[YACC] nary_prim_op\n");
+        $$ = ast_new_call($1, $2);
     }
     | CLOSURE args '(' expressions ')' '\n' {
         DEBUG("[YACC] CLOSURE\n");
+        $$ = ast_new_closure($2, $4);
     }
 ;
 
@@ -68,21 +76,22 @@ nary_prim_op:
     }
 
 args:
-      /* empty */
-    | args arg
+      /* empty */ {
+        $$ = ast_new_empty_expr_list();
+      }
+    | args arg {
+        $$ = ast_expr_list_append($1, $2);
+    }
 ;
 
 arg:
     INT_LITERAL {
-        DEBUG("[YACC PUSHING INT_LITERAL] %d (line %d)\n", $1, yylineno);
-        PUSH(&STACK, $1);
+        DEBUG("[YACC INT_LITERAL] %d (line %d)\n", $1, yylineno);
+        $$ = ast_new_literal_int($1);
     }
     | SYM_LITERAL {
-        int addr;
-        Object *obj = ALLOC_SYM(&addr);  //TO DO: fix me: error handling
-        obj->as.symbol = $1;
-        DEBUG("[YACC PUSHING SYM_LITERAL] '%s':%d (line %d)\n", $1, addr, yylineno);
-        PUSH(&STACK, addr);
+        DEBUG("[YACC SYM_LITERAL] %d (line %d)\n", $1, yylineno);
+        $$ = ast_new_literal_sym($1);
     }
 ;
 

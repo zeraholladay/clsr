@@ -5,7 +5,6 @@
 
 typedef struct PrimOp {
   yytoken_kind_t tok;
-  int nargs;
 } PrimOp;
 
 const PrimOp *prim_op_lookup(register const char *str,

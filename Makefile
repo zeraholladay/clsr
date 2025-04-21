@@ -3,17 +3,18 @@
 # Compilers and flags
 CC := gcc
 CFLAGS := -Iinclude -Wall
-LEX := flex
-YACC := bison
+# Add -d for flex debugging
+FLEX := flex
+BISON := bison
 GPERF := gperf
 
-LEX_SRC = src/lexer.l
-YACC_SRC = src/parser.y
+FLEX_SRC = src/lexer.l
+BISON_SRC = src/parser.y
 GPERF_SCR = src/prim_op.gperf
 
 LEX_OUT = src/lexer.c
-YACC_OUT = src/parser.c
-YACC_HEADER = include/parser.h
+BISON_OUT = src/parser.c
+BISON_HEADER = include/parser.h
 GPERF_OUT = src/prim_op.c
 
 # GLIB := glib-2.0
@@ -31,16 +32,16 @@ REPL = bin/repl
 
 all: $(REPL)
 
-$(REPL): $(YACC_OUT) $(LEX_OUT) $(GPERF_OUT) src
+$(REPL): $(BISON_OUT) $(LEX_OUT) $(GPERF_OUT) src
 	$(CC) $(CFLAGS) -o $(REPL) bin/*.o $(FLEX_LIB) $(LIBS)
 
-$(LEX_OUT): $(LEX_SRC) $(YACC_HEADER)
-	$(LEX) -o $(LEX_OUT) $(LEX_SRC)
+$(LEX_OUT): $(FLEX_SRC) $(BISON_HEADER)
+	$(FLEX) -o $(LEX_OUT) $(FLEX_SRC)
 
-$(YACC_OUT): $(YACC_SRC)
-	$(YACC) -o $(YACC_OUT) --defines=$(YACC_HEADER) $(YACC_SRC)
+$(BISON_OUT): $(BISON_SRC)
+	$(BISON) -o $(BISON_OUT) --defines=$(BISON_HEADER) $(BISON_SRC)
 
-$(GPERF_OUT): $(GPERF_SCR) $(YACC_HEADER)
+$(GPERF_OUT): $(GPERF_SCR) $(BISON_HEADER)
 	$(GPERF) $(GPERF_SCR) --output-file=$(GPERF_OUT)
 
 src:
@@ -51,5 +52,5 @@ lint: clean
 	cppcheck src/*.c include/*.h
 
 clean:
-	@rm -f $(REPL) $(LEX_OUT) $(YACC_OUT) $(YACC_HEADER) $(GPERF_OUT) $(OBJS)
+	@rm -f $(REPL) $(LEX_OUT) $(BISON_OUT) $(BISON_HEADER) $(GPERF_OUT) $(OBJS)
 	@$(MAKE) -C src/ clean

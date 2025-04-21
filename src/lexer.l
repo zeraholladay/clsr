@@ -1,5 +1,6 @@
 %option noyywrap
 %option yylineno
+/* %option noinput */
 
 %{
 #include <stdio.h>
@@ -9,10 +10,11 @@
 #include "prim_op.h"
 #include "common.h"
 
+#define YY_DECL int yylex(ParseContext *ctx)
+
 extern int yylineno;
-unsigned int paren_cnt;
+unsigned int parens;
 %}
-%option noinput nounput
 
 COMMENT ;[^\n]*
 
@@ -20,55 +22,44 @@ OP (APPLY|CLOSURE|LOOKUP|PUSH|RETURN|SET)
 WS [ \t]+
 NL \r?\n
 
-%x ARG END_CLOSURE
+%x ARGS END_CLOSURE
 
 %%
 
 <INITIAL>{
-    {COMMENT}       { /* skip comment */ }
-    {WS}            { /* skip whitespace */ }
-    {WS}*{NL}       {
-        if (paren_cnt == 0) 
-            return TOK_END_PARSE;
+    {WS}*{NL} {
+        if (parens == 0) {
+            return '\n';
+        }
     }
-
     {OP} {
         DEBUG("[LEX] prim_op matched: yytext = '%s'\n", yytext);
         const PrimOp *p = prim_op_lookup(yytext, strlen(yytext));
         if (p) {
-            BEGIN(ARG);
             yylval.prim = p;
-            DEBUG("[LEX] returning prim code = '%d'\n", p->tok);
-            return p->tok;
-        } else {
-            DEBUG("[GPERF] prim not found = '%s'\n", yytext);
-            return TOK_ERROR;  // fallback if not found
-        }
+            BEGIN(ARGS); return p->tok;
+        } else
+            return 1;
     }
-
     \) {
-        paren_cnt--;
-        BEGIN(END_CLOSURE);
-        return ')';
+        parens--;
+        BEGIN(END_CLOSURE); return ')';
     }
 }
 
 <END_CLOSURE>{
-    {COMMENT} { /* skip comment */ }
-    {WS}      { /* skip whitespace */ }
     {NL} {
-        BEGIN(INITIAL);
-        return '\n';
+        BEGIN(INITIAL); return '\n';
     }
 }
 
-<ARG>{
-    {COMMENT}       { /* skip comment */ }
-    {WS}            { /* skip whitespace */ }
+<ARGS>{
     \( {
-        paren_cnt++;
-        BEGIN(INITIAL);
-        return '(';
+        parens++;
+        BEGIN(INITIAL); return '(';
+    }
+    {NL} {
+        BEGIN(INITIAL); return '\n';
     }
     -*[0-9]+ {
         yylval.num = atoi(yytext);
@@ -78,9 +69,23 @@ NL \r?\n
         yylval.sym = str_intern(yytext, yyleng);
         return TOK_SYM_LITERAL;
     }
-    {NL} {
-        BEGIN(INITIAL);
-        return '\n';
+}
+
+<*>{
+    {COMMENT}|{WS} {
+        /* ignore comments or whitespace */
+    }
+    <<EOF>> {
+        DEBUG("[LEX] EOF\n");
+        if (!ctx->eof_seen) {
+            ctx->eof_seen = 1;
+            unput('\n'); BEGIN(INITIAL);
+        } else
+            return 0;
+    }
+    . {
+        DEBUG("[LEX] Unknown token.\n");
+        return 1;
     }
 }
 

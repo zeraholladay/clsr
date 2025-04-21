@@ -1,6 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,7 +45,7 @@ debugging
 #define LOCATION __FILE__ ":" STRINGIFY(__LINE__)
 
 /*
-Heap
+memory management
 Gnulib - The GNU Portability Library
 https://git.savannah.gnu.org/git/gnulib.git
 */
@@ -69,6 +70,9 @@ static inline void die(const char *msg) {
   exit(1);
   abort();
 }
+
+#define container_of(ptr, type, member)                                        \
+  ((type *)((char *)(ptr) - offsetof(type, member)))
 
 /* Strings */
 

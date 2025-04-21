@@ -5,7 +5,6 @@
 #include "prim_op.h"
 
 #define OBJ_AS(obj_ptr, kind) ((obj_ptr)->as.kind)
-
 #define OBJ_ISKIND(obj_ptr, kind) (OBJ_KIND(obj_ptr) == kind)
 #define OBJ_KIND(obj_ptr) (obj_ptr)->kind
 
@@ -50,11 +49,26 @@ typedef struct Obj {
   } as;
 } Obj;
 
-Obj *obj_new_literal_int(int i);
-Obj *obj_new_literal_sym(const char *sym);
-Obj *obj_new_empty_expr_list(void);
-Obj *obj_expr_list_append(Obj *list, Obj *item);
-Obj *obj_new_call(const PrimOp *prim, Obj *args);
-Obj *obj_new_closure(Obj *params, Obj *body);
+typedef struct ObjPoolWrapper {
+  struct ObjPoolWrapper *next_free;
+  Obj obj;
+} ObjPoolWrapper;
+
+typedef struct {
+  ObjPoolWrapper *free_list;
+  ObjPoolWrapper *pool;
+} ObjPool;
+
+Obj *obj_new_literal_int(ObjPool *p, int i);
+Obj *obj_new_literal_sym(ObjPool *p, const char *sym);
+Obj *obj_new_empty_expr_list(ObjPool *p);
+Obj *obj_expr_list_append(ObjPool *p, Obj *obj, Obj *item);
+Obj *obj_new_call(ObjPool *p, const PrimOp *prim, Obj *args);
+Obj *obj_new_closure(ObjPool *p, Obj *params, Obj *body);
+
+/*obj_pool.c*/
+ObjPool *obj_pool_init(unsigned int n);
+Obj *obj_pool_alloc(ObjPool *p);
+void obj_pool_free(ObjPool *p, Obj *obj);
 
 #endif

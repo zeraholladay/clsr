@@ -30,7 +30,7 @@ Obj *obj_new_empty_expr_list(ObjPool *p) {
 Obj *obj_expr_list_append(ObjPool *p, Obj *obj, Obj *item) {
   size_t count = OBJ_AS(obj, list).count;
   Obj **new_objs = OBJ_AS(obj, list).nodes;
-  if (REALLOC_N(new_objs, count + 1)) // FIX ME
+  if (REALLOC_N(new_objs, count + 1)) // TODO: FIX
     die(LOCATION);
   new_objs[count] = item;
   ObjList *list_ptr = &OBJ_AS(obj, list);

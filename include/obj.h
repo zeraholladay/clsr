@@ -5,8 +5,8 @@
 #include "prim_op.h"
 
 #define OBJ_AS(obj_ptr, kind) ((obj_ptr)->as.kind)
-#define OBJ_ISKIND(obj_ptr, kind) (OBJ_KIND(obj_ptr) == kind)
 #define OBJ_KIND(obj_ptr) (obj_ptr)->kind
+#define OBJ_ISKIND(obj_ptr, kind) (OBJ_KIND(obj_ptr) == kind)
 
 typedef enum { Obj_Literal, Obj_List, Obj_Call, Obj_Closure } ObjKind;
 

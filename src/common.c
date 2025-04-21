@@ -1,7 +1,5 @@
 #include "common.h"
 
-#ifndef __G_LIB_H__
-
 struct _node {
   struct _node *left, *right;
   char *str;
@@ -30,5 +28,3 @@ const char *str_intern(const char *s, size_t s_len) {
 
   return cpy;
 }
-
-#endif

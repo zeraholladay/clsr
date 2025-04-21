@@ -7,7 +7,7 @@
 %language=ANSI-C
 %readonly-tables
 %struct-type
-%define initializer-suffix ,{0}
+%define initializer-suffix ,{0,0}
 %define slot-name name
 
 struct _prim_op_gperf {
@@ -16,12 +16,12 @@ struct _prim_op_gperf {
 };
 
 %%
-APPLY,   {TOK_APPLY   }
-CLOSURE, {TOK_CLOSURE }
-LOOKUP,  {TOK_LOOKUP  }
-PUSH,    {TOK_PUSH    }
-RETURN,  {TOK_RETURN  }
-SET,     {TOK_SET     }
+APPLY,   {TOK_APPLY,   PrimOp_Apply   }
+CLOSURE, {TOK_CLOSURE, PrimOp_Closure }
+LOOKUP,  {TOK_LOOKUP,  PrimOp_Lookup  }
+PUSH,    {TOK_PUSH,    PrimOp_Push    }
+RETURN,  {TOK_RETURN,  PrimOp_Return  }
+SET,     {TOK_SET,     PrimOp_Set     }
 %%
 
 const PrimOp * prim_op_lookup(register const char *str, register unsigned int len) {

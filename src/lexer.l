@@ -1,6 +1,6 @@
 %option noyywrap
 %option yylineno
-/* %option noinput */
+%option noinput
 
 %{
 #include <stdio.h>
@@ -12,8 +12,6 @@
 
 #define YY_DECL int yylex(ParseContext *ctx)
 
-extern int yylineno;
-unsigned int parens;
 %}
 
 COMMENT ;[^\n]*
@@ -28,9 +26,7 @@ NL \r?\n
 
 <INITIAL>{
     {WS}*{NL} {
-        if (parens == 0) {
-            return '\n';
-        }
+        if (ctx->lexer_state.parens == 0) return '\n';
     }
     {OP} {
         DEBUG("[LEX] prim_op matched: yytext = '%s'\n", yytext);
@@ -38,11 +34,13 @@ NL \r?\n
         if (p) {
             yylval.prim = p;
             BEGIN(ARGS); return p->tok;
-        } else
+        } else {
+            // TODO: Handle error
             return 1;
+        }
     }
     \) {
-        parens--;
+        ctx->lexer_state.parens--;
         BEGIN(END_CLOSURE); return ')';
     }
 }
@@ -55,7 +53,7 @@ NL \r?\n
 
 <ARGS>{
     \( {
-        parens++;
+        ctx->lexer_state.parens++;
         BEGIN(INITIAL); return '(';
     }
     {NL} {
@@ -76,14 +74,13 @@ NL \r?\n
         /* ignore comments or whitespace */
     }
     <<EOF>> {
-        DEBUG("[LEX] EOF\n");
-        if (!ctx->eof_seen) {
-            ctx->eof_seen = 1;
-            unput('\n'); BEGIN(INITIAL);
+        if (!ctx->lexer_state.eof && (ctx->lexer_state.eof = 1)) {
+            unput('\n'); BEGIN(INITIAL);  // Give BEGIN a \n once:
         } else
-            return 0;
+            return 0;  // Otherwise, terminate parsing.
     }
     . {
+         // TODO: Handle error
         DEBUG("[LEX] Unknown token.\n");
         return 1;
     }

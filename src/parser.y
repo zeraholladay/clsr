@@ -7,20 +7,26 @@
 #include "parser.h"
 #include "prim_op.h"
 
+void reset_parse_context(ParseContext *ctx);
 int yyerror(ParseContext *ctx, const char *s);
 int yylex(ParseContext *ctx);
 
 extern int yylineno;
 %}
-%code requires {
-    #include "obj.h"
 
-    typedef struct ParseContext {
-        ObjPool *obj_pool;
-        Obj *root_obj;
-        int eof_seen;
-    } ParseContext;
+%code requires {
+#include "obj.h"
+
+typedef struct ParseContext {
+    ObjPool *obj_pool;
+    Obj *root_obj;
+    struct {
+        unsigned int parens;
+        unsigned int eof;
+    } lexer_state;
+} ParseContext;
 }
+
 %lex-param   {ParseContext *ctx}
 %parse-param {ParseContext *ctx}
 
@@ -114,7 +120,15 @@ arg:
 
 %%
 
+void reset_parse_context(ParseContext *ctx) {
+    // TODO: free any nodes pointed to *root_obj
+    ctx->root_obj = NULL;
+    ctx->lexer_state.parens = 0;
+    ctx->lexer_state.eof = 0;
+}
+
 int yyerror(ParseContext *ctx, const char *s) {
     fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
+    reset_parse_context(ctx);
     return 1;
 }

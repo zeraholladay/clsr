@@ -147,7 +147,7 @@ CLOSURE a b c (
 ; foo
 SET  ;  env={ foo=#clsr-id }
 ; call foo(1,2,3)
-LOOKUP foo
+LOOKUP
 ; STACK:
 ; 3
 ; 2

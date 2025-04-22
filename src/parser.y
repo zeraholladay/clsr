@@ -55,7 +55,7 @@ input:
         ctx->root_obj = NULL;
         YYACCEPT;
     }
-    | expressions '\n' {
+    | expressions {  // no more '\n'
         ctx->root_obj = $1;
         YYACCEPT;
     }

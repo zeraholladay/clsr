@@ -3,13 +3,14 @@
 # Compilers and flags
 CC ?= gcc
 CFLAGS := -Iinclude -Wall -Wextra -O2
-
+LIBS :=
 INCLUDE := include
+
 SRC := src
 
-# Add -d for flex debugging
-FLEX := flex
-BISON := bison
+# Add -d for debugging
+FLEX := flex #-d
+BISON := bison #-d -v --debug
 GPERF := gperf
 
 FLEX_SRC := $(SRC)/lexer.l
@@ -44,7 +45,7 @@ REPL = bin/repl
 .PHONY: all
 all: build
 	@$(MAKE) CFLAGS="-DDEBUG" -C $(SRC)/
-	$(CC) $(CFLAGS) -o $(REPL) $(SRC_OBJS) $(FLEX_LIB)
+	$(CC) $(CFLAGS) -o $(REPL) $(SRC_OBJS) $(LIBS)
 
 build: $(BISON_C) $(FLEX_C) $(GPERF_C) $(SRC_OBJS)
 

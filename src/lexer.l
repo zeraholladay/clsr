@@ -29,7 +29,6 @@ NL \r?\n
         if (ctx->lexer_state.parens == 0) return '\n';
     }
     {OP} {
-        DEBUG("[LEX] prim_op matched: yytext = '%s'\n", yytext);
         const PrimOp *p = prim_op_lookup(yytext, strlen(yytext));
         if (p) {
             yylval.prim = p;
@@ -75,7 +74,7 @@ NL \r?\n
     }
     <<EOF>> {
         if (!ctx->lexer_state.eof && (ctx->lexer_state.eof = 1)) {
-            unput('\n'); BEGIN(INITIAL);  // Give BEGIN a \n once:
+            unput('\n'); BEGIN(INITIAL);  // Give BEGIN a \n once
         } else
             return 0;  // Otherwise, terminate parsing.
     }

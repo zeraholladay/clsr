@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
+#include "obj.h"
 
 #ifndef STACK_GROWTH
 #define STACK_GROWTH 4096

@@ -5,7 +5,6 @@
 #include "obj.h"
 #include "parser.h"
 
-void reset_parse_context(ParseContext *ctx);
 extern int yyparse(ParseContext *ctx);
 
 int repl(void) {
@@ -26,3 +25,9 @@ int repl(void) {
     }
   }
 }
+
+#ifdef REPL_MAIN
+
+int main(void) { repl(); }
+
+#endif

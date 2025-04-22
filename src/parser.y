@@ -7,7 +7,6 @@
 #include "parser.h"
 #include "prim_op.h"
 
-void reset_parse_context(ParseContext *ctx);
 int yyerror(ParseContext *ctx, const char *s);
 int yylex(ParseContext *ctx);
 
@@ -25,6 +24,8 @@ typedef struct ParseContext {
         unsigned int eof;
     } lexer_state;
 } ParseContext;
+
+void reset_parse_context(ParseContext *ctx);
 }
 
 %lex-param   {ParseContext *ctx}

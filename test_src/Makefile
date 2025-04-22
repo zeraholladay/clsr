@@ -1,7 +1,6 @@
 # Compiler and flags
-CC := gcc
+CC ?= gcc
 CFLAGS := -I../include -Wall -Wextra -O2
-CPPFLAGS :=
 BIN := ../test_bin/
 
 # Source and object files
@@ -22,7 +21,7 @@ all: $(OBJS)
 
 # Compile .c to $(BIN).o
 $(BIN)%.o: %.c | $(BIN)
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(BIN):
 	@mkdir -p $(BIN)

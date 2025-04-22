@@ -1,8 +1,8 @@
 # src
 
 # Compilers and flags
-CC := gcc
-CFLAGS := -Iinclude -Wall
+CC ?= gcc
+CFLAGS := -Iinclude -Wall -Wextra -O2
 
 INCLUDE := include
 SRC := src
@@ -43,6 +43,7 @@ REPL = bin/repl
 
 .PHONY: all
 all: build
+	@$(MAKE) CFLAGS="-DDEBUG" -C $(SRC)/
 	$(CC) $(CFLAGS) -o $(REPL) $(SRC_OBJS) $(FLEX_LIB)
 
 build: $(BISON_C) $(FLEX_C) $(GPERF_C) $(SRC_OBJS)
@@ -60,7 +61,7 @@ $(SRC_OBJS): src
 
 .PHONY: src
 src:
-	@$(MAKE) -C src/
+	@$(MAKE) -C $(SRC)/
 
 # test
 TEST_BIN := test_bin/
@@ -71,7 +72,7 @@ TEST_OBJS := $(patsubst $(TEST_SRC)/%.c, $(TEST_BIN)%.o, $(TEST_SRCS))
 TEST_BINS := $(patsubst $(TEST_SRC)/%.c, $(TEST_BIN)%, $(TEST_SRCS))
 
 .PHONY: test
-test: $(TEST_BINS)
+test: build $(TEST_BINS)
 	@echo "Running tests..."
 	@for t in $(TEST_BINS); do \
 		echo "  $$t"; \

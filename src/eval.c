@@ -11,8 +11,8 @@ Obj *eval_call(Obj *obj, EvalContext *ctx) {
     break;
 
   case PrimOp_Push:
-    for () {
-    }
+    // for () {
+    // }
 
     break;
 

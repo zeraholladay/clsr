@@ -1,19 +1,20 @@
 # Compiler and flags
 CC := gcc
 CFLAGS := -I../include -Wall -Wextra -O2
-BIN = ../bin/
+CPPFLAGS :=
+BIN := ../test_bin/
 
 # Source and object files
 SRCS := $(wildcard *.c)
 OBJS := $(patsubst %.c,$(BIN)%.o,$(SRCS))
 
-# GLIB := glib-2.0
+CHECK := check
 
-# OS := $(shell uname)
+OS := $(shell uname)
 
-# ifeq ($(OS), Darwin)
-# 	INCLUDES := $(shell pkg-config --cflags $(GLIB))
-# endif
+ifeq ($(OS), Darwin)
+	INCLUDES := $(shell pkg-config --cflags $(CHECK))
+endif
 
 # Default target
 .PHONY: all
@@ -21,13 +22,12 @@ all: $(OBJS)
 
 # Compile .c to $(BIN).o
 $(BIN)%.o: %.c | $(BIN)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-# Ensure $(BIN) exists before compiling
 $(BIN):
-	@mkdir -p ../bin
+	@mkdir -p $(BIN)
 
 # Clean up
 .PHONY: clean
 clean:
-	@rm -rf $(BIN)*.o
+	@rm -rf $(BIN)test_*.o

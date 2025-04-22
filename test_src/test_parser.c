@@ -131,10 +131,11 @@ const char *valid_expressions[] = {
 };
 
 const char *invalid_expressions[] = {
-    // Invalid
+    // Invalid chars
+    "&PUSH\n",
 
     // Incomplete CLOSURE
-    "CLOSURE A B C ( PUSH",
+    "CLOSURE A B C ( PUSH\n",
 
     NULL,
 };
@@ -152,6 +153,8 @@ int run_parser_on(const char *type, const char *input, int expected_result) {
   yylex_destroy();
 
   fclose(yyin);
+
+  obj_pool_reset(ctx.obj_pool);
 
   if (result != expected_result)
     fprintf(stderr,

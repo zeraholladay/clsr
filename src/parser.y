@@ -44,6 +44,7 @@ void reset_parse_context(ParseContext *ctx);
 
 %define api.token.prefix {TOK_}
 
+%token ERROR
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
 %token <prim> APPLY CLOSURE LOOKUP PUSH RETURN SET

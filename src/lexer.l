@@ -79,9 +79,7 @@ NL \r?\n
             return 0;  // Otherwise, terminate parsing.
     }
     . {
-         // TODO: Handle error
-        DEBUG("[LEX] Unknown token.\n");
-        return 1;
+        return TOK_ERROR;
     }
 }
 

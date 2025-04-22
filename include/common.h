@@ -10,9 +10,9 @@
 debugging
 */
 
-#define INFO_ENABLED 1
-#define DEBUG_ENABLED 1
-#define TRACE_ENABLED 1
+#define INFO_ENABLED 0
+#define DEBUG_ENABLED 0
+#define TRACE_ENABLED 0
 
 #ifndef INFO
 #define INFO(...)                                                              \

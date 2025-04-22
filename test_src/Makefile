@@ -29,4 +29,4 @@ $(BIN):
 # Clean up
 .PHONY: clean
 clean:
-	@rm -rf $(BIN)test_*.o
+	rm -rf $(BIN)test_*.o

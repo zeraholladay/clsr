@@ -3,16 +3,22 @@
 #include "common.h"
 #include "obj.h"
 
-ObjPool *obj_pool_init(unsigned int n) {
+ObjPool *obj_pool_init(unsigned int count) {
   ObjPool *p = NULL;
-  if (ALLOC(p) || ALLOC_N(p->pool, n))
+
+  if (ALLOC(p) || ALLOC_N(p->pool, count))
     die(LOCATION);
 
-  for (unsigned int i = 0; i < n - 1; ++i) {
+  DEBUG("[OBJ_POOL] n=%u sizeof=%lu bytes=%lu\n", count, sizeof *(p->pool),
+        count * sizeof *(p->pool));
+
+  for (unsigned int i = 0; i < count - 1; ++i) {
     p->pool[i].next_free = &p->pool[i + 1];
   }
-  p->pool[n - 1].next_free = NULL;
+
+  p->pool[count - 1].next_free = NULL;
   p->free_list = &p->pool[0];
+  p->count = count;
 
   return p;
 }
@@ -32,4 +38,12 @@ void obj_pool_free(ObjPool *p, Obj *obj) {
       (ObjPoolWrapper *)((char *)obj - offsetof(ObjPoolWrapper, obj));
   wrapper->next_free = p->free_list;
   p->free_list = wrapper;
+}
+
+void obj_pool_reset(ObjPool *p) {
+  for (unsigned int i = 0; i < p->count - 1; ++i) {
+    p->pool[i].next_free = &p->pool[i + 1];
+  }
+  p->pool[p->count - 1].next_free = NULL;
+  p->free_list = &p->pool[0];
 }

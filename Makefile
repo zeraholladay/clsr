@@ -97,6 +97,6 @@ lint: clean
 
 .PHONY: clean
 clean:
-	@rm -f $(REPL) $(FLEX_C) $(BISON_C) $(BISON_H) $(GPERF_C) $(OBJS)
+	rm -f $(REPL) $(FLEX_C) $(BISON_C) $(BISON_H) $(GPERF_C) $(OBJS)
 	@$(MAKE) -C $(SRC)/ clean
 	@$(MAKE) -C $(TEST_SRC)/ clean

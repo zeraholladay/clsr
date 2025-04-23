@@ -29,7 +29,6 @@ SRC_CFILES := $(wildcard $(SRC)/*.c)
 SRC_CFILES += $(FLEX_C) $(BISON_C) $(GPERF_C)
 SRC_CFILES_ALL := $(sort $(SRC_CFILES))
 SRC_OBJS := $(patsubst $(SRC)/%.c, $(BIN)%.o, $(SRC_CFILES_ALL))
-#BINS := $(patsubst $(SRC)/%.c, $(BIN)%, $(SRC_CFILES_ALL))
 
 # dependencies
 CHECK := check
@@ -45,7 +44,6 @@ REPL = bin/repl
 
 .PHONY: all
 all: src $(REPL)
-# $(CC) $(CFLAGS) -o $(REPL) $(SRC_OBJS) $(LIBS)
 
 $(FLEX_C): $(FLEX_SRC) $(BISON_H)
 	$(FLEX) -o $(FLEX_C) $(FLEX_SRC)
@@ -61,7 +59,6 @@ src: $(BISON_C) $(FLEX_C) $(GPERF_C) $(SRC_OBJS)
 $(BIN)%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-#-DMAIN=1
 $(REPL): src/repl.c
 	$(CC) $(CFLAGS) -DREPL_MAIN=1 -o $@ $(SRC_OBJS) $^ $(LIBS)
 

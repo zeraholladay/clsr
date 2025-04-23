@@ -66,7 +66,7 @@ input:
         ctx->root_obj = $1;
         YYACCEPT;
     }
-    | ERROR {
+    | error {
         yyerror(ctx, "Some text here\n");
     }
 ;

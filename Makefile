@@ -23,13 +23,13 @@ BISON_C := $(SRC)/parser.c
 BISON_H := $(INCLUDE)/parser.h
 GPERF_C := $(SRC)/prim_op.c
 
-SRC_BIN := bin/
+BIN := bin/
 
-SRC_SRCS := $(wildcard $(SRC)/*.c)
-SRC_SRCS += $(FLEX_C) $(BISON_C) $(GPERF_C)
-SRC_SRCS_UNIQUE := $(sort $(SRC_SRCS))
-SRC_OBJS := $(patsubst $(SRC)/%.c, $(SRC_BIN)%.o, $(SRC_SRCS_UNIQUE))
-SRC_BINS := $(patsubst $(SRC)/%.c, $(SRC_BIN)%, $(SRC_SRCS_UNIQUE))
+SRC_CFILES := $(wildcard $(SRC)/*.c)
+SRC_CFILES += $(FLEX_C) $(BISON_C) $(GPERF_C)
+SRC_CFILES_ALL := $(sort $(SRC_CFILES))
+SRC_OBJS := $(patsubst $(SRC)/%.c, $(BIN)%.o, $(SRC_CFILES_ALL))
+#BINS := $(patsubst $(SRC)/%.c, $(BIN)%, $(SRC_CFILES_ALL))
 
 # dependencies
 CHECK := check
@@ -37,17 +37,15 @@ CHECK := check
 OS := $(shell uname)
 
 ifeq ($(OS), Darwin)
-	CHECK_FLAGS := $(shell pkg-config --libs $(CHECK))
+	TEST_FLAGS := $(shell pkg-config --cflags $(CHECK))
+	TEST_LIBS := $(shell pkg-config --libs $(CHECK))
 endif
 
 REPL = bin/repl
 
 .PHONY: all
-all: build
-	@$(MAKE) CFLAGS="-DDEBUG" -C $(SRC)/
-	$(CC) $(CFLAGS) -o $(REPL) $(SRC_OBJS) $(LIBS)
-
-build: $(BISON_C) $(FLEX_C) $(GPERF_C) $(SRC_OBJS)
+all: src $(REPL)
+# $(CC) $(CFLAGS) -o $(REPL) $(SRC_OBJS) $(LIBS)
 
 $(FLEX_C): $(FLEX_SRC) $(BISON_H)
 	$(FLEX) -o $(FLEX_C) $(FLEX_SRC)
@@ -58,45 +56,42 @@ $(BISON_C): $(BISON_SRC)
 $(GPERF_C): $(GPERF_SCR) $(BISON_H)
 	$(GPERF) $(GPERF_SCR) --output-file=$(GPERF_C)
 
-$(SRC_OBJS): src
+src: $(BISON_C) $(FLEX_C) $(GPERF_C) $(SRC_OBJS)
 
-.PHONY: src
-src:
-	@$(MAKE) -C $(SRC)/
+$(BIN)%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+#-DMAIN=1
+$(REPL): src/repl.c
+	$(CC) $(CFLAGS) -DREPL_MAIN=1 -o $@ $(SRC_OBJS) $^ $(LIBS)
 
 # test
 TEST_BIN := test_bin/
-TEST_SRC := test_src
+TEST_SRC := test
 
-TEST_SRCS := $(wildcard $(TEST_SRC)/*.c)
-TEST_OBJS := $(patsubst $(TEST_SRC)/%.c, $(TEST_BIN)%.o, $(TEST_SRCS))
-TEST_BINS := $(patsubst $(TEST_SRC)/%.c, $(TEST_BIN)%, $(TEST_SRCS))
+TEST_CFILES := $(wildcard $(TEST_SRC)/*.c)
+TEST_OBJS := $(patsubst $(TEST_SRC)/%.c, $(TEST_BIN)%.o, $(TEST_CFILES))
+TEST_BINS := $(patsubst $(TEST_SRC)/%.c, $(TEST_BIN)%, $(TEST_CFILES))
 
 .PHONY: test
-test: build $(TEST_BINS)
+test: src $(TEST_BINS)
 	@echo "Running tests..."
 	@for t in $(TEST_BINS); do \
 		echo "  $$t"; \
 		./$$t || exit 1; \
 	done
 
-$(TEST_BINS): $(TEST_BIN)%: $(TEST_BIN)%.o
-	$(CC) $(CFLAGS) -o $@ $(SRC_OBJS) $^ $(CHECK_FLAGS)
+$(TEST_BINS):$(TEST_CFILES)
+	$(CC) $(CFLAGS) -o $@ $(SRC_OBJS) $^ $(TEST_LIBS) $(TEST_FLAGS)
 
-$(TEST_OBJS): test_src
-
-.PHONY: test_src
-test_src:
-	@$(MAKE) -C $(TEST_SRC)/
-
-# helpers
+# linting
 
 lint: clean
 	clang-format -i */*.c $(INCLUDE)/*.h
 	cppcheck */*.c $(INCLUDE)/*.h
 
+# clean
+
 .PHONY: clean
 clean:
-	rm -f $(REPL) $(FLEX_C) $(BISON_C) $(BISON_H) $(GPERF_C) $(OBJS)
-	@$(MAKE) -C $(SRC)/ clean
-	@$(MAKE) -C $(TEST_SRC)/ clean
+	rm -f $(REPL) $(FLEX_C) $(BISON_C) $(BISON_H) $(GPERF_C) $(BIN)* $(TEST_BINS)

@@ -7,8 +7,14 @@
 #include "parser.h"
 #include "prim_op.h"
 
-int yyerror(ParseContext *ctx, const char *s);
+#define yyerror(ctx, s)      \
+  do {                       \
+    yyerror_handler(ctx, s); \
+    YYABORT;                 \
+  } while (0)
+
 int yylex(ParseContext *ctx);
+void yyerror_handler(ParseContext *ctx, const char *s);
 
 extern int yylineno;
 %}
@@ -60,13 +66,16 @@ input:
         ctx->root_obj = $1;
         YYACCEPT;
     }
+    | ERROR {
+        yyerror(ctx, "Some text here\n");
+    }
 ;
 
 expressions:
     /* empty */ {
         $$ = obj_new_empty_expr_list(ctx->obj_pool);
     }
-  | expressions expression {
+    | expressions expression {
         $$ = obj_expr_list_append(ctx->obj_pool, $1, $2);
     }
 ;
@@ -129,8 +138,7 @@ void reset_parse_context(ParseContext *ctx) {
     ctx->lexer_state.eof = 0;
 }
 
-int yyerror(ParseContext *ctx, const char *s) {
+void yyerror_handler(ParseContext *ctx, const char *s) {
     fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
     reset_parse_context(ctx);
-    return 1;
 }

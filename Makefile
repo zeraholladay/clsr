@@ -6,12 +6,12 @@
 
 # Compilers and flags
 CC ?= gcc
-INCLUDE := include
-CFLAGS := -I$(INCLUDE) -Wall -Wextra -O2
+CFLAGS := -Iinclude -Igen -I$(GEN) -Wall -Wextra -O2
 
-# src/
+# src/ and gen/
 SRC := src
 BIN := bin
+GEN := gen
 
 MAIN_SRC := $(SRC)/repl.c
 EXEC := bin/repl
@@ -25,10 +25,10 @@ FLEX_SRC := $(SRC)/lexer.l
 BISON_SRC := $(SRC)/parser.y
 GPERF_SCR := $(SRC)/prim_op.gperf
 
-FLEX_C := $(SRC)/lexer.c
-BISON_C := $(SRC)/parser.c
-BISON_H := $(INCLUDE)/parser.h
-GPERF_C := $(SRC)/prim_op.c
+FLEX_C := $(GEN)/lexer.c
+BISON_C := $(GEN)/parser.c
+BISON_H := $(GEN)/parser.h
+GPERF_C := $(GEN)/prim_op.c
 
 SRC_CFILES := $(wildcard $(SRC)/*.c) $(FLEX_C) $(BISON_C) $(GPERF_C)
 SRC_CFILES_ALL := $(sort $(SRC_CFILES))
@@ -51,13 +51,13 @@ $(BIN)/%.o: $(SRC)/%.c | bin
 .PHONY: gen
 gen: $(BISON_C) $(FLEX_C) $(GPERF_C)
 
-$(BISON_C): $(BISON_SRC)
+$(BISON_C): $(BISON_SRC) | bin
 	$(BISON) -o $(BISON_C) --defines=$(BISON_H) $(BISON_SRC)
 
-$(FLEX_C): $(FLEX_SRC) $(BISON_H)
+$(FLEX_C): $(FLEX_SRC) $(BISON_H) | bin
 	$(FLEX) -o $(FLEX_C) $(FLEX_SRC)
 
-$(GPERF_C): $(GPERF_SCR) $(BISON_H)
+$(GPERF_C): $(GPERF_SCR) $(BISON_H) | bin
 	$(GPERF) $(GPERF_SCR) --output-file=$(GPERF_C)
 
 # test/
@@ -88,16 +88,16 @@ $(BIN)/%.o: $(TEST_SRC)/%.c
 # linting
 .PHONY: lint
 lint:
-	clang-format -i */*.c $(INCLUDE)/*.h
-	cppcheck */*.c $(INCLUDE)/*.h
+	clang-format -i */*.c */*.h
+	cppcheck */*.c */*.h
 
 # bin/
 .PHONY: bin
 bin:
-	mkdir $(BIN) || true
+	-@mkdir $(BIN) $(GEN)
 
 # clean
 .PHONY: clean
 clean:
-	rm -f $(FLEX_C) $(BISON_C) $(BISON_H) $(GPERF_C) $(BIN)/*
-	rmdir $(BIN) || true
+	-@rm -f $(FLEX_C) $(BISON_C) $(BISON_H) $(GPERF_C) $(BIN)/* $(GEN)/*
+	-@rmdir $(BIN) $(GEN)

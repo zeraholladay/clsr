@@ -1,20 +1,19 @@
 #ifndef STACK_H
 #define STACK_H
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "obj.h"
 
-#ifndef STACK_GROWTH
-#define STACK_GROWTH 4096
-#endif
+#define PUSH(o) push(o)
+#define POP(o) (Obj *)pop()
+#define PEEK(o) (Obj *)peek()
+#define ENTER_FRAME() enter_frame()
+#define EXIT_FRAME() exit_frame()
 
-typedef struct stack {
-  unsigned int sp; // stack pointer
-  unsigned int fp; // frame pointer
-  unsigned int cur_size;
-  Obj **stack;
-} Stack;
+void stack_reset();
+void push(void *value);
+void *pop(void);
+void *peek(void);
+void enter_frame(void);
+void exit_frame(void);
 
 #endif

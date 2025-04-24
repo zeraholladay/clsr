@@ -60,6 +60,7 @@ typedef struct {
   unsigned int count;
 } ObjPool;
 
+/* obj.c */
 Obj *obj_new_literal_int(ObjPool *p, int i);
 Obj *obj_new_literal_sym(ObjPool *p, const char *sym);
 Obj *obj_new_empty_expr_list(ObjPool *p);
@@ -67,7 +68,7 @@ Obj *obj_expr_list_append(ObjPool *p, Obj *obj, Obj *item);
 Obj *obj_new_call(ObjPool *p, const PrimOp *prim, Obj *args);
 Obj *obj_new_closure(ObjPool *p, Obj *params, Obj *body);
 
-/*obj_pool.c*/
+/* obj_pool.c */
 ObjPool *obj_pool_init(unsigned int count);
 Obj *obj_pool_alloc(ObjPool *p);
 void obj_pool_free(ObjPool *p, Obj *obj);

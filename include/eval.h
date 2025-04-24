@@ -6,7 +6,7 @@
 #include "stack.h"
 
 typedef struct EvalContext {
-  Stack *stack;
+  // Stack *stack;
   Env *environ;
 } EvalContext;
 

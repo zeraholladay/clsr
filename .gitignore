@@ -3,5 +3,4 @@ src/parser.c
 include/parser.h
 src/prim_op.c
 bin/
-test_bin/
 .vscode/

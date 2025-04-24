@@ -198,4 +198,3 @@ Suite *parser_suite(void) {
   suite_add_tcase(s, tc_core);
   return s;
 }
-

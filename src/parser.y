@@ -76,7 +76,7 @@ expressions:
         $$ = obj_new_empty_expr_list(ctx->obj_pool);
     }
     | expressions expression {
-        $$ = obj_expr_list_append(ctx->obj_pool, $1, $2);
+        $$ = obj_expr_list_append($1, $2);
     }
 ;
 
@@ -114,7 +114,7 @@ args:
         $$ = obj_new_empty_expr_list(ctx->obj_pool);
       }
     | args arg {
-        $$ = obj_expr_list_append(ctx->obj_pool, $1, $2);
+        $$ = obj_expr_list_append($1, $2);
     }
 ;
 

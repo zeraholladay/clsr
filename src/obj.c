@@ -22,19 +22,19 @@ Obj *obj_new_empty_expr_list(ObjPool *p) {
   Obj *obj = obj_pool_alloc(p);
   OBJ_KIND(obj) = Obj_List;
   ObjList *list_ptr = &OBJ_AS(obj, list);
-  list_ptr->nodes = NULL;
+  list_ptr->nodes = NULL; // XXX: nodes
   list_ptr->count++;
   return obj;
 }
 
-Obj *obj_expr_list_append(ObjPool *p, Obj *obj, Obj *item) {
+Obj *obj_expr_list_append(Obj *obj, Obj *item) {
   size_t count = OBJ_AS(obj, list).count;
-  Obj **new_objs = OBJ_AS(obj, list).nodes;
-  if (REALLOC_N(new_objs, count + 1)) // TODO: FIX
+  Obj **new_objs = OBJ_AS(obj, list).nodes; // XXX: nodes
+  if (REALLOC_N(new_objs, count + 1))       // TODO: FIX
     die(LOCATION);
   new_objs[count] = item;
   ObjList *list_ptr = &OBJ_AS(obj, list);
-  list_ptr->nodes = new_objs;
+  list_ptr->nodes = new_objs; // XXX: nodes
   list_ptr->count++;
   return obj;
 }

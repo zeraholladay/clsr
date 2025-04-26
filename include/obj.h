@@ -64,7 +64,7 @@ typedef struct {
 Obj *obj_new_literal_int(ObjPool *p, int i);
 Obj *obj_new_literal_sym(ObjPool *p, const char *sym);
 Obj *obj_new_empty_expr_list(ObjPool *p);
-Obj *obj_expr_list_append(ObjPool *p, Obj *obj, Obj *item);
+Obj *obj_expr_list_append(Obj *obj, Obj *item);
 Obj *obj_new_call(ObjPool *p, const PrimOp *prim, Obj *args);
 Obj *obj_new_closure(ObjPool *p, Obj *params, Obj *body);
 

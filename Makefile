@@ -87,7 +87,7 @@ $(BIN)/%.o: $(TEST_SRC)/%.c
 
 # linting
 .PHONY: lint
-lint:
+lint: clean
 	clang-format -i */*.c */*.h
 	cppcheck */*.c */*.h
 

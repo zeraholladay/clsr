@@ -42,7 +42,7 @@ START_TEST(test_push) {
 
   Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
 
-  ck_assert_ptr_eq(eval_status, NULL);
+  ck_assert_ptr_eq(eval_status, TRUE);
 
   ck_assert_ptr_eq(POP(&stack), NULL);
 
@@ -63,7 +63,7 @@ START_TEST(test_push_args) {
 
   Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
 
-  ck_assert_ptr_eq(eval_status, NULL);
+  ck_assert_ptr_eq(eval_status, TRUE);
   ck_assert_int_eq(sp + 4, eval_ctx.stack->sp);
 
   Obj *neg_int = POP(&stack);
@@ -101,6 +101,85 @@ START_TEST(test_push_args) {
 }
 END_TEST
 
+START_TEST(test_set) {
+  const char *expressions[] = {
+      "PUSH foo 42\n",
+      "SET\n",
+      NULL,
+  };
+
+  for (unsigned i = 0; expressions[i]; ++i) {
+    const char *input = expressions[i];
+
+    yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+
+    int parse_status = yyparse(&parser_ctx);
+    ck_assert_int_eq(parse_status, 0);
+
+    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    ck_assert_ptr_eq(eval_status, TRUE);
+
+    yylex_destroy();
+    fclose(yyin);
+  }
+
+  // SET is a pure consumer
+
+  Obj *obj;
+
+  int status = env_lookup(eval_ctx.env, "foo", (void **)&obj);
+  ck_assert_int_eq(status, 0);
+
+  ck_assert(OBJ_ISKIND(obj, Obj_Literal));
+
+  ObjLiteral obj_literal = OBJ_AS(obj, literal);
+
+  ck_assert(obj_literal.kind == Literal_Int);
+  ck_assert_int_eq(obj_literal.integer, 42);
+}
+END_TEST
+
+START_TEST(test_lookup) {
+  const char *expressions[] = {
+      "PUSH foo bar\n", "SET\n", "PUSH foo\n", "LOOKUP\n", NULL,
+  };
+
+  for (unsigned i = 0; expressions[i]; ++i) {
+    const char *input = expressions[i];
+
+    yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+
+    int parse_status = yyparse(&parser_ctx);
+    ck_assert_int_eq(parse_status, 0);
+
+    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    ck_assert_ptr_eq(eval_status, TRUE);
+
+    yylex_destroy();
+    fclose(yyin);
+  }
+
+  // symbol value is the same
+
+  Obj *obj = POP(&stack);
+
+  ck_assert(OBJ_ISKIND(obj, Obj_Literal));
+
+  ObjLiteral obj_literal = OBJ_AS(obj, literal);
+  ck_assert(obj_literal.kind == Literal_Sym);
+  ck_assert_str_eq(obj_literal.symbol, "bar");
+
+  // same address
+
+  Obj *ob_ptr;
+
+  int status = env_lookup(eval_ctx.env, "foo", (void **)&ob_ptr);
+
+  ck_assert_int_eq(status, 0);
+  ck_assert_ptr_eq(obj, ob_ptr);
+}
+END_TEST
+
 Suite *eval_suite(void) {
   Suite *s = suite_create("Eval");
 
@@ -109,6 +188,8 @@ Suite *eval_suite(void) {
 
   tcase_add_test(tc_core, test_push);
   tcase_add_test(tc_core, test_push_args);
+  tcase_add_test(tc_core, test_set);
+  tcase_add_test(tc_core, test_lookup);
 
   suite_add_tcase(s, tc_core);
   return s;

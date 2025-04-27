@@ -150,7 +150,6 @@ int run_parser_on(const char *type, const char *input, int expected_result) {
   int result = yyparse(&ctx);
 
   yylex_destroy();
-
   fclose(yyin);
 
   obj_pool_reset(ctx.obj_pool);

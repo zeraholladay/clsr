@@ -16,12 +16,12 @@ struct _prim_op_gperf {
 };
 
 %%
-APPLY,   {TOK_APPLY,   PrimOp_Apply   , 0}
-CLOSURE, {TOK_CLOSURE, PrimOp_Closure , 0}
-LOOKUP,  {TOK_LOOKUP,  PrimOp_Lookup  , 0}
-PUSH,    {TOK_PUSH,    PrimOp_Push    , push}
-RETURN,  {TOK_RETURN,  PrimOp_Return  , 0}
-SET,     {TOK_SET,     PrimOp_Set     , 0}
+APPLY,   {TOK_APPLY,   PrimOp_Apply   , apply   }
+CLOSURE, {TOK_CLOSURE, PrimOp_Closure , 0       }
+LOOKUP,  {TOK_LOOKUP,  PrimOp_Lookup  , lookup  }
+PUSH,    {TOK_PUSH,    PrimOp_Push    , push    }
+RETURN,  {TOK_RETURN,  PrimOp_Return  , ret     }
+SET,     {TOK_SET,     PrimOp_Set     , set     }
 %%
 
 const PrimOp * prim_op_lookup(register const char *str, register unsigned int len) {

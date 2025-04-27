@@ -2,15 +2,78 @@
 
 #include "clsr.h"
 
+Obj *apply(Obj *obj, EvalContext *ctx) {
+  (void)obj; // FIXME: undo
+  (void)ctx; // FIXME: undo
+  return NULL;
+}
+
 Obj *closure(Obj *obj, EvalContext *ctx) {
   (void)obj; // FIXME: undo
   (void)ctx; // FIXME: undo
   return NULL;
 }
 
+Obj *lookup(Obj *obj, EvalContext *ctx) {
+  (void)obj;
+
+  Obj *key = POP(ctx->stack);
+
+  if (!(key && OBJ_ISKIND(key, Obj_Literal) &&
+        OBJ_AS(key, literal).kind == Literal_Sym)) {
+    return FALSE; // TODO
+  }
+
+  void *rval;
+
+  if (env_lookup(ctx->env, OBJ_AS(key, literal).symbol, &rval))
+    PUSH(ctx->stack, NULL); // TODO
+  else
+    PUSH(ctx->stack, rval);
+
+  return TRUE;
+}
+
+Obj *push(Obj *obj, EvalContext *ctx) {
+  (void)ctx; // only consumes
+
+  ObjCall obj_call = OBJ_AS(obj, call);
+  ObjList list = OBJ_AS(obj_call.args, list);
+
+  for (unsigned int i = 0; i < list.count; ++i) {
+    assert(OBJ_ISKIND(list.nodes[i], Obj_Literal));
+    PUSH(ctx->stack, list.nodes[i]);
+  }
+
+  return TRUE;
+}
+
+// RETURN
+Obj *ret(Obj *obj, EvalContext *ctx) {
+  (void)obj; // FIXME: undo
+  (void)ctx; // FIXME: undo
+  return NULL;
+}
+
+Obj *set(Obj *obj, EvalContext *ctx) {
+  (void)obj;
+
+  Obj *val = POP(ctx->stack);
+  Obj *key = POP(ctx->stack);
+
+  if (!(key && OBJ_ISKIND(key, Obj_Literal) &&
+        OBJ_AS(key, literal).kind == Literal_Sym)) {
+    return FALSE; // TODO
+  }
+
+  env_set(ctx->env, OBJ_AS(key, literal).symbol, val); // TODO
+  return TRUE;
+}
+
 Obj *eval(Obj *obj, EvalContext *ctx) {
-  if (obj == NULL)
-    return NULL;
+  if (obj == NULL) {
+    return FALSE;
+  }
 
   ObjList expressions = OBJ_AS(obj, list);
 
@@ -25,50 +88,5 @@ Obj *eval(Obj *obj, EvalContext *ctx) {
       die("Unknown to eval\n");
     }
   }
-  return NULL;
+  return FALSE;
 }
-
-Obj *push(Obj *obj, EvalContext *ctx) {
-  (void)ctx; // FIXME
-
-  ObjCall obj_call = OBJ_AS(obj, call);
-  ObjList list = OBJ_AS(obj_call.args, list);
-
-  for (unsigned int i = 0; i < list.count; ++i) {
-    assert(OBJ_ISKIND(list.nodes[i], Obj_Literal));
-    PUSH(ctx->stack, list.nodes[i]);
-  }
-
-  return NULL;
-}
-
-// Obj *eval_call(ObjCall *obj_call, EvalContext *ctx) {
-//   // switch (obj_call->prim->op_code) {
-//   // case PrimOp_Apply:
-//   //   // handle APPLY operation
-//   //   break;
-//   // case PrimOp_Lookup:
-//   //   // handle LOOKUP operation
-//   //   break;
-//   // case PrimOp_Push:
-//   //   ObjList *list = &OBJ_AS(obj_call->args, list);
-//   //   for (unsigned int i; i < list->count; ++i) {
-//   //     PUSH(ctx->stack, list->nodes[i]);
-//   //   }
-//   //   break;
-//   // case PrimOp_Return:
-//   //   // handle RETURN operation
-//   //   break;
-//   // case PrimOp_Set:
-//   //   Obj *obj_val = POP(ctx->stack);
-//   //   Obj *obj_key = POP(ctx->stack);
-//   //   // FIXME: key must be a symbol
-//   //   ObjLiteral literal = OBJ_AS(obj_key, literal);
-//   //   env_set(ctx->env, literal.symbol, obj_val);
-//   //   break;
-//   // default:
-//   //   die("Unknown op_code\n");
-//   //   break;
-//   // }
-//   return NULL;
-// }

@@ -2,9 +2,9 @@
 
 #include <stdio.h>
 
-void obj_print(const Obj *obj) {
+void obj_fprintf(FILE *restrict stream, const Obj *obj) {
   if (obj == NULL) {
-    printf("NULL");
+    fprintf(stream, "NULL");
     return;
   }
 
@@ -12,49 +12,49 @@ void obj_print(const Obj *obj) {
   case Obj_Literal:
     switch (OBJ_AS(obj, literal).kind) {
     case Literal_Int:
-      printf("%d", OBJ_AS(obj, literal).integer);
+      fprintf(stream, "%d", OBJ_AS(obj, literal).integer);
       break;
     case Literal_Sym:
-      printf("%s", OBJ_AS(obj, literal).symbol);
+      fprintf(stream, "%s", OBJ_AS(obj, literal).symbol);
       break;
     default:
-      printf("<unknown literal>");
+      fprintf(stream, "<unknown literal>");
       break;
     }
     break;
 
   case Obj_List:
-    printf("(");
+    fprintf(stream, "(");
     for (unsigned int i = 0; i < OBJ_AS(obj, list).count; ++i) {
       if (i > 0) {
-        printf(" ");
+        fprintf(stream, " ");
       }
-      obj_print(OBJ_AS(obj, list).nodes[i]);
+      obj_fprintf(stream, OBJ_AS(obj, list).nodes[i]);
     }
-    printf(")");
+    fprintf(stream, ")");
     break;
 
   case Obj_Call:
-    printf("<call ");
+    fprintf(stream, "<call ");
     if (OBJ_AS(obj, call).prim) {
-      printf("%p ", (void *)OBJ_AS(obj, call).prim);
+      fprintf(stream, "%p ", (void *)OBJ_AS(obj, call).prim);
     } else {
-      printf("NULL ");
+      fprintf(stream, "NULL ");
     }
-    obj_print(OBJ_AS(obj, call).args);
-    printf(">");
+    obj_fprintf(stream, OBJ_AS(obj, call).args);
+    fprintf(stream, ">");
     break;
 
   case Obj_Closure:
-    printf("<closure params=");
-    obj_print(OBJ_AS(obj, closure).params);
-    printf(" body=");
-    obj_print(OBJ_AS(obj, closure).body);
-    printf(">");
+    fprintf(stream, "<closure params=");
+    obj_fprintf(stream, OBJ_AS(obj, closure).params);
+    fprintf(stream, " body=");
+    obj_fprintf(stream, OBJ_AS(obj, closure).body);
+    fprintf(stream, ">");
     break;
 
   default:
-    printf("<unknown object>");
+    fprintf(stream, "<unknown object>");
     break;
   }
 }

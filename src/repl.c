@@ -1,8 +1,7 @@
 #include <stdio.h>
 
+#include "clsr.h"
 #include "common.h"
-#include "eval.h"
-#include "obj.h"
 #include "parser.h"
 
 #ifndef REPL_MAIN
@@ -10,18 +9,28 @@
 extern int yyparse(ParseContext *ctx);
 
 int repl(void) {
-  ParseContext ctx;
+  ParseContext parser_ctx;
+  reset_parse_context(&parser_ctx);
+  parser_ctx.obj_pool = obj_pool_init(4096);
 
-  reset_parse_context(&ctx);
-  ctx.obj_pool = obj_pool_init(4096);
+  Stack stack = {};
+  STACK_INIT(&stack);
+
+  Env *env = env_new(NULL);
+
+  EvalContext eval_ctx = {
+      .stack = &stack,
+      .env = env,
+  };
 
   for (;;) {
-    int parse_status = yyparse(&ctx);
+    int parse_status = yyparse(&parser_ctx);
 
     if (parse_status == 0) {
       DEBUG("[REPL] Eval\n");
+      eval(parser_ctx.root_obj, &eval_ctx);
     }
-    if (ctx.lexer_state.eof) {
+    if (parser_ctx.lexer_state.eof) {
       DEBUG("[REPL] EOF\n");
       return parse_status;
     }

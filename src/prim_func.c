@@ -1,6 +1,16 @@
-#include "eval.h"
+#include "clsr.h"
 
-#include "env.h"
+Obj *push(Obj *obj, EvalContext *ctx) {
+  (void)ctx; // FIXME
+
+  ObjCall obj_call = OBJ_AS(obj, call);
+
+  ObjList list = OBJ_AS(obj_call.args, list);
+  for (unsigned int i; i < list.count; ++i) {
+    PUSH(ctx->stack, list.nodes[i]);
+  }
+  return NULL;
+}
 
 Obj *eval_call(ObjCall *obj_call, EvalContext *ctx) {
   // switch (obj_call->prim->op_code) {
@@ -33,20 +43,15 @@ Obj *eval_call(ObjCall *obj_call, EvalContext *ctx) {
   return NULL;
 }
 
-Obj *eval_closure(Obj *call, EvalContext *ctx) { return NULL; }
+Obj *closure(Obj *obj, EvalContext *ctx) { return NULL; }
 
 Obj *eval(Obj *obj, EvalContext *ctx) {
-  switch (OBJ_KIND(obj)) {
-  case Obj_Call:
-    eval_call(&OBJ_AS(obj, call), ctx);
-    break;
-  case Obj_Closure:
-    eval_closure(obj, ctx);
-    break;
-  default:
-    fprintf(stderr, "Unknown object kind: %d\n", obj->kind);
+  if (OBJ_KIND(obj) == Obj_Call) {
+    return OBJ_AS(obj, call).prim->prim_func(obj, ctx);
+  } else if (OBJ_KIND(obj) == Obj_Closure) {
+    return closure(obj, ctx);
+  } else {
+    die("Unknown to eval\n");
     return NULL;
-    break;
   }
-  return NULL;
 }

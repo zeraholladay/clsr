@@ -1,13 +1,13 @@
 %{
 #include "parser.h"
-#include "prim_op.h"
+#include "clsr.h"
 %}
 
 %includes
 %language=ANSI-C
 %readonly-tables
 %struct-type
-%define initializer-suffix ,{0,0}
+%define initializer-suffix ,{0,0,0}
 %define slot-name name
 
 struct _prim_op_gperf {
@@ -16,12 +16,12 @@ struct _prim_op_gperf {
 };
 
 %%
-APPLY,   {TOK_APPLY,   PrimOp_Apply   }
-CLOSURE, {TOK_CLOSURE, PrimOp_Closure }
-LOOKUP,  {TOK_LOOKUP,  PrimOp_Lookup  }
-PUSH,    {TOK_PUSH,    PrimOp_Push    }
-RETURN,  {TOK_RETURN,  PrimOp_Return  }
-SET,     {TOK_SET,     PrimOp_Set     }
+APPLY,   {TOK_APPLY,   PrimOp_Apply   , 0}
+CLOSURE, {TOK_CLOSURE, PrimOp_Closure , 0}
+LOOKUP,  {TOK_LOOKUP,  PrimOp_Lookup  , 0}
+PUSH,    {TOK_PUSH,    PrimOp_Push    , 0}
+RETURN,  {TOK_RETURN,  PrimOp_Return  , 0}
+SET,     {TOK_SET,     PrimOp_Set     , 0}
 %%
 
 const PrimOp * prim_op_lookup(register const char *str, register unsigned int len) {

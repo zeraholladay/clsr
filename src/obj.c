@@ -1,4 +1,4 @@
-#include "obj.h"
+#include "clsr.h"
 
 Obj *obj_new_literal_int(ObjPool *p, int i) {
   Obj *obj = obj_pool_alloc(p);

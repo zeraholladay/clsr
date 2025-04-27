@@ -1,7 +1,7 @@
 #include <errno.h>
 
+#include "clsr.h"
 #include "common.h"
-#include "obj.h"
 
 ObjPool *obj_pool_init(unsigned int count) {
   ObjPool *p = NULL;

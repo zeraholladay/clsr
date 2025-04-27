@@ -3,9 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "clsr.h"
 #include "common.h"
-#include "eval.h"
-#include "obj.h"
 #include "parser.h"
 
 extern FILE *yyin;

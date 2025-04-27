@@ -3,9 +3,8 @@
 #include <stdlib.h>
 
 #include "common.h"
-#include "obj.h"
+#include "clsr.h"
 #include "parser.h"
-#include "prim_op.h"
 
 #define yyerror(ctx, s)      \
   do {                       \
@@ -20,7 +19,7 @@ extern int yylineno;
 %}
 
 %code requires {
-#include "obj.h"
+#include "clsr.h"
 
 typedef struct ParseContext {
     ObjPool *obj_pool;

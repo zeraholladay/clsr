@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "clsr.h"
 #include "parser.h"
-#include "prim_op.h"
 #include "common.h"
 
 #define YY_DECL int yylex(ParseContext *ctx)

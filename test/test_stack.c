@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stack.h"
+#include "clsr.h"
 
 START_TEST(test_push_pop) {
   Stack stack = {};
@@ -44,7 +44,7 @@ START_TEST(test_enter_exit_frame) {
   STACK_INIT(&stack);
   uintptr_t old_fp = stack.fp;
   PUSH(&stack, 100);
-  enter_frame(&stack);
+  ENTER_FRAME(&stack);
   ck_assert_uint_eq(stack.fp, stack.sp);
   PUSH(&stack, 200);
   EXIT_FRAME(&stack);

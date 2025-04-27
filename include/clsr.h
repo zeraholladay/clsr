@@ -1,8 +1,33 @@
-#ifndef OBJ_H
-#define OBJ_H
+#ifndef CLSR_H
+#define CLSR_H
 
 #include "common.h"
-#include "prim_op.h"
+#include "env.h"
+#include "stack.h"
+
+/* primitive operations */
+
+struct Obj;
+struct EvalContext;
+
+typedef struct Obj *(*PrimFunc)(struct Obj *obj, struct EvalContext *ctx);
+
+typedef enum {
+  PrimOp_Apply,
+  PrimOp_Closure,
+  PrimOp_Lookup,
+  PrimOp_Push,
+  PrimOp_Return,
+  PrimOp_Set
+} PrimOpCode;
+
+typedef struct PrimOp {
+  int tok;
+  PrimOpCode op_code;
+  PrimFunc prim_func;
+} PrimOp;
+
+/* objects */
 
 #define OBJ_AS(obj_ptr, kind) ((obj_ptr)->as.kind)
 #define OBJ_KIND(obj_ptr) (obj_ptr)->kind
@@ -49,6 +74,8 @@ typedef struct Obj {
   } as;
 } Obj;
 
+/* object pool */
+
 typedef struct ObjPoolWrapper {
   struct ObjPoolWrapper *next_free;
   Obj obj;
@@ -60,7 +87,19 @@ typedef struct {
   unsigned int count;
 } ObjPool;
 
+/* eval context */
+
+typedef struct EvalContext {
+  Stack *stack;
+  Env *env;
+} EvalContext;
+
+/* prim_op.gperf */
+const PrimOp *prim_op_lookup(register const char *str,
+                             register unsigned int len);
+
 /* obj.c */
+
 Obj *obj_new_literal_int(ObjPool *p, int i);
 Obj *obj_new_literal_sym(ObjPool *p, const char *sym);
 Obj *obj_new_empty_expr_list(ObjPool *p);
@@ -69,9 +108,27 @@ Obj *obj_new_call(ObjPool *p, const PrimOp *prim, Obj *args);
 Obj *obj_new_closure(ObjPool *p, Obj *params, Obj *body);
 
 /* obj_pool.c */
+
 ObjPool *obj_pool_init(unsigned int count);
 Obj *obj_pool_alloc(ObjPool *p);
 void obj_pool_free(ObjPool *p, Obj *obj);
 void obj_pool_reset(ObjPool *p);
+
+/* eval.c */
+
+Obj *eval(Obj *obj, EvalContext *ctx);
+
+/* stack.c (stack helpers) */
+
+#define STACK_INIT(stack) stack_init(stack, STACK_GROWTH)
+#define PUSH(stack, obj) stack_push(stack, (void *)obj)
+#define POP(stack) (Obj *)stack_pop(stack)
+#define PEEK(stack) (Obj *)stack_peek(stack)
+#define ENTER_FRAME(stack) stack_enter_frame(stack)
+#define EXIT_FRAME(stack) stack_exit_frame(stack)
+
+/* prim_func.c */
+
+Obj *eval(Obj *obj, EvalContext *ctx);
 
 #endif

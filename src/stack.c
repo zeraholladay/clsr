@@ -41,7 +41,9 @@ void stack_enter_frame(Stack *s_ptr) {
 }
 
 void stack_exit_frame(Stack *s_ptr) {
-  uintptr_t saved_fp = (uintptr_t)(s_ptr->data[s_ptr->fp - 1]);
-  s_ptr->sp = s_ptr->fp - 1;
-  s_ptr->fp = saved_fp;
+  if (s_ptr->fp > 0) {
+    uintptr_t old_fp = (uintptr_t)(s_ptr->data[s_ptr->fp - 1]);
+    s_ptr->sp = s_ptr->fp - 1;
+    s_ptr->fp = old_fp;
+  }
 }

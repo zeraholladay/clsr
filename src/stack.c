@@ -17,20 +17,20 @@ void stack_init(Stack *s_ptr, unsigned int count) {
 void stack_free(Stack *s_ptr) { FREE(s_ptr->data); }
 
 void stack_push(Stack *s_ptr, void *value) {
-  if (s_ptr->sp >= s_ptr->data_size)
-    if (stack_data_alloc(s_ptr, s_ptr->data_size + STACK_GROWTH))
-      die(LOCATION);
+  if (s_ptr->sp >= s_ptr->data_size &&
+      stack_data_alloc(s_ptr, s_ptr->data_size + STACK_GROWTH))
+    die(LOCATION);
   s_ptr->data[s_ptr->sp++] = (uintptr_t)value;
 }
 
 void *stack_pop(Stack *s_ptr) {
-  if (s_ptr->sp <= 0)
+  if (s_ptr->sp <= s_ptr->fp)
     return NULL;
   return (void *)s_ptr->data[--s_ptr->sp];
 }
 
 void *stack_peek(Stack *s_ptr) {
-  if (s_ptr->sp <= 0)
+  if (s_ptr->sp <= s_ptr->fp)
     return NULL;
   return (void *)(s_ptr->data[s_ptr->sp - 1]);
 }
@@ -41,6 +41,7 @@ void stack_enter_frame(Stack *s_ptr) {
 }
 
 void stack_exit_frame(Stack *s_ptr) {
-  s_ptr->sp = s_ptr->fp;
-  s_ptr->fp = (uintptr_t)stack_pop(s_ptr);
+  uintptr_t saved_fp = (uintptr_t)(s_ptr->data[s_ptr->fp - 1]);
+  s_ptr->sp = s_ptr->fp - 1;
+  s_ptr->fp = saved_fp;
 }

@@ -103,7 +103,7 @@ SET  ;  env={ foo=#clsr-id }
 ---
 
 ### `APPLY`
-Applies a closure to a sequence of argument values by evaluating its body in a new stack frame, with each argument bound to the corresponding parameter.
+Applies a closure to a sequence of argument values by evaluating its body in a new *stack frame*, with each argument bound to the corresponding parameter.
 
 A consumer + producer instruction:
 
@@ -165,11 +165,11 @@ Ends evaluation of the current function or closure and returns a value to the ca
 A consumer + producer instruction that:
 
 Consumes:
-1. A single value from the top of the current stack frame (the return value)
+1. A single value from the top of the current *stack frame* (the return value)
 
 Produces:
-1. That value, pushed onto the previous stack frame
+1. That value, pushed onto the previous *stack frame*
 
 Side effect:
-1. Pops the current stack frame, restoring the caller’s environment
+1. Pops the current *stack frame*, restoring the caller’s environment
 ---

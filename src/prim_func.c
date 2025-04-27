@@ -48,11 +48,16 @@ Obj *push(Obj *obj, EvalContext *ctx) {
   return TRUE;
 }
 
-// RETURN
+/* a/k/a RETURN */
 Obj *ret(Obj *obj, EvalContext *ctx) {
-  (void)obj; // FIXME: undo
-  (void)ctx; // FIXME: undo
-  return NULL;
+  (void)obj;
+  (void)ctx;
+
+  Obj *obj_rval = POP(ctx->stack);
+  EXIT_FRAME(ctx->stack);
+  PUSH(ctx->stack, obj_rval);
+
+  return TRUE;
 }
 
 Obj *set(Obj *obj, EvalContext *ctx) {

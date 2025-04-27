@@ -180,6 +180,45 @@ START_TEST(test_lookup) {
 }
 END_TEST
 
+START_TEST(test_ret) {
+  void *val_in = (void *)0xDEADBEEF;
+
+  PUSH(&stack, val_in);
+  ENTER_FRAME(&stack);
+
+  const char *expressions[] = {
+      "PUSH foobar\n",
+      "RETURN\n",
+      NULL,
+  };
+
+  for (unsigned i = 0; expressions[i]; ++i) {
+    const char *input = expressions[i];
+
+    yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+
+    int parse_status = yyparse(&parser_ctx);
+    ck_assert_int_eq(parse_status, 0);
+
+    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    ck_assert_ptr_eq(eval_status, TRUE);
+
+    yylex_destroy();
+    fclose(yyin);
+  }
+
+  Obj *obj = POP(&stack);
+
+  ck_assert(OBJ_ISKIND(obj, Obj_Literal));
+
+  ObjLiteral obj_literal = OBJ_AS(obj, literal);
+  ck_assert(obj_literal.kind == Literal_Sym);
+  ck_assert_str_eq(obj_literal.symbol, "foobar");
+
+  ck_assert_ptr_eq((void *)POP(&stack), val_in);
+}
+END_TEST
+
 Suite *eval_suite(void) {
   Suite *s = suite_create("Eval");
 
@@ -190,6 +229,7 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_push_args);
   tcase_add_test(tc_core, test_set);
   tcase_add_test(tc_core, test_lookup);
+  tcase_add_test(tc_core, test_ret);
 
   suite_add_tcase(s, tc_core);
   return s;

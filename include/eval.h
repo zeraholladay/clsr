@@ -6,8 +6,8 @@
 #include "stack.h"
 
 typedef struct EvalContext {
-  // Stack *stack;
-  Env *environ;
+  Stack *stack;
+  Env *env;
 } EvalContext;
 
 Obj *eval(Obj *obj, EvalContext *ctx);

@@ -11,7 +11,7 @@ debugging
 */
 
 #define INFO_ENABLED 0
-#define DEBUG_ENABLED 1
+#define DEBUG_ENABLED 0
 #define TRACE_ENABLED 0
 
 #ifndef INFO
@@ -61,7 +61,7 @@ inline static int safe_alloc_check(void *ptr) {
   safe_alloc_check((ptr) = calloc(count, sizeof *(ptr)))
 
 #define REALLOC_N(ptr, count)                                                  \
-  safe_alloc_check((ptr) = realloc(ptr, count * sizeof *(ptr)))
+  safe_alloc_check((ptr) = realloc(ptr, (count) * sizeof *(ptr)))
 
 #define FREE(ptr) ((void)(free(ptr), (ptr) = NULL))
 

@@ -8,9 +8,7 @@
 #include "parser.h"
 
 extern FILE *yyin;
-extern int yylex(void);
 extern int yyparse(ParseContext *ctx);
-extern void yy_scan_string(const char *);
 extern void yylex_destroy(void);
 
 const char *valid_expressions[] = {

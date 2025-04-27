@@ -15,12 +15,9 @@ int repl(void) {
 
   Stack stack = {};
   STACK_INIT(&stack);
-
-  Env *env = env_new(NULL);
-
   EvalContext eval_ctx = {
       .stack = &stack,
-      .env = env,
+      .env = env_new(NULL),
   };
 
   for (;;) {

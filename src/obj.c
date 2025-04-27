@@ -1,5 +1,64 @@
 #include "clsr.h"
 
+#include <stdio.h>
+
+void obj_print(const Obj *obj) {
+  if (obj == NULL) {
+    printf("NULL");
+    return;
+  }
+
+  switch (OBJ_KIND(obj)) {
+  case Obj_Literal:
+    switch (OBJ_AS(obj, literal).kind) {
+    case Literal_Int:
+      printf("%d", OBJ_AS(obj, literal).integer);
+      break;
+    case Literal_Sym:
+      printf("%s", OBJ_AS(obj, literal).symbol);
+      break;
+    default:
+      printf("<unknown literal>");
+      break;
+    }
+    break;
+
+  case Obj_List:
+    printf("(");
+    for (unsigned int i = 0; i < OBJ_AS(obj, list).count; ++i) {
+      if (i > 0) {
+        printf(" ");
+      }
+      obj_print(OBJ_AS(obj, list).nodes[i]);
+    }
+    printf(")");
+    break;
+
+  case Obj_Call:
+    printf("<call ");
+    if (OBJ_AS(obj, call).prim) {
+      printf("%p ", (void *)OBJ_AS(obj, call).prim);
+    } else {
+      printf("NULL ");
+    }
+    obj_print(OBJ_AS(obj, call).args);
+    printf(">");
+    break;
+
+  case Obj_Closure:
+    printf("<closure params=");
+    obj_print(OBJ_AS(obj, closure).params);
+    printf(" body=");
+    obj_print(OBJ_AS(obj, closure).body);
+    printf(">");
+    break;
+
+  default:
+    printf("<unknown object>");
+    break;
+  }
+}
+
 Obj *obj_new_literal_int(ObjPool *p, int i) {
   Obj *obj = obj_pool_alloc(p);
   OBJ_KIND(obj) = Obj_Literal;
@@ -23,7 +82,7 @@ Obj *obj_new_empty_expr_list(ObjPool *p) {
   OBJ_KIND(obj) = Obj_List;
   ObjList *list_ptr = &OBJ_AS(obj, list);
   list_ptr->nodes = NULL; // XXX: nodes
-  list_ptr->count++;
+  list_ptr->count = 0;
   return obj;
 }
 

@@ -100,6 +100,7 @@ const PrimOp *prim_op_lookup(register const char *str,
 
 /* obj.c */
 
+void obj_print(const Obj *obj);
 Obj *obj_new_literal_int(ObjPool *p, int i);
 Obj *obj_new_literal_sym(ObjPool *p, const char *sym);
 Obj *obj_new_empty_expr_list(ObjPool *p);
@@ -110,13 +111,10 @@ Obj *obj_new_closure(ObjPool *p, Obj *params, Obj *body);
 /* obj_pool.c */
 
 ObjPool *obj_pool_init(unsigned int count);
+void obj_pool_destroy(ObjPool **p);
 Obj *obj_pool_alloc(ObjPool *p);
 void obj_pool_free(ObjPool *p, Obj *obj);
 void obj_pool_reset(ObjPool *p);
-
-/* eval.c */
-
-Obj *eval(Obj *obj, EvalContext *ctx);
 
 /* stack.c (stack helpers) */
 
@@ -129,6 +127,8 @@ Obj *eval(Obj *obj, EvalContext *ctx);
 
 /* prim_func.c */
 
+Obj *closure(Obj *obj, EvalContext *ctx);
 Obj *eval(Obj *obj, EvalContext *ctx);
+Obj *push(Obj *obj, EvalContext *ctx);
 
 #endif

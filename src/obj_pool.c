@@ -23,6 +23,11 @@ ObjPool *obj_pool_init(unsigned int count) {
   return p;
 }
 
+void obj_pool_destroy(ObjPool **p) {
+  FREE((*p)->pool);
+  FREE(*p);
+}
+
 Obj *obj_pool_alloc(ObjPool *p) {
   if (!p->free_list) {
     errno = ENOMEM;

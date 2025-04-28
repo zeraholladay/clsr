@@ -9,9 +9,15 @@ Obj *apply(Obj *obj, EvalContext *ctx) {
 }
 
 Obj *closure(Obj *obj, EvalContext *ctx) {
-  (void)obj; // FIXME: undo
-  (void)ctx; // FIXME: undo
-  return NULL;
+  assert(OBJ_ISKIND(obj, Obj_Closure));
+
+  obj_fprintf(stderr, obj);
+  fprintf(stderr, "\n");
+
+  ObjClosure *clsr = OBJ_AS_PTR(obj, closure);
+  clsr->env = ctx->env;
+  PUSH(ctx->stack, obj);
+  return TRUE;
 }
 
 Obj *lookup(Obj *obj, EvalContext *ctx) {

@@ -91,13 +91,9 @@ CLOSURE a b c (
   PUSH bar
   RETURN
 )
-; STACK:
-; #clsr-id
-PUSH foo
-; STACK:
 ; #clsr-id
 ; foo
-SET  ;  env={ foo=#clsr-id }
+SET  ; env={ foo=#clsr-id }
 ```
 
 ---
@@ -145,7 +141,7 @@ CLOSURE a b c (
 ; STACK:
 ; #clsr-id
 ; foo
-SET  ;  env={ foo=#clsr-id }
+SET  ; env={ foo=#clsr-id }
 ; call foo(1,2,3)
 LOOKUP
 ; STACK:

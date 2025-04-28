@@ -32,7 +32,8 @@ NL \r?\n
         const PrimOp *p = prim_op_lookup(yytext, strlen(yytext));
         if (p) {
             yylval.prim = p;
-            BEGIN(ARGS); return p->tok;
+            BEGIN(ARGS);
+            return p->tok;
         } else {
             // TODO: Handle error
             return 1;
@@ -40,23 +41,27 @@ NL \r?\n
     }
     \) {
         ctx->lexer_state.parens--;
-        BEGIN(END_CLOSURE); return ')';
+        BEGIN(END_CLOSURE);
+        return ')';
     }
 }
 
 <END_CLOSURE>{
     {NL} {
-        BEGIN(INITIAL); return '\n';
+        BEGIN(INITIAL);
+        return '\n';
     }
 }
 
 <ARGS>{
     \( {
         ctx->lexer_state.parens++;
-        BEGIN(INITIAL); return '(';
+        BEGIN(INITIAL);
+        return '(';
     }
     {NL} {
-        BEGIN(INITIAL); return '\n';
+        BEGIN(INITIAL);
+        return '\n';
     }
     -*[0-9]+ {
         yylval.num = atoi(yytext);
@@ -74,7 +79,8 @@ NL \r?\n
     }
     <<EOF>> {
         if (!ctx->lexer_state.eof && (ctx->lexer_state.eof = 1)) {
-            unput('\n'); BEGIN(INITIAL);  // Give BEGIN a \n once
+            unput('\n');
+            BEGIN(INITIAL);  // Give BEGIN a \n once
         } else
             return 0;  // Otherwise, terminate parsing.
     }

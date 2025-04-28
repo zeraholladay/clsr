@@ -219,6 +219,56 @@ START_TEST(test_ret) {
 }
 END_TEST
 
+START_TEST(test_closure_basic) {
+  const char *expressions[] = {
+      "CLOSURE ()\n",
+
+      "CLOSURE foo bar ()\n",
+
+      // TODO fix test_parser.c
+
+      "PUSH foo42\n",
+
+      "CLOSURE foo bar (\n"
+      "  PUSH 42\n"
+      "  RETURN\n"
+      ")\n",
+
+      "SET\n",
+
+      "PUSH foo42\n",
+
+      "LOOKUP\n",
+
+      NULL,
+  };
+
+  for (unsigned i = 0; expressions[i]; ++i) {
+    const char *input = expressions[i];
+
+    yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+
+    int parse_status = yyparse(&parser_ctx);
+    ck_assert_int_eq(parse_status, 0);
+
+    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    ck_assert_ptr_eq(eval_status, TRUE);
+
+    yylex_destroy();
+    fclose(yyin);
+  }
+
+  // Check the last one
+
+  Obj *obj = POP(&stack);
+
+  obj_fprintf(stderr, obj);
+  fprintf(stderr, "\n");
+
+  ck_assert(OBJ_ISKIND(obj, Obj_Closure));
+}
+END_TEST
+
 Suite *eval_suite(void) {
   Suite *s = suite_create("Eval");
 
@@ -230,6 +280,7 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_set);
   tcase_add_test(tc_core, test_lookup);
   tcase_add_test(tc_core, test_ret);
+  tcase_add_test(tc_core, test_closure_basic);
 
   suite_add_tcase(s, tc_core);
   return s;

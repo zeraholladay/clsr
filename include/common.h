@@ -10,9 +10,9 @@
 debugging
 */
 
-#define INFO_ENABLED 1
-#define DEBUG_ENABLED 1
-#define TRACE_ENABLED 1
+#define INFO_ENABLED 0
+#define DEBUG_ENABLED 0
+#define TRACE_ENABLED 0
 
 #ifndef INFO
 #define INFO(...)                                                              \
@@ -25,7 +25,7 @@ debugging
 #ifndef DEBUG
 #define DEBUG(...)                                                             \
   do {                                                                         \
-    if (TRACE_ENABLED)                                                         \
+    if (DEBUG_ENABLED)                                                         \
       fprintf(stderr, "[DEBUG] " __VA_ARGS__);                                 \
   } while (0)
 #endif
@@ -33,7 +33,7 @@ debugging
 #ifndef TRACE
 #define TRACE(...)                                                             \
   do {                                                                         \
-    if (DEBUG_ENABLED)                                                         \
+    if (TRACE_ENABLED)                                                         \
       fprintf(stderr, "[TRACE] " __VA_ARGS__);                                 \
   } while (0)
 #endif
@@ -61,7 +61,7 @@ inline static int safe_alloc_check(void *ptr) {
   safe_alloc_check((ptr) = calloc(count, sizeof *(ptr)))
 
 #define REALLOC_N(ptr, count)                                                  \
-  safe_alloc_check((ptr) = realloc(ptr, count * sizeof *(ptr)))
+  safe_alloc_check((ptr) = realloc(ptr, (count) * sizeof *(ptr)))
 
 #define FREE(ptr) ((void)(free(ptr), (ptr) = NULL))
 

@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "clsr.h"
 #include "parser.h"
-#include "prim_op.h"
 #include "common.h"
 
 #define YY_DECL int yylex(ParseContext *ctx)
@@ -29,11 +29,11 @@ NL \r?\n
         if (ctx->lexer_state.parens == 0) return '\n';
     }
     {OP} {
-        DEBUG("[LEX] prim_op matched: yytext = '%s'\n", yytext);
         const PrimOp *p = prim_op_lookup(yytext, strlen(yytext));
         if (p) {
             yylval.prim = p;
-            BEGIN(ARGS); return p->tok;
+            BEGIN(ARGS);
+            return p->tok;
         } else {
             // TODO: Handle error
             return 1;
@@ -41,23 +41,27 @@ NL \r?\n
     }
     \) {
         ctx->lexer_state.parens--;
-        BEGIN(END_CLOSURE); return ')';
+        BEGIN(END_CLOSURE);
+        return ')';
     }
 }
 
 <END_CLOSURE>{
     {NL} {
-        BEGIN(INITIAL); return '\n';
+        BEGIN(INITIAL);
+        return '\n';
     }
 }
 
 <ARGS>{
     \( {
         ctx->lexer_state.parens++;
-        BEGIN(INITIAL); return '(';
+        BEGIN(INITIAL);
+        return '(';
     }
     {NL} {
-        BEGIN(INITIAL); return '\n';
+        BEGIN(INITIAL);
+        return '\n';
     }
     -*[0-9]+ {
         yylval.num = atoi(yytext);
@@ -75,14 +79,13 @@ NL \r?\n
     }
     <<EOF>> {
         if (!ctx->lexer_state.eof && (ctx->lexer_state.eof = 1)) {
-            unput('\n'); BEGIN(INITIAL);  // Give BEGIN a \n once:
+            unput('\n');
+            BEGIN(INITIAL);  // Give BEGIN a \n once
         } else
             return 0;  // Otherwise, terminate parsing.
     }
     . {
-         // TODO: Handle error
-        DEBUG("[LEX] Unknown token.\n");
-        return 1;
+        return TOK_ERROR;
     }
 }
 

@@ -4,14 +4,12 @@
 #include <stddef.h>
 
 #ifndef MAX_ENTRIES
-#define MAX_ENTRIES 16
+#define MAX_ENTRIES 64
 #endif
-
-#include "obj.h"
 
 typedef struct EnvEntry {
   const char *symbol; // symbol name
-  int addr;           // heap address
+  void *addr;         // heap address
 } EnvEntry;
 
 typedef struct Env {
@@ -21,7 +19,7 @@ typedef struct Env {
 } Env;
 
 Env *env_new(Env *parent);
-int env_set(Env *env, const char *sym, int addr);
-int env_lookup(Env *env, const char *s, size_t s_len);
+int env_set(Env *env, const char *sym, void *addr);
+int env_lookup(Env *env, const char *s, void **val);
 
 #endif

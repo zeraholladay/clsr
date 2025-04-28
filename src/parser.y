@@ -3,19 +3,23 @@
 #include <stdlib.h>
 
 #include "common.h"
-#include "obj.h"
+#include "clsr.h"
 #include "parser.h"
-#include "prim_op.h"
 
-void reset_parse_context(ParseContext *ctx);
-int yyerror(ParseContext *ctx, const char *s);
+#define yyerror(ctx, s)      \
+  do {                       \
+    yyerror_handler(ctx, s); \
+    YYABORT;                 \
+  } while (0)
+
 int yylex(ParseContext *ctx);
+void yyerror_handler(ParseContext *ctx, const char *s);
 
 extern int yylineno;
 %}
 
 %code requires {
-#include "obj.h"
+#include "clsr.h"
 
 typedef struct ParseContext {
     ObjPool *obj_pool;
@@ -25,6 +29,8 @@ typedef struct ParseContext {
         unsigned int eof;
     } lexer_state;
 } ParseContext;
+
+void reset_parse_context(ParseContext *ctx);
 }
 
 %lex-param   {ParseContext *ctx}
@@ -39,10 +45,11 @@ typedef struct ParseContext {
 
 %type <prim> nullary_prim_op
 %type <prim> nary_prim_op
-%type <obj> input expression expressions args arg
+%type <obj> input expression expressions args arg expression_with_nl
 
 %define api.token.prefix {TOK_}
 
+%token ERROR
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
 %token <prim> APPLY CLOSURE LOOKUP PUSH RETURN SET
@@ -54,9 +61,12 @@ input:
         ctx->root_obj = NULL;
         YYACCEPT;
     }
-    | expressions '\n' {
+  | expressions {
         ctx->root_obj = $1;
         YYACCEPT;
+    }
+  | error {
+        yyerror(ctx, "Parse error\n");
     }
 ;
 
@@ -64,24 +74,35 @@ expressions:
     /* empty */ {
         $$ = obj_new_empty_expr_list(ctx->obj_pool);
     }
-  | expressions expression {
-        $$ = obj_expr_list_append(ctx->obj_pool, $1, $2);
+  | expressions expression_with_nl {
+        $$ = obj_expr_list_append($1, $2);
+    }
+;
+
+expression_with_nl:
+    expression '\n' {
+        $$ = $1;
     }
 ;
 
 expression:
-    nullary_prim_op '\n' {
+    nullary_prim_op {
         DEBUG("[YACC] nullary_prim_op\n");
         $$ = obj_new_call(ctx->obj_pool, $1, NULL);
     }
-    | nary_prim_op args '\n' {
+  | nary_prim_op args {
         DEBUG("[YACC] nary_prim_op\n");
         $$ = obj_new_call(ctx->obj_pool, $1, $2);
     }
-    | CLOSURE args '(' expressions ')' '\n' {
+  | CLOSURE args '(' opt_nl expressions opt_nl ')' {
         DEBUG("[YACC] CLOSURE\n");
-        $$ = obj_new_closure(ctx->obj_pool, $2, $4);
+        $$ = obj_new_closure(ctx->obj_pool, $2, $5);
     }
+;
+
+opt_nl:
+    /* empty */
+  | '\n'
 ;
 
 nullary_prim_op:
@@ -103,7 +124,7 @@ args:
         $$ = obj_new_empty_expr_list(ctx->obj_pool);
       }
     | args arg {
-        $$ = obj_expr_list_append(ctx->obj_pool, $1, $2);
+        $$ = obj_expr_list_append($1, $2);
     }
 ;
 
@@ -127,8 +148,7 @@ void reset_parse_context(ParseContext *ctx) {
     ctx->lexer_state.eof = 0;
 }
 
-int yyerror(ParseContext *ctx, const char *s) {
+void yyerror_handler(ParseContext *ctx, const char *s) {
     fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
     reset_parse_context(ctx);
-    return 1;
 }

@@ -16,12 +16,12 @@ This is a variadic producer instruction — it accepts zero or more arguments an
 
 Example:
 
-```
+```lisp
 PUSH a b c
 ; STACK:
-; c
-; b
 ; a
+; b
+; c
 ```
 
 ---
@@ -33,11 +33,11 @@ A pure consumer that establishes a new variable binding. This operation does not
 
 Example:
 
-```
+```lisp
 PUSH a 1
 ; STACK:
-; 1
 ; a
+; 1
 SET ; env={ a=1 }
 ```
 
@@ -52,11 +52,11 @@ The original symbol is discarded, and the resolved value is pushed in its place.
 
 Example:
 
-```
+```lisp
 PUSH a 1 
 ; STACK:
-; 1
 ; a
+; 1
 SET ; env={ a=1 }
 PUSH a
 ; STACK:
@@ -85,30 +85,26 @@ Produces:
 
 Example with cloure named `foo`:
 
-```
+```lisp
 PUSH foo
 CLOSURE a b c (
   PUSH bar
   RETURN
 )
-; STACK:
-; #clsr-id
-PUSH foo
-; STACK:
-; #clsr-id
+; (closure)
 ; foo
-SET  ;  env={ foo=#clsr-id }
+SET  ; env={ foo=(closure) }
 ```
 
 ---
 
 ### `APPLY`
-Applies a closure to a sequence of argument values by evaluating its body in a new stack frame, with each argument bound to the corresponding parameter.
+Applies a closure to a sequence of argument values by evaluating its body in a new *stack frame*, with each argument bound to the corresponding parameter.
 
 A consumer + producer instruction:
 
 Consumes:
-1. N arguments, already on the stack above the closure (left-to-right).
+1. N arguments, already on the stack above the closure (right-to-lef).
 1. A closure object (on bottom of the stack).
 
 Produces:
@@ -119,41 +115,44 @@ Side effect:
 
 Example with anonymous clousre:
 
-```
+```lisp
+PUSH 1 2 3
+; STACK:
+;   3
+;   2
+;   1
 CLOSURE a b c (
   ; returns NIL
 )
 ; STACK:
-; #clsr-id
-PUSH 1 2 3
-; STACK:
-; 3
-; 2
-; 1
-; #clsr-id
+;   (closure)
+;   3
+;   2
+;   1
 APPLY
 ```
 
 Example with closure named `foo`:
 
-```
-PUSH foo
+```lisp
 CLOSURE a b c (
   PUSH bar
   RETURN
 )
+PUSH foo
 ; STACK:
-; #clsr-id
-; foo
-SET  ;  env={ foo=#clsr-id }
-; call foo(1,2,3)
+;   foo
+;   (closure)
+SET
+; env={ foo=closure }
+PUSH 1 2 3
+PUSH foo
 LOOKUP
 ; STACK:
-; 3
-; 2
-; 1
-; #clsr-id
-PUSH 1 2 3
+;   (closure)
+;   1
+;   2
+;   3
 APPLY
 ```
 
@@ -165,11 +164,11 @@ Ends evaluation of the current function or closure and returns a value to the ca
 A consumer + producer instruction that:
 
 Consumes:
-1. A single value from the top of the current stack frame (the return value)
+1. A single value from the top of the current *stack frame* (the return value)
 
 Produces:
-1. That value, pushed onto the previous stack frame
+1. That value, pushed onto the previous *stack frame*
 
 Side effect:
-1. Pops the current stack frame, restoring the caller’s environment
+1. Pops the current *stack frame*, restoring the caller’s environment
 ---

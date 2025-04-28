@@ -1,56 +1,103 @@
-.PHONY: all src clean
+# src
+
+# $@	The target of the rule (the thing being built)
+# $<	The first prerequisite (typically the input file)
+# $^	All prerequisites, with duplicates removed
 
 # Compilers and flags
-CC := gcc
-CFLAGS := -Iinclude -Wall
-# Add -d for flex debugging
-FLEX := flex
-BISON := bison
+CC ?= gcc
+CFLAGS := -Iinclude -Igen -I$(GEN) -Wall -Wextra -O2
+
+# src/ and gen/
+SRC := src
+BIN := bin
+GEN := gen
+
+MAIN_SRC := $(SRC)/repl.c
+EXEC := bin/repl
+
+# Add -d for debugging
+FLEX := flex #-d
+BISON := bison #-d -v --debug
 GPERF := gperf
 
-FLEX_SRC = src/lexer.l
-BISON_SRC = src/parser.y
-GPERF_SCR = src/prim_op.gperf
+FLEX_SRC := $(SRC)/lexer.l
+BISON_SRC := $(SRC)/parser.y
+GPERF_SCR := $(SRC)/prim_op.gperf
 
-LEX_OUT = src/lexer.c
-BISON_OUT = src/parser.c
-BISON_HEADER = include/parser.h
-GPERF_OUT = src/prim_op.c
+FLEX_C := $(GEN)/lexer.c
+BISON_C := $(GEN)/parser.c
+BISON_H := $(GEN)/parser.h
+GPERF_C := $(GEN)/prim_op.c
 
-# GLIB := glib-2.0
+SRC_CFILES := $(wildcard $(SRC)/*.c) $(FLEX_C) $(BISON_C) $(GPERF_C)
+SRC_CFILES_ALL := $(sort $(SRC_CFILES))
+SRC_OBJS := $(patsubst $(SRC)/%.c, $(BIN)/%.o, $(SRC_CFILES_ALL))
 
-OS := $(shell uname)
-LIBS = -lreadline
+.PHONY: all
+all: src exec
 
-# ifeq ($(OS), Darwin)
-# 	LIBS := $(shell pkg-config --libs $(GLIB)) -ll
-# else
-#     LIBS = -lfl
-# endif
+exec: $(MAIN_SRC)
+	$(CC) $(CFLAGS) -DREPL_MAIN=1 -o $(EXEC) $(SRC_OBJS) $(MAIN_SRC)
 
-REPL = bin/repl
+.PHONY: src
+src: gen $(SRC_OBJS)
 
-all: $(REPL)
+# ie pattern rule istead of $(SRC_OBJS) because $(SRC_OBJS) would assume gcc built all $(SRC_OBJS)
+$(BIN)/%.o: $(SRC)/%.c | bin
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(REPL): $(BISON_OUT) $(LEX_OUT) $(GPERF_OUT) src
-	$(CC) $(CFLAGS) -o $(REPL) bin/*.o $(FLEX_LIB) $(LIBS)
+# gen
+.PHONY: gen
+gen: $(BISON_C) $(FLEX_C) $(GPERF_C)
 
-$(LEX_OUT): $(FLEX_SRC) $(BISON_HEADER)
-	$(FLEX) -o $(LEX_OUT) $(FLEX_SRC)
+$(BISON_C): $(BISON_SRC) | bin
+	$(BISON) -o $(BISON_C) --defines=$(BISON_H) $(BISON_SRC)
 
-$(BISON_OUT): $(BISON_SRC)
-	$(BISON) -o $(BISON_OUT) --defines=$(BISON_HEADER) $(BISON_SRC)
+$(FLEX_C): $(FLEX_SRC) $(BISON_H) | bin
+	$(FLEX) -o $(FLEX_C) $(FLEX_SRC)
 
-$(GPERF_OUT): $(GPERF_SCR) $(BISON_HEADER)
-	$(GPERF) $(GPERF_SCR) --output-file=$(GPERF_OUT)
+$(GPERF_C): $(GPERF_SCR) $(BISON_H) | bin
+	$(GPERF) $(GPERF_SCR) --output-file=$(GPERF_C)
 
-src:
-	@$(MAKE) -C src/
+# test/
+TEST_SRC := test
 
+TEST_MAIN_SRC := $(TEST_SRC)/test_main.c
+TEST_EXE := $(BIN)/test_main
+
+TEST_CFILES := $(wildcard $(TEST_SRC)/*.c)
+TEST_OBJS := $(patsubst $(TEST_SRC)/%.c, $(BIN)/%.o, $(TEST_CFILES))
+
+ifeq ($(shell uname), Darwin)
+	CHECK := check
+	TEST_FLAGS := $(shell pkg-config --cflags $(CHECK))
+	TEST_LIBS := $(shell pkg-config --libs $(CHECK)) -pthread
+endif
+
+.PHONY: test
+test: src $(TEST_EXE)
+	@./$(TEST_EXE)
+
+$(TEST_EXE): $(TEST_OBJS) | bin
+	$(CC) $(CFLAGS) -DTEST_MAIN=1 -o $(TEST_EXE) $(SRC_OBJS) $(TEST_OBJS) $(TEST_MAIN_SRC) $(TEST_FLAGS) $(TEST_LIBS)
+
+$(BIN)/%.o: $(TEST_SRC)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@ $(TEST_FLAGS)
+
+# linting
+.PHONY: lint
 lint: clean
-	clang-format -i src/*.c include/*.h
-	cppcheck src/*.c include/*.h
+	clang-format -i */*.c */*.h
+	cppcheck */*.c */*.h
 
+# bin/
+.PHONY: bin
+bin:
+	-@mkdir $(BIN) $(GEN)
+
+# clean
+.PHONY: clean
 clean:
-	@rm -f $(REPL) $(LEX_OUT) $(BISON_OUT) $(BISON_HEADER) $(GPERF_OUT) $(OBJS)
-	@$(MAKE) -C src/ clean
+	-@rm -f $(FLEX_C) $(BISON_C) $(BISON_H) $(GPERF_C) $(BIN)/* $(GEN)/*
+	-@rmdir $(BIN) $(GEN)

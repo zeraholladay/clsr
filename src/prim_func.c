@@ -117,6 +117,8 @@ Obj *set(Obj *void_obj, EvalContext *ctx) {
 }
 
 Obj *eval(Obj *obj, EvalContext *ctx) {
+  Obj *result = FALSE;
+
   if (obj == NULL) {
     return FALSE;
   }
@@ -130,13 +132,13 @@ Obj *eval(Obj *obj, EvalContext *ctx) {
     Obj *expression = expressions.nodes[i];
 
     if (OBJ_KIND(expression) == Obj_Call) {
-      return OBJ_AS(expression, call).prim->prim_func(expression, ctx);
+      result = OBJ_AS(expression, call).prim->prim_func(expression, ctx);
     } else if (OBJ_KIND(expression) == Obj_Closure) { // FIXME
-      return closure(expression, ctx);
+      result = closure(expression, ctx);
     } else {
       die("Unknown to eval\n");
       return FALSE;
     }
   }
-  return TRUE;
+  return result;
 }

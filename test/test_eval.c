@@ -260,33 +260,21 @@ START_TEST(test_closure) {
 
   Obj *obj = POP(&stack);
 
-  obj_fprintf(stderr, obj);
-  fprintf(stderr, "\n");
-
   ck_assert(OBJ_ISKIND(obj, Obj_Closure));
 }
 END_TEST
 
-START_TEST(test_apply_basic) {
+START_TEST(test_anonymous_closure_apply) {
   const char *expressions[] = {
-      "CLOSURE ()\n",
+      "PUSH 42 1 3\n",
 
-      "CLOSURE foo bar ()\n",
-
-      // TODO fix test_parser.c
-
-      "CLOSURE foo bar (\n"
-      "  PUSH 42\n"
-      "  RETURN\n"
+      "CLOSURE i j k(\n"
+      "  PUSH i\n"
+      "  LOOKUP\n"
+      "  RETURN ; return 42\n"
       ")\n",
 
-      "PUSH foo42\n",
-
-      "SET\n",
-
-      "PUSH foo42\n",
-
-      "LOOKUP\n",
+      "APPLY\n",
 
       NULL,
   };
@@ -306,14 +294,61 @@ START_TEST(test_apply_basic) {
     fclose(yyin);
   }
 
-  // Check the last one
+  Obj *obj = POP(&stack);
+  ck_assert(OBJ_ISKIND(obj, Obj_Literal));
+
+  ObjLiteral int_literal = OBJ_AS(obj, literal);
+
+  ck_assert(int_literal.kind == Literal_Int);
+  ck_assert_int_eq(int_literal.integer, 42);
+}
+END_TEST
+
+START_TEST(test_named_closure_apply) {
+  const char *expressions[] = {
+      "CLOSURE barvar (\n"
+      "  PUSH barvar\n"
+      "  LOOKUP\n"
+      "  RETURN\n"
+      ")\n",
+
+      "PUSH foo42\n",
+
+      "SET\n",
+
+      "PUSH 42\n",
+
+      "PUSH foo42\n",
+
+      "LOOKUP\n",
+
+      "APPLY\n",
+
+      NULL,
+  };
+
+  for (unsigned i = 0; expressions[i]; ++i) {
+    const char *input = expressions[i];
+
+    yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+
+    int parse_status = yyparse(&parser_ctx);
+    ck_assert_int_eq(parse_status, 0);
+
+    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    ck_assert_ptr_eq(eval_status, TRUE);
+
+    yylex_destroy();
+    fclose(yyin);
+  }
 
   Obj *obj = POP(&stack);
+  ck_assert(OBJ_ISKIND(obj, Obj_Literal));
 
-  obj_fprintf(stderr, obj);
-  fprintf(stderr, "\n");
+  ObjLiteral int_literal = OBJ_AS(obj, literal);
 
-  ck_assert(OBJ_ISKIND(obj, Obj_Closure));
+  ck_assert(int_literal.kind == Literal_Int);
+  ck_assert_int_eq(int_literal.integer, 42);
 }
 END_TEST
 
@@ -329,6 +364,8 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_lookup);
   tcase_add_test(tc_core, test_ret);
   tcase_add_test(tc_core, test_closure);
+  tcase_add_test(tc_core, test_anonymous_closure_apply);
+  tcase_add_test(tc_core, test_named_closure_apply);
 
   suite_add_tcase(s, tc_core);
   return s;

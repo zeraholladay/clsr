@@ -18,12 +18,9 @@ const char *valid_expressions[] = {
     "\n\n",
 
     // Comments
-    ";", // ignored
-
+    ";",
     ";\n",
-
     "; 42\n",
-
     ";;\n",
 
     // PUSH Instructions
@@ -31,19 +28,15 @@ const char *valid_expressions[] = {
 
     "PUSH 42 life\n",
 
-    "PUSH a b c\n"
-    "; STACK:\n"
-    ";   c\n"
-    ";   b\n"
-    ";   a\n",
+    "PUSH a b c\n",
 
     // SET Instruction
     "SET\n",
 
     "PUSH a 1\n"
     "; STACK:\n"
-    ";   1\n"
-    ";   a\n"
+    ";   a   (symbol)\n"
+    ";   1   (value)\n"
     "SET\n"
     "; env={ a=1 }\n",
 
@@ -52,16 +45,16 @@ const char *valid_expressions[] = {
 
     "PUSH a 1\n"
     "; STACK:\n"
-    ";   1\n"
-    ";   a\n"
+    ";   a   (symbol)\n"
+    ";   1   (value)\n"
     "SET\n"
     "; env={ a=1 }\n"
     "PUSH a\n"
     "; STACK:\n"
-    ";   a\n"
+    ";   a   (symbol)\n"
     "LOOKUP\n"
     "; STACK:\n"
-    ";   1\n",
+    ";   1   (value found)\n",
 
     // CLOSURE Instructions
     "CLOSURE ()\n",
@@ -75,53 +68,50 @@ const char *valid_expressions[] = {
     "   RETURN\n"
     ")\n",
 
-    "PUSH foo\n"
     "CLOSURE a b c (\n"
     "  PUSH bar\n"
     "  RETURN\n"
     ")\n"
     "; STACK:\n"
-    ";   #clsr-id\n"
+    ";   (closure)\n"
     "PUSH foo\n"
     "; STACK:\n"
-    ";   #clsr-id\n"
-    ";   foo\n"
+    ";   foo   (symbol)\n"
+    ";   (closure)\n"
     "SET\n"
-    "; env={ foo=#clsr-id }\n",
+    "; env={ foo=closure }\n",
 
     // APPLY Anonymous Closure
+    "PUSH 1 2 3\n"
     "CLOSURE a b c (\n"
     "  ; returns NIL\n"
     ")\n"
     "; STACK:\n"
-    ";   #clsr-id\n"
-    "PUSH 1 2 3\n"
-    "; STACK:\n"
-    ";   3\n"
-    ";   2\n"
+    ";   (closure)\n"
     ";   1\n"
-    ";   #clsr-id\n"
+    ";   2\n"
+    ";   3\n"
     "APPLY\n",
 
     // APPLY Named Closure
-    "PUSH foo\n"
     "CLOSURE a b c (\n"
     "  PUSH bar\n"
     "  RETURN\n"
     ")\n"
+    "PUSH foo\n"
     "; STACK:\n"
-    ";   #clsr-id\n"
-    ";   foo\n"
+    ";   foo   (symbol)\n"
+    ";   (closure)\n"
     "SET\n"
-    "; env={ foo=#clsr-id }\n"
-    "; call foo(1,2,3)\n"
+    "; env={ foo=closure }\n"
+    "PUSH 1 2 3\n"
+    "PUSH foo\n"
     "LOOKUP\n"
     "; STACK:\n"
-    ";   3\n"
-    ";   2\n"
+    ";   (closure)\n"
     ";   1\n"
-    ";   #clsr-id\n"
-    "PUSH 1 2 3\n"
+    ";   2\n"
+    ";   3\n"
     "APPLY\n",
 
     NULL,

@@ -46,9 +46,9 @@ Obj *push(Obj *obj, EvalContext *ctx) {
   ObjCall obj_call = OBJ_AS(obj, call);
   ObjList list = OBJ_AS(obj_call.args, list);
 
-  for (unsigned int i = 0; i < list.count; ++i) {
-    assert(OBJ_ISKIND(list.nodes[i], Obj_Literal));
-    PUSH(ctx->stack, list.nodes[i]);
+  for (unsigned int i = list.count; i > 0; --i) {
+    assert(OBJ_ISKIND(list.nodes[i - 1], Obj_Literal));
+    PUSH(ctx->stack, list.nodes[i - 1]);
   }
 
   return TRUE;
@@ -69,8 +69,8 @@ Obj *ret(Obj *obj, EvalContext *ctx) {
 Obj *set(Obj *obj, EvalContext *ctx) {
   (void)obj;
 
-  Obj *val = POP(ctx->stack);
   Obj *key = POP(ctx->stack);
+  Obj *val = POP(ctx->stack);
 
   if (!(key && OBJ_ISKIND(key, Obj_Literal) &&
         OBJ_AS(key, literal).kind == Literal_Sym)) {

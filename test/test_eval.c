@@ -52,7 +52,7 @@ START_TEST(test_push) {
 END_TEST
 
 START_TEST(test_push_args) {
-  const char *input = "PUSH foo 42 bar -1\n";
+  const char *input = "PUSH -1 bar 42 foo\n";
   yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
 
   int parse_status = yyparse(&parser_ctx);
@@ -227,12 +227,12 @@ START_TEST(test_closure_basic) {
 
       // TODO fix test_parser.c
 
-      "PUSH foo42\n",
-
       "CLOSURE foo bar (\n"
       "  PUSH 42\n"
       "  RETURN\n"
       ")\n",
+
+      "PUSH foo42\n",
 
       "SET\n",
 

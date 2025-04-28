@@ -264,7 +264,7 @@ START_TEST(test_closure) {
 }
 END_TEST
 
-START_TEST(test_anonymous_closure_apply) {
+START_TEST(test_apply_with_anonymous_closure) {
   const char *expressions[] = {
       "PUSH 42 1 3\n",
 
@@ -304,7 +304,7 @@ START_TEST(test_anonymous_closure_apply) {
 }
 END_TEST
 
-START_TEST(test_named_closure_apply) {
+START_TEST(test_apply_with_named_closure) {
   const char *expressions[] = {
       "CLOSURE barvar (\n"
       "  PUSH barvar\n"
@@ -364,8 +364,8 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_lookup);
   tcase_add_test(tc_core, test_ret);
   tcase_add_test(tc_core, test_closure);
-  tcase_add_test(tc_core, test_anonymous_closure_apply);
-  tcase_add_test(tc_core, test_named_closure_apply);
+  tcase_add_test(tc_core, test_apply_with_anonymous_closure);
+  tcase_add_test(tc_core, test_apply_with_named_closure);
 
   suite_add_tcase(s, tc_core);
   return s;

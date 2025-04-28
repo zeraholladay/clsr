@@ -1,6 +1,6 @@
-# Mini Stack-Based VM Instructions
+# clsr: Mini Stack-Based Interpreted Language with Closures
 
-This virtual machine uses a simple stack-based architecture with support for closures, lexical environments, and basic function application.
+A simple stack-based interpreted language with support for closures, lexical environments, and basic function application.
 
 ## Atoms
 

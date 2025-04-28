@@ -4,10 +4,6 @@
 # $<	The first prerequisite (typically the input file)
 # $^	All prerequisites, with duplicates removed
 
-# Compilers and flags
-CC ?= gcc
-CFLAGS := -Iinclude -Igen -I$(GEN) -Wall -Wextra -O2
-
 # src/ and gen/
 SRC := src
 BIN := bin
@@ -15,6 +11,14 @@ GEN := gen
 
 MAIN_SRC := $(SRC)/repl.c
 EXEC := bin/repl
+
+# Compilers and flags
+CC ?= gcc
+CFLAGS_DEBUG := -g -O0
+CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O2
+
+# libs
+LIBS := -lreadline
 
 # Add -d for debugging
 FLEX := flex #-d
@@ -38,7 +42,7 @@ SRC_OBJS := $(patsubst $(SRC)/%.c, $(BIN)/%.o, $(SRC_CFILES_ALL))
 all: src exec
 
 exec: $(MAIN_SRC)
-	$(CC) $(CFLAGS) -DREPL_MAIN=1 -o $(EXEC) $(SRC_OBJS) $(MAIN_SRC)
+	$(CC) $(CFLAGS) -DREPL_MAIN=1 -o $(EXEC) $(SRC_OBJS) $(MAIN_SRC) $(LIBS)
 
 .PHONY: src
 src: gen $(SRC_OBJS)
@@ -72,7 +76,7 @@ TEST_OBJS := $(patsubst $(TEST_SRC)/%.c, $(BIN)/%.o, $(TEST_CFILES))
 ifeq ($(shell uname), Darwin)
 	CHECK := check
 	TEST_FLAGS := $(shell pkg-config --cflags $(CHECK))
-	TEST_LIBS := $(shell pkg-config --libs $(CHECK)) -pthread
+	TEST_LIBS := $(shell pkg-config --libs $(CHECK)) -pthread $(LIBS)
 endif
 
 .PHONY: test
@@ -89,7 +93,7 @@ $(BIN)/%.o: $(TEST_SRC)/%.c
 .PHONY: lint
 lint: clean
 	clang-format -i */*.c */*.h
-	cppcheck */*.c */*.h
+	cppcheck */*.c */*.h --check-level=exhaustive
 
 # bin/
 .PHONY: bin

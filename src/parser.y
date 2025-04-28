@@ -87,15 +87,12 @@ expression_with_nl:
 
 expression:
     nullary_prim_op {
-        DEBUG("[YACC] nullary_prim_op\n");
         $$ = obj_new_call(ctx->obj_pool, $1, NULL);
     }
   | nary_prim_op args {
-        DEBUG("[YACC] nary_prim_op\n");
         $$ = obj_new_call(ctx->obj_pool, $1, $2);
     }
   | CLOSURE args '(' opt_nl expressions opt_nl ')' {
-        DEBUG("[YACC] CLOSURE\n");
         $$ = obj_new_closure(ctx->obj_pool, $2, $5);
     }
 ;
@@ -130,11 +127,9 @@ args:
 
 arg:
     INT_LITERAL {
-        DEBUG("[YACC] INT_LITERAL %d (line %d)\n", $1, yylineno);
         $$ = obj_new_literal_int(ctx->obj_pool, $1);
     }
     | SYM_LITERAL {
-        DEBUG("[YACC] SYM_LITERAL %s (line %d)\n", $1, yylineno);
         $$ = obj_new_literal_sym(ctx->obj_pool, $1);
     }
 ;

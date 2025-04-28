@@ -132,12 +132,13 @@ void obj_pool_reset(ObjPool *p);
 
 /* prim_func.c */
 
-Obj *apply(Obj *obj, EvalContext *ctx);
+Obj *apply(Obj *void_obj, EvalContext *ctx);
 Obj *closure(Obj *obj, EvalContext *ctx);
-Obj *lookup(Obj *obj, EvalContext *ctx);
+Obj *lookup(Obj *void_obj, EvalContext *ctx);
 Obj *push(Obj *obj, EvalContext *ctx);
-Obj *ret(Obj *obj, EvalContext *ctx);
-Obj *set(Obj *obj, EvalContext *ctx);
+Obj *ret(Obj *void_obj, EvalContext *ctx);
+Obj *set(Obj *void_obj, EvalContext *ctx);
+Obj *eval(Obj *obj, EvalContext *ctx);
 
 Obj *eval(Obj *obj, EvalContext *ctx);
 

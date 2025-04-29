@@ -33,7 +33,7 @@ Obj *apply(Obj *void_obj, EvalContext *ctx) {
       .env = closure_env,
   };
 
-  return eval(obj_closure.body, &new_ctx);  // TODO: force EXIT_FRAME?
+  return eval(obj_closure.body, &new_ctx); // TODO: force EXIT_FRAME?
 }
 
 Obj *closure(Obj *obj, EvalContext *ctx) {

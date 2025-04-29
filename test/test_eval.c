@@ -16,13 +16,13 @@ extern void clsr_init(Stack *stack, ParseContext *parser_ctx,
 void clsr_destroy(Stack *stack, ParseContext *parser_ctx,
                   EvalContext *eval_ctx);
 
-Stack stack = {};
-ParseContext parser_ctx = {};
-EvalContext eval_ctx = {};
+static Stack stack = {};
+static ParseContext parser_ctx = {};
+static EvalContext eval_ctx = {};
 
-void eval_setup(void) { clsr_init(&stack, &parser_ctx, &eval_ctx); }
+static void setup(void) { clsr_init(&stack, &parser_ctx, &eval_ctx); }
 
-void eval_teardown(void) { clsr_destroy(&stack, &parser_ctx, &eval_ctx); }
+static void teardown(void) { clsr_destroy(&stack, &parser_ctx, &eval_ctx); }
 
 START_TEST(test_push) {
   const char *input = "PUSH ()\n";
@@ -348,7 +348,7 @@ Suite *eval_suite(void) {
   Suite *s = suite_create("Eval");
 
   TCase *tc_core = tcase_create("Core");
-  tcase_add_checked_fixture(tc_core, eval_setup, eval_teardown);
+  tcase_add_checked_fixture(tc_core, setup, teardown);
 
   tcase_add_test(tc_core, test_push);
   tcase_add_test(tc_core, test_push_args);

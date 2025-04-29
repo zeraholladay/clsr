@@ -140,7 +140,6 @@ Obj *obj_expr_list_append(Obj *obj, Obj *item);
 Obj *obj_new_call(ObjPool *p, const PrimOp *prim, Obj *args);
 Obj *obj_new_closure(ObjPool *p, Obj *params, Obj *body);
 Obj *obj_new_if(ObjPool *p, Obj *then, Obj *else_);
-void obj_dfs_post_order(Obj *obj, void *ptr, void (*visit)(Obj *, void *ptr));
 void obj_fprintf(FILE *restrict stream, const Obj *obj);
 
 /* obj_pool.c */
@@ -149,7 +148,8 @@ ObjPool *obj_pool_init(unsigned int count);
 void obj_pool_destroy(ObjPool **p);
 Obj *obj_pool_alloc(ObjPool *p);
 void obj_pool_free(ObjPool *p, Obj *obj);
-void obj_pool_reset(ObjPool *p);
+void obj_pool_reset_from_mark(ObjPool *p, ObjPoolWrapper *mark);
+void obj_pool_reset_all(ObjPool *p);
 
 /* prim_func.c */
 

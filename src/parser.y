@@ -1,4 +1,5 @@
 %{
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -24,6 +25,7 @@ extern int yylineno;
 typedef struct ParseContext {
     ObjPool *obj_pool;
     Obj *root_obj;
+    ObjPoolWrapper *parse_mark;
 } ParseContext;
 
 void reset_parse_context(ParseContext *ctx);
@@ -117,11 +119,16 @@ arg:
 %%
 
 void reset_parse_context(ParseContext *ctx) {
-    // TODO: free any nodes pointed to *root_obj
+    assert(ctx);
+    assert(ctx->obj_pool);
+
+    // no pool. assumes it has already been allocated.
     ctx->root_obj = NULL;
+    ctx->parse_mark = ctx->obj_pool->free_list;
 }
 
 void yyerror_handler(ParseContext *ctx, const char *s) {
     fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
+    obj_pool_reset_from_mark(ctx->obj_pool, ctx->parse_mark);
     reset_parse_context(ctx);
 }

@@ -92,53 +92,6 @@ Obj *obj_new_if(ObjPool *p, Obj *then, Obj *else_) {
   return obj;
 }
 
-void obj_dfs_post_order(Obj *obj, void *ptr, void (*visit)(Obj *, void *)) {
-  if (obj == NULL)
-    return;
-
-  switch (OBJ_KIND(obj)) {
-  case Obj_Literal:
-    visit(obj, ptr);
-    break;
-
-  case Obj_List: {
-    ObjList list = OBJ_AS(obj, list);
-    for (unsigned int i = 0; i < list.count; ++i) {
-      obj_dfs_post_order(list.nodes[i], ptr, visit);
-    }
-    visit(obj, ptr);
-    break;
-  }
-
-  case Obj_Call: {
-    ObjCall call = OBJ_AS(obj, call);
-    obj_dfs_post_order(call.args, ptr, visit);
-    visit(obj, ptr);
-    break;
-  }
-
-  case Obj_Closure: {
-    ObjClosure closure = OBJ_AS(obj, closure);
-    obj_dfs_post_order(closure.params, ptr, visit);
-    obj_dfs_post_order(closure.body, ptr, visit);
-    visit(obj, ptr);
-    break;
-  }
-
-  case Obj_If: {
-    ObjIf if_ = OBJ_AS(obj, if_);
-    obj_dfs_post_order(if_.then, ptr, visit);
-    obj_dfs_post_order(if_.else_, ptr, visit);
-    visit(obj, ptr);
-    break;
-  }
-
-  default:
-    die("Unknown ObjKind!");
-    break;
-  }
-}
-
 void obj_fprintf(FILE *restrict stream, const Obj *obj) {
   if (obj == NULL) {
     fprintf(stream, "NULL");

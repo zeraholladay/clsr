@@ -19,8 +19,8 @@ extern void yylex_destroy(void);
 void clsr_init(Stack *stack, ParseContext *parser_ctx, EvalContext *eval_ctx) {
   obj_init_reserved_literals();
 
-  reset_parse_context(parser_ctx);
   parser_ctx->obj_pool = obj_pool_init(OBJ_POOL_CAPACITY);
+  reset_parse_context(parser_ctx);
 
   STACK_INIT(stack);
 
@@ -59,6 +59,7 @@ int clsr_repl(void) {
 
     yyin = fmemopen((void *)full_input, len, "r");
 
+    reset_parse_context(&parser_ctx);
     int parse_status = yyparse(&parser_ctx);
 
     yylex_destroy();
@@ -77,8 +78,6 @@ int clsr_repl(void) {
       fprintf(stderr, "Parse failed\n");
       continue; // TODO: syntax error
     }
-
-    reset_parse_context(&parser_ctx);
   }
 }
 

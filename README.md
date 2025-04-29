@@ -9,7 +9,7 @@ A simple stack-based interpreted language with support for closures, lexical env
 
 ## Primitives (or Operators)
 
-### `PUSH arg0 arg1 ... argN`
+### `PUSH (arg0 arg1 ... argN)`
 Pushes one or more atoms onto the stack.
 
 This is a variadic producer instruction — it accepts zero or more arguments and *produces* values by pushing them onto the stack.
@@ -17,7 +17,7 @@ This is a variadic producer instruction — it accepts zero or more arguments an
 Example:
 
 ```lisp
-PUSH a b c
+PUSH (a b c)
 ; STACK:
 ; a
 ; b
@@ -34,7 +34,7 @@ A pure consumer that establishes a new variable binding. This operation does not
 Example:
 
 ```lisp
-PUSH a 1
+PUSH (a 1)
 ; STACK:
 ; a
 ; 1
@@ -53,12 +53,12 @@ The original symbol is discarded, and the resolved value is pushed in its place.
 Example:
 
 ```lisp
-PUSH a 1 
+PUSH (a 1) 
 ; STACK:
 ; a
 ; 1
 SET ; env={ a=1 }
-PUSH a
+PUSH (a)
 ; STACK:
 ; a
 LOOKUP
@@ -86,9 +86,9 @@ Produces:
 Example with cloure named `foo`:
 
 ```lisp
-PUSH foo
-CLOSURE a b c (
-  PUSH bar
+PUSH (foo)
+CLOSURE (a b c) (
+  PUSH (bar)
   RETURN
 )
 ; (closure)
@@ -116,12 +116,12 @@ Side effect:
 Example with anonymous clousre:
 
 ```lisp
-PUSH 1 2 3
+PUSH (1 2 3)
 ; STACK:
 ;   3
 ;   2
 ;   1
-CLOSURE a b c (
+CLOSURE (a b c) (
   ; returns NIL
 )
 ; STACK:
@@ -135,18 +135,18 @@ APPLY
 Example with closure named `foo`:
 
 ```lisp
-CLOSURE a b c (
-  PUSH bar
+CLOSURE (a b c) (
+  PUSH (bar)
   RETURN
 )
-PUSH foo
+PUSH (foo)
 ; STACK:
 ;   foo
 ;   (closure)
 SET
 ; env={ foo=closure }
-PUSH 1 2 3
-PUSH foo
+PUSH (1 2 3)
+PUSH (foo)
 LOOKUP
 ; STACK:
 ;   (closure)

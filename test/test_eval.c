@@ -33,7 +33,7 @@ void eval_teardown(void) {
 }
 
 START_TEST(test_push) {
-  const char *input = "PUSH\n";
+  const char *input = "PUSH ()\n";
   yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
 
   int parse_status = yyparse(&parser_ctx);
@@ -52,7 +52,7 @@ START_TEST(test_push) {
 END_TEST
 
 START_TEST(test_push_args) {
-  const char *input = "PUSH -1 bar 42 foo\n";
+  const char *input = "PUSH (-1 bar 42 foo)\n";
   yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
 
   int parse_status = yyparse(&parser_ctx);
@@ -103,7 +103,7 @@ END_TEST
 
 START_TEST(test_set) {
   const char *expressions[] = {
-      "PUSH foo 42\n",
+      "PUSH (foo 42)\n",
       "SET\n",
       NULL,
   };
@@ -141,7 +141,7 @@ END_TEST
 
 START_TEST(test_lookup) {
   const char *expressions[] = {
-      "PUSH foo bar\n", "SET\n", "PUSH foo\n", "LOOKUP\n", NULL,
+      "PUSH (foo bar)\n", "SET\n", "PUSH (foo)\n", "LOOKUP\n", NULL,
   };
 
   for (unsigned i = 0; expressions[i]; ++i) {
@@ -187,7 +187,7 @@ START_TEST(test_ret) {
   ENTER_FRAME(&stack);
 
   const char *expressions[] = {
-      "PUSH foobar\n",
+      "PUSH (foobar)\n",
       "RETURN\n",
       NULL,
   };
@@ -221,20 +221,20 @@ END_TEST
 
 START_TEST(test_closure) {
   const char *expressions[] = {
-      "CLOSURE ()\n",
+      "CLOSURE ()()\n",
 
-      "CLOSURE foo bar ()\n",
+      "CLOSURE (foo bar) ()\n",
 
-      "CLOSURE foo bar (\n"
-      "  PUSH 42\n"
+      "CLOSURE (foo bar) (\n"
+      "  PUSH (42)\n"
       "  RETURN\n"
       ")\n",
 
-      "PUSH foo42\n",
+      "PUSH (foo42)\n",
 
       "SET\n",
 
-      "PUSH foo42\n",
+      "PUSH (foo42)\n",
 
       "LOOKUP\n",
 
@@ -266,10 +266,10 @@ END_TEST
 
 START_TEST(test_apply_with_anonymous_closure) {
   const char *expressions[] = {
-      "PUSH 42 1 3\n",
+      "PUSH (42 1 3)\n",
 
-      "CLOSURE i j k(\n"
-      "  PUSH i\n"
+      "CLOSURE (i j k) (\n"
+      "  PUSH (i)\n"
       "  LOOKUP\n"
       "  RETURN ; return 42\n"
       ")\n",
@@ -306,19 +306,19 @@ END_TEST
 
 START_TEST(test_apply_with_named_closure) {
   const char *expressions[] = {
-      "CLOSURE barvar (\n"
-      "  PUSH barvar\n"
+      "CLOSURE (barvar) (\n"
+      "  PUSH (barvar)\n"
       "  LOOKUP\n"
       "  RETURN\n"
       ")\n",
 
-      "PUSH foo42\n",
+      "PUSH (foo42)\n",
 
       "SET\n",
 
-      "PUSH 42\n",
+      "PUSH (42)\n",
 
-      "PUSH foo42\n",
+      "PUSH (foo42)\n",
 
       "LOOKUP\n",
 

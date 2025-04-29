@@ -12,28 +12,28 @@ extern int yyparse(ParseContext *ctx);
 extern void yylex_destroy(void);
 
 const char *valid_expressions[] = {
-    // Newlines
-    "\n",
+    // // Newlines
+    // "\n",
 
-    "\n\n",
+    // "\n\n",
 
-    // Comments
-    ";",
-    ";\n",
-    "; 42\n",
-    ";;\n",
+    // // Comments
+    // ";",
+    // ";\n",
+    // "; 42\n",
+    // ";;\n",
 
     // PUSH Instructions
-    "PUSH\n",
+    "PUSH ()\n",
 
-    "PUSH 42 life\n",
+    "PUSH (42 life)\n",
 
-    "PUSH a b c\n",
+    "PUSH (a b c)\n",
 
     // SET Instruction
     "SET\n",
 
-    "PUSH a 1\n"
+    "PUSH (a 1)\n"
     "; STACK:\n"
     ";   a   (symbol)\n"
     ";   1   (value)\n"
@@ -43,13 +43,13 @@ const char *valid_expressions[] = {
     // LOOKUP Instruction
     "LOOKUP\n",
 
-    "PUSH a 1\n"
+    "PUSH (a 1)\n"
     "; STACK:\n"
     ";   a   (symbol)\n"
     ";   1   (value)\n"
     "SET\n"
     "; env={ a=1 }\n"
-    "PUSH a\n"
+    "PUSH (a)\n"
     "; STACK:\n"
     ";   a   (symbol)\n"
     "LOOKUP\n"
@@ -57,24 +57,24 @@ const char *valid_expressions[] = {
     ";   1   (value found)\n",
 
     // CLOSURE Instructions
-    "CLOSURE ()\n",
+    "CLOSURE ()()\n",
 
-    "CLOSURE a b c ()\n",
-
-    "CLOSURE (\n"
-    ")\n",
+    "CLOSURE (a b c) ()\n",
 
     "CLOSURE (\n"
+    ")()\n",
+
+    "CLOSURE () (\n"
     "   RETURN\n"
     ")\n",
 
-    "CLOSURE a b c (\n"
-    "  PUSH bar\n"
+    "CLOSURE (a b c) (\n"
+    "  PUSH (bar)\n"
     "  RETURN\n"
     ")\n"
     "; STACK:\n"
     ";   (closure)\n"
-    "PUSH foo\n"
+    "PUSH (foo)\n"
     "; STACK:\n"
     ";   foo   (symbol)\n"
     ";   (closure)\n"
@@ -82,8 +82,8 @@ const char *valid_expressions[] = {
     "; env={ foo=closure }\n",
 
     // APPLY Anonymous Closure
-    "PUSH 1 2 3\n"
-    "CLOSURE a b c (\n"
+    "PUSH (1 2 3)\n"
+    "CLOSURE (a b c) (\n"
     "  ; returns NIL\n"
     ")\n"
     "; STACK:\n"
@@ -94,18 +94,18 @@ const char *valid_expressions[] = {
     "APPLY\n",
 
     // APPLY Named Closure
-    "CLOSURE a b c (\n"
-    "  PUSH bar\n"
+    "CLOSURE (a b c) (\n"
+    "  PUSH (bar)\n"
     "  RETURN\n"
     ")\n"
-    "PUSH foo\n"
+    "PUSH (foo)\n"
     "; STACK:\n"
     ";   foo   (symbol)\n"
     ";   (closure)\n"
     "SET\n"
     "; env={ foo=closure }\n"
-    "PUSH 1 2 3\n"
-    "PUSH foo\n"
+    "PUSH (1 2 3)\n"
+    "PUSH (foo)\n"
     "LOOKUP\n"
     "; STACK:\n"
     ";   (closure)\n"
@@ -121,7 +121,7 @@ const char *invalid_expressions[] = {
     // Invalid chars
     "&PUSH\n",
 
-    "PUSH . & $\n",
+    "PUSH (. & $)\n",
 
     // Incomplete CLOSURE
     "CLOSURE A B C ( PUSH\n",

@@ -51,7 +51,7 @@ void reset_parse_context(ParseContext *ctx);
 %token ERROR
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
-%token <prim> APPLY CLOSURE LOOKUP PUSH RETURN SET
+%token <prim> APPLY CLOSURE IF LOOKUP PUSH RETURN SET
 
 %%
 
@@ -83,6 +83,9 @@ expression:
       }
     | CLOSURE '(' args ')' '(' expressions ')' {
         $$ = obj_new_closure(ctx->obj_pool, $3, $6);
+    }
+    | IF '(' expressions ')' '(' expressions ')' {
+        $$ = obj_new_if(ctx->obj_pool, $3, $6);
     }
 ;
 

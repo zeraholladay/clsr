@@ -2,6 +2,9 @@
 
 #include "clsr.h"
 
+extern Obj *const obj_true;
+extern Obj *const obj_false;
+
 Obj *apply(Obj *void_obj, EvalContext *ctx) {
   (void)void_obj;
 
@@ -11,7 +14,7 @@ Obj *apply(Obj *void_obj, EvalContext *ctx) {
   assert(OBJ_ISKIND(obj, Obj_Closure));
 
   if (!obj || !(OBJ_ISKIND(obj, Obj_Closure))) {
-    return FALSE; // TODO: error handling
+    return obj_false; // TODO: error handling
   }
 
   ObjClosure obj_closure = OBJ_AS(obj, closure);
@@ -41,13 +44,13 @@ Obj *closure(Obj *obj, EvalContext *ctx) {
   assert(OBJ_ISKIND(obj, Obj_Closure));
 
   if (!obj || !(OBJ_ISKIND(obj, Obj_Closure))) {
-    return FALSE; // TODO: error handling
+    return obj_false; // TODO: error handling
   }
 
   ObjClosure *clsr = OBJ_AS_PTR(obj, closure);
   clsr->env = ctx->env;
   PUSH(ctx->stack, obj);
-  return TRUE;
+  return obj_true;
 }
 
 Obj *lookup(Obj *void_obj, EvalContext *ctx) {
@@ -61,7 +64,7 @@ Obj *lookup(Obj *void_obj, EvalContext *ctx) {
 
   if (!key || !(OBJ_ISKIND(key, Obj_Literal)) ||
       !(OBJ_AS(key, literal).kind == Literal_Sym)) {
-    return FALSE; // TODO: error handling
+    return obj_false; // TODO: error handling
   }
 
   void *rval;
@@ -71,7 +74,7 @@ Obj *lookup(Obj *void_obj, EvalContext *ctx) {
   else
     PUSH(ctx->stack, rval);
 
-  return TRUE;
+  return obj_true;
 }
 
 Obj *push(Obj *obj, EvalContext *ctx) {
@@ -83,7 +86,7 @@ Obj *push(Obj *obj, EvalContext *ctx) {
     PUSH(ctx->stack, list.nodes[i - 1]);
   }
 
-  return TRUE;
+  return obj_true;
 }
 
 /* a/k/a RETURN */
@@ -94,7 +97,7 @@ Obj *ret(Obj *void_obj, EvalContext *ctx) {
   EXIT_FRAME(ctx->stack);
   PUSH(ctx->stack, obj_rval);
 
-  return TRUE;
+  return obj_true;
 }
 
 Obj *set(Obj *void_obj, EvalContext *ctx) {
@@ -109,18 +112,18 @@ Obj *set(Obj *void_obj, EvalContext *ctx) {
 
   if (!key || !(OBJ_ISKIND(key, Obj_Literal)) ||
       !(OBJ_AS(key, literal).kind == Literal_Sym)) {
-    return FALSE; // TODO: error handling
+    return obj_false; // TODO: error handling
   }
 
   env_set(ctx->env, OBJ_AS(key, literal).symbol, val); // TODO
-  return TRUE;
+  return obj_true;
 }
 
 Obj *eval(Obj *obj, EvalContext *ctx) {
-  Obj *result = FALSE;
+  Obj *result = obj_false;
 
   if (obj == NULL) {
-    return FALSE;
+    return obj_false;
   }
 
   assert(obj);
@@ -137,7 +140,7 @@ Obj *eval(Obj *obj, EvalContext *ctx) {
       result = closure(expression, ctx);
     } else {
       die("Unknown to eval\n");
-      return FALSE;
+      return obj_false;
     }
   }
   return result;

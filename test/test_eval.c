@@ -16,6 +16,8 @@ EvalContext eval_ctx = {};
 Stack stack = {};
 
 void eval_setup(void) {
+  obj_init_reserved_literals();
+
   reset_parse_context(&parser_ctx);
   parser_ctx.obj_pool = obj_pool_init(4096);
 
@@ -42,7 +44,7 @@ START_TEST(test_push) {
 
   Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
 
-  ck_assert_ptr_eq(eval_status, TRUE);
+  ck_assert_ptr_eq(eval_status, obj_true);
 
   ck_assert_ptr_eq(POP(&stack), NULL);
 
@@ -63,7 +65,7 @@ START_TEST(test_push_args) {
 
   Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
 
-  ck_assert_ptr_eq(eval_status, TRUE);
+  ck_assert_ptr_eq(eval_status, obj_true);
   ck_assert_int_eq(sp + 4, eval_ctx.stack->sp);
 
   Obj *neg_int = POP(&stack);
@@ -117,7 +119,7 @@ START_TEST(test_set) {
     ck_assert_int_eq(parse_status, 0);
 
     Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
-    ck_assert_ptr_eq(eval_status, TRUE);
+    ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
     fclose(yyin);
@@ -153,7 +155,7 @@ START_TEST(test_lookup) {
     ck_assert_int_eq(parse_status, 0);
 
     Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
-    ck_assert_ptr_eq(eval_status, TRUE);
+    ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
     fclose(yyin);
@@ -201,7 +203,7 @@ START_TEST(test_ret) {
     ck_assert_int_eq(parse_status, 0);
 
     Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
-    ck_assert_ptr_eq(eval_status, TRUE);
+    ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
     fclose(yyin);
@@ -250,7 +252,7 @@ START_TEST(test_closure) {
     ck_assert_int_eq(parse_status, 0);
 
     Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
-    ck_assert_ptr_eq(eval_status, TRUE);
+    ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
     fclose(yyin);
@@ -288,7 +290,7 @@ START_TEST(test_apply_with_anonymous_closure) {
     ck_assert_int_eq(parse_status, 0);
 
     Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
-    ck_assert_ptr_eq(eval_status, TRUE);
+    ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
     fclose(yyin);
@@ -336,7 +338,7 @@ START_TEST(test_apply_with_named_closure) {
     ck_assert_int_eq(parse_status, 0);
 
     Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
-    ck_assert_ptr_eq(eval_status, TRUE);
+    ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
     fclose(yyin);

@@ -70,6 +70,8 @@ int repl_readline(char *full_input, size_t n) {
 }
 
 int repl(void) {
+  obj_init_reserved_literals();
+
   ParseContext parser_ctx;
   reset_parse_context(&parser_ctx);
   parser_ctx.obj_pool = obj_pool_init(4096);

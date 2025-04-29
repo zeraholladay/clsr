@@ -39,7 +39,7 @@ void clsr_destroy(Stack *stack, ParseContext *parser_ctx,
   FREE(eval_ctx->env);
 }
 
-int repl(void) {
+int clsr_repl(void) {
   Stack stack = {};
   ParseContext parser_ctx = {};
   EvalContext eval_ctx = {};
@@ -69,9 +69,6 @@ int repl(void) {
 
       if (eval_status != obj_false) {
         printf("=>TRUE\n");
-        Obj *obj_peek = PEEK((&eval_ctx)->stack);
-        obj_fprintf(stdout, obj_peek);
-        printf("\n");
       } else {
         printf("=>FALSE\n");
       }
@@ -80,13 +77,15 @@ int repl(void) {
       fprintf(stderr, "Parse failed\n");
       continue; // TODO: syntax error
     }
+
+    reset_parse_context(&parser_ctx);
   }
 }
 
 #else
 
-extern int repl(void);
+extern int clsr_repl(void);
 
-int main(void) { repl(); }
+int main(void) { clsr_repl(); }
 
 #endif

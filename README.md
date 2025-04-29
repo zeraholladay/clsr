@@ -86,13 +86,13 @@ Produces:
 Example with cloure named `foo`:
 
 ```lisp
-PUSH (foo)
 CLOSURE (a b c) (
   PUSH (bar)
   RETURN
 )
-; (closure)
+PUSH (foo)
 ; foo
+; (closure)
 SET  ; env={ foo=(closure) }
 ```
 
@@ -121,9 +121,7 @@ PUSH (1 2 3)
 ;   3
 ;   2
 ;   1
-CLOSURE (a b c) (
-  ; returns NIL
-)
+CLOSURE (a b c) ( RETURN )
 ; STACK:
 ;   (closure)
 ;   3

@@ -12,7 +12,7 @@
     YYABORT;                 \
   } while (0)
 
-int yylex(ParseContext *ctx);
+int yylex(void);
 void yyerror_handler(ParseContext *ctx, const char *s);
 
 extern int yylineno;
@@ -24,16 +24,15 @@ extern int yylineno;
 typedef struct ParseContext {
     ObjPool *obj_pool;
     Obj *root_obj;
-    struct {
-        unsigned int parens;
-        unsigned int eof;
-    } lexer_state;
+    // struct {
+    //     unsigned int parens;
+    //     unsigned int eof;
+    // } lexer_state;
 } ParseContext;
 
 void reset_parse_context(ParseContext *ctx);
 }
 
-%lex-param   {ParseContext *ctx}
 %parse-param {ParseContext *ctx}
 
 %union {
@@ -45,7 +44,7 @@ void reset_parse_context(ParseContext *ctx);
 
 %type <prim> nullary_prim_op
 %type <prim> nary_prim_op
-%type <obj> input expression expressions args arg expression_with_nl
+%type <obj> input expression expressions args arg
 
 %define api.token.prefix {TOK_}
 
@@ -57,15 +56,11 @@ void reset_parse_context(ParseContext *ctx);
 %%
 
 input:
-    '\n' {
-        ctx->root_obj = NULL;
-        YYACCEPT;
-    }
-  | expressions {
+    expressions {
         ctx->root_obj = $1;
         YYACCEPT;
     }
-  | error {
+    | error {
         yyerror(ctx, "Parse error\n");
     }
 ;
@@ -74,14 +69,8 @@ expressions:
     /* empty */ {
         $$ = obj_new_empty_expr_list(ctx->obj_pool);
     }
-  | expressions expression_with_nl {
+    | expressions expression {
         $$ = obj_expr_list_append($1, $2);
-    }
-;
-
-expression_with_nl:
-    expression '\n' {
-        $$ = $1;
     }
 ;
 
@@ -89,32 +78,24 @@ expression:
     nullary_prim_op {
         $$ = obj_new_call(ctx->obj_pool, $1, NULL);
     }
-  | nary_prim_op args {
-        $$ = obj_new_call(ctx->obj_pool, $1, $2);
+    | nary_prim_op '(' args ')' {
+        $$ = obj_new_call(ctx->obj_pool, $1, $3);
+      }
+    | CLOSURE '(' args ')' '(' expressions ')' {
+        $$ = obj_new_closure(ctx->obj_pool, $3, $6);
     }
-  | CLOSURE args '(' opt_nl expressions opt_nl ')' {
-        $$ = obj_new_closure(ctx->obj_pool, $2, $5);
-    }
-;
-
-opt_nl:
-    /* empty */
-  | '\n'
 ;
 
 nullary_prim_op:
-    APPLY
+      APPLY
     | LOOKUP
     | RETURN
-    | SET {
-        $$ = $1;
-    }
+    | SET
 ;
 
 nary_prim_op:
-    PUSH {
-        $$ = $1;
-    }
+      PUSH
+;
 
 args:
       /* empty */ {
@@ -122,16 +103,16 @@ args:
       }
     | args arg {
         $$ = obj_expr_list_append($1, $2);
-    }
+      }
 ;
 
 arg:
-    INT_LITERAL {
+      INT_LITERAL {
         $$ = obj_new_literal_int(ctx->obj_pool, $1);
-    }
+      }
     | SYM_LITERAL {
         $$ = obj_new_literal_sym(ctx->obj_pool, $1);
-    }
+      }
 ;
 
 %%
@@ -139,8 +120,6 @@ arg:
 void reset_parse_context(ParseContext *ctx) {
     // TODO: free any nodes pointed to *root_obj
     ctx->root_obj = NULL;
-    ctx->lexer_state.parens = 0;
-    ctx->lexer_state.eof = 0;
 }
 
 void yyerror_handler(ParseContext *ctx, const char *s) {

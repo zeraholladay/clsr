@@ -10,12 +10,16 @@ BIN := bin
 GEN := gen
 
 MAIN_SRC := $(SRC)/repl.c
-EXEC := bin/repl
+EXEC := $(BIN)/clsr
 
 # Compilers and flags
 CC ?= gcc
-CFLAGS_DEBUG := -g -O0
-CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O2
+
+ifeq ($(DEBUG), 1)
+	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O0 -g
+else
+	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O2 -DNDEBUG
+endif
 
 # libs
 LIBS := -lreadline
@@ -103,5 +107,5 @@ bin:
 # clean
 .PHONY: clean
 clean:
-	-@rm -f $(FLEX_C) $(BISON_C) $(BISON_H) $(GPERF_C) $(BIN)/* $(GEN)/*
+	-@rm -rf $(FLEX_C) $(BISON_C) $(BISON_H) $(GPERF_C) $(BIN)/* $(GEN)/*
 	-@rmdir $(BIN) $(GEN)

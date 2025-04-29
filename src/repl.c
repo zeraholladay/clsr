@@ -18,6 +18,16 @@ extern FILE *yyin;
 extern int yyparse(ParseContext *ctx);
 extern void yylex_destroy(void);
 
+char **repl_attempted_completion_function(const char *text, int start,
+                                          int end) {
+  (void)text;
+  (void)start;
+  (void)end;
+
+  rl_bind_key('\t', rl_insert);
+  return NULL;
+}
+
 int repl_readline(char *full_input, size_t n) {
   size_t len = 0;
   char *line = NULL;
@@ -37,7 +47,7 @@ int repl_readline(char *full_input, size_t n) {
 
     size_t line_len = strlen(line);
 
-    if (len + line_len + 3 >= n) { // 3 for '\n\0EOF'
+    if (len + line_len + 2 >= n) {
       free(line);
       return -1;
     }
@@ -71,6 +81,8 @@ int repl(void) {
       .env = env_new(NULL),
   };
 
+  rl_attempted_completion_function = repl_attempted_completion_function;
+
   char full_input[REPL_BUF_SIZ];
 
   for (;;) {
@@ -80,7 +92,7 @@ int repl(void) {
       continue; // TODO: Something
     }
 
-    yyin = fmemopen((void *)full_input, len, "r"); // + 1 for one unput
+    yyin = fmemopen((void *)full_input, len, "r");
 
     int parse_status = yyparse(&parser_ctx);
 
@@ -90,9 +102,9 @@ int repl(void) {
     if (parse_status == 0) {
       Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
       if (eval_status) {
-        printf("<TRUE\n");
+        printf("=>TRUE\n");
       } else {
-        printf("<FALSE\n");
+        printf("=>FALSE\n");
       }
 
     } else {

@@ -73,11 +73,8 @@ START_TEST(test_env_frame) {
   const char *child_key1 = "FACEFADE";
   const char *child_key2 = "DEADFACE";
 
-  void *child_val_1 = (void *)0xFACEFADE;
-  void *child_val_2 = (void *)0x00000000;
-
-  void *child_rval_1;
-  void *child_rval_2;
+  void *child_rval_1 = NULL;
+  void *child_rval_2 = NULL;
 
   env_set(env_child, child_key1, child_rval_1);
   env_set(env_child, child_key2, child_rval_2);

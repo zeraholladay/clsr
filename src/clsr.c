@@ -18,6 +18,29 @@ extern FILE *yyin;
 extern int yyparse(ParseContext *ctx);
 extern void yylex_destroy(void);
 
+void clsr_init(Stack *stack, ParseContext *parser_ctx, EvalContext *eval_ctx) {
+  obj_init_reserved_literals();
+
+  reset_parse_context(parser_ctx);
+  parser_ctx->obj_pool = obj_pool_init(OBJ_POOL_CAPACITY);
+
+  STACK_INIT(stack);
+
+  eval_ctx->stack = stack;
+  eval_ctx->env = env_new(NULL);
+}
+
+void clsr_destroy(Stack *stack, ParseContext *parser_ctx,
+                  EvalContext *eval_ctx) {
+  reset_parse_context(parser_ctx);
+  obj_pool_destroy(&(parser_ctx->obj_pool));
+
+  STACK_FREE(stack);
+
+  eval_ctx->stack = NULL;
+  FREE(eval_ctx->env);
+}
+
 char **repl_attempted_completion_function(const char *text, int start,
                                           int end) {
   (void)text;
@@ -70,18 +93,11 @@ int repl_readline(char *full_input, size_t n) {
 }
 
 int repl(void) {
-  obj_init_reserved_literals();
-
-  ParseContext parser_ctx;
-  reset_parse_context(&parser_ctx);
-  parser_ctx.obj_pool = obj_pool_init(OBJ_POOL_CAPACITY);
-
   Stack stack = {};
-  STACK_INIT(&stack);
-  EvalContext eval_ctx = {
-      .stack = &stack,
-      .env = env_new(NULL),
-  };
+  ParseContext parser_ctx = {};
+  EvalContext eval_ctx = {};
+
+  clsr_init(&stack, &parser_ctx, &eval_ctx);
 
   rl_attempted_completion_function = repl_attempted_completion_function;
 
@@ -106,7 +122,7 @@ int repl(void) {
 
       if (eval_status != obj_false) {
         printf("=>TRUE\n");
-        Obj *obj_peek = PEEK(&stack);
+        Obj *obj_peek = PEEK((&eval_ctx)->stack);
         obj_fprintf(stdout, obj_peek);
         printf("\n");
       } else {

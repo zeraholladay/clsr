@@ -109,7 +109,7 @@ typedef struct {
 /* eval context */
 
 typedef struct EvalContext {
-  Stack *stack;
+  Stack *stack;  // one stack per EvalContext
   Env *env;
 } EvalContext;
 
@@ -120,6 +120,7 @@ const PrimOp *prim_op_lookup(register const char *str,
 /* stack.c (stack helpers) */
 
 #define STACK_INIT(stack) stack_init(stack, STACK_GROWTH)
+#define STACK_FREE(stack) stack_free(stack)
 #define PUSH(stack, obj) stack_push(stack, (void *)obj)
 #define POP(stack) (Obj *)stack_pop(stack)
 #define PEEK(stack) (Obj *)stack_peek(stack)
@@ -158,10 +159,5 @@ Obj *push(Obj *obj, EvalContext *ctx);
 Obj *return_(Obj *void_obj, EvalContext *ctx);
 Obj *set(Obj *void_obj, EvalContext *ctx);
 Obj *eval(Obj *obj, EvalContext *ctx);
-
-/* clsr.c */
-
-// void clsr_init(Stack *stack, ParseContext *parser_ctx, EvalContext
-// *eval_ctx);
 
 #endif

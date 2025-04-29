@@ -11,28 +11,18 @@ extern FILE *yyin;
 extern int yyparse(ParseContext *ctx);
 extern void yylex_destroy(void);
 
+extern void clsr_init(Stack *stack, ParseContext *parser_ctx,
+                      EvalContext *eval_ctx);
+void clsr_destroy(Stack *stack, ParseContext *parser_ctx,
+                  EvalContext *eval_ctx);
+
+Stack stack = {};
 ParseContext parser_ctx = {};
 EvalContext eval_ctx = {};
-Stack stack = {};
 
-void eval_setup(void) {
-  obj_init_reserved_literals();
+void eval_setup(void) { clsr_init(&stack, &parser_ctx, &eval_ctx); }
 
-  reset_parse_context(&parser_ctx);
-  parser_ctx.obj_pool = obj_pool_init(OBJ_POOL_CAPACITY);
-
-  STACK_INIT(&stack);
-  eval_ctx.stack = &stack;
-  eval_ctx.env = env_new(NULL);
-}
-
-void eval_teardown(void) {
-  obj_pool_destroy(&(parser_ctx.obj_pool));
-
-  stack_free(&stack);
-  eval_ctx.stack = NULL;
-  FREE(eval_ctx.env);
-}
+void eval_teardown(void) { clsr_destroy(&stack, &parser_ctx, &eval_ctx); }
 
 START_TEST(test_push) {
   const char *input = "PUSH ()\n";

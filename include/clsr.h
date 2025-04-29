@@ -109,7 +109,7 @@ typedef struct {
 /* eval context */
 
 typedef struct EvalContext {
-  Stack *stack;  // one stack per EvalContext
+  Stack *stack; // one stack per EvalContext
   Env *env;
 } EvalContext;
 

@@ -1,12 +1,10 @@
-#include <readline/history.h>
-#include <readline/readline.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "clsr.h"
 #include "common.h"
 #include "parser.h"
+#include "readline.h"
 
 #ifndef REPL_MAIN
 
@@ -41,57 +39,6 @@ void clsr_destroy(Stack *stack, ParseContext *parser_ctx,
   FREE(eval_ctx->env);
 }
 
-char **repl_attempted_completion_function(const char *text, int start,
-                                          int end) {
-  (void)text;
-  (void)start;
-  (void)end;
-
-  rl_bind_key('\t', rl_insert);
-  return NULL;
-}
-
-int repl_readline(char *full_input, size_t n) {
-  size_t len = 0;
-  char *line = NULL;
-
-  full_input[0] = '\0';
-
-  do {
-    if (line) {
-      free(line);
-      line = NULL;
-    }
-
-    line = readline(len == 0 ? "clsr> " : "... ");
-
-    if (!line)
-      return -1;
-
-    size_t line_len = strlen(line);
-
-    if (len + line_len + 2 >= n) {
-      free(line);
-      return -1;
-    }
-
-    if (len > 0) {
-      full_input[len++] = '\n';
-    }
-
-    strcpy(&full_input[len], line);
-    len += line_len;
-
-  } while (len == 0 || full_input[len - 1] != '\n');
-
-  if (full_input[0]) {
-    add_history(full_input);
-  }
-
-  free(line);
-  return len;
-}
-
 int repl(void) {
   Stack stack = {};
   ParseContext parser_ctx = {};
@@ -99,12 +46,12 @@ int repl(void) {
 
   clsr_init(&stack, &parser_ctx, &eval_ctx);
 
-  rl_attempted_completion_function = repl_attempted_completion_function;
+  rl_init();
 
   char full_input[REPL_BUF_SIZ];
 
   for (;;) {
-    int len = repl_readline(full_input, sizeof(full_input));
+    int len = rl_readline(full_input, sizeof(full_input));
 
     if (len < 0) {
       continue; // TODO: Something

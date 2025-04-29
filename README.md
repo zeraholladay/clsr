@@ -104,7 +104,7 @@ Applies a closure to a sequence of argument values by evaluating its body in a n
 A consumer + producer instruction:
 
 Consumes:
-1. N arguments, already on the stack above the closure (right-to-lef).
+1. N arguments, already on the stack above the closure (right-to-left).
 1. A closure object (on bottom of the stack).
 
 Produces:

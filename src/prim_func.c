@@ -33,7 +33,7 @@ Obj *apply(Obj *void_obj, EvalContext *ctx) {
       .env = closure_env,
   };
 
-  return eval(obj_closure.body, &new_ctx);
+  return eval(obj_closure.body, &new_ctx);  // TODO: force EXIT_FRAME?
 }
 
 Obj *closure(Obj *obj, EvalContext *ctx) {
@@ -67,7 +67,7 @@ Obj *lookup(Obj *void_obj, EvalContext *ctx) {
   void *rval;
 
   if (env_lookup(ctx->env, OBJ_AS(key, literal).symbol, &rval))
-    PUSH(ctx->stack, NULL); // TODO
+    PUSH(ctx->stack, NULL); // TODO: what happens if the symbol isn't found?
   else
     PUSH(ctx->stack, rval);
 

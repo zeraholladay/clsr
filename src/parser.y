@@ -24,10 +24,6 @@ extern int yylineno;
 typedef struct ParseContext {
     ObjPool *obj_pool;
     Obj *root_obj;
-    // struct {
-    //     unsigned int parens;
-    //     unsigned int eof;
-    // } lexer_state;
 } ParseContext;
 
 void reset_parse_context(ParseContext *ctx);

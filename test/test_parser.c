@@ -133,7 +133,7 @@ int run_parser_on(const char *type, const char *input, int expected_result) {
   ParseContext ctx;
 
   reset_parse_context(&ctx);
-  ctx.obj_pool = obj_pool_init(4096);
+  ctx.obj_pool = obj_pool_init(OBJ_POOL_CAPACITY);
 
   yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
 

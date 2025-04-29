@@ -19,7 +19,7 @@ void eval_setup(void) {
   obj_init_reserved_literals();
 
   reset_parse_context(&parser_ctx);
-  parser_ctx.obj_pool = obj_pool_init(4096);
+  parser_ctx.obj_pool = obj_pool_init(OBJ_POOL_CAPACITY);
 
   STACK_INIT(&stack);
   eval_ctx.stack = &stack;

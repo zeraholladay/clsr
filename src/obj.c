@@ -143,6 +143,14 @@ void obj_fprintf(FILE *restrict stream, const Obj *obj) {
     fprintf(stream, ">");
     break;
 
+  case Obj_If:
+    fprintf(stream, "<if then=");
+    obj_fprintf(stream, OBJ_AS(obj, if_).then);
+    fprintf(stream, " else=");
+    obj_fprintf(stream, OBJ_AS(obj, if_).else_);
+    fprintf(stream, ">");
+    break;
+
   default:
     fprintf(stream, "<unknown object>");
     break;

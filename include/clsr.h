@@ -5,6 +5,10 @@
 #include "env.h"
 #include "stack.h"
 
+#ifndef OBJ_POOL_CAPACITY
+#define OBJ_POOL_CAPACITY 4096
+#endif
+
 /* primitive operations */
 
 struct Obj;
@@ -113,6 +117,15 @@ typedef struct EvalContext {
 const PrimOp *prim_op_lookup(register const char *str,
                              register unsigned int len);
 
+/* stack.c (stack helpers) */
+
+#define STACK_INIT(stack) stack_init(stack, STACK_GROWTH)
+#define PUSH(stack, obj) stack_push(stack, (void *)obj)
+#define POP(stack) (Obj *)stack_pop(stack)
+#define PEEK(stack) (Obj *)stack_peek(stack)
+#define ENTER_FRAME(stack) stack_enter_frame(stack)
+#define EXIT_FRAME(stack) stack_exit_frame(stack)
+
 /* obj.c */
 
 extern Obj *const obj_true;
@@ -136,25 +149,19 @@ Obj *obj_pool_alloc(ObjPool *p);
 void obj_pool_free(ObjPool *p, Obj *obj);
 void obj_pool_reset(ObjPool *p);
 
-/* stack.c (stack helpers) */
-
-#define STACK_INIT(stack) stack_init(stack, STACK_GROWTH)
-#define PUSH(stack, obj) stack_push(stack, (void *)obj)
-#define POP(stack) (Obj *)stack_pop(stack)
-#define PEEK(stack) (Obj *)stack_peek(stack)
-#define ENTER_FRAME(stack) stack_enter_frame(stack)
-#define EXIT_FRAME(stack) stack_exit_frame(stack)
-
 /* prim_func.c */
 
 Obj *apply(Obj *void_obj, EvalContext *ctx);
 Obj *closure(Obj *obj, EvalContext *ctx);
 Obj *lookup(Obj *void_obj, EvalContext *ctx);
 Obj *push(Obj *obj, EvalContext *ctx);
-Obj *ret(Obj *void_obj, EvalContext *ctx);
+Obj *return_(Obj *void_obj, EvalContext *ctx);
 Obj *set(Obj *void_obj, EvalContext *ctx);
 Obj *eval(Obj *obj, EvalContext *ctx);
 
-Obj *eval(Obj *obj, EvalContext *ctx);
+/* clsr.c */
+
+// void clsr_init(Stack *stack, ParseContext *parser_ctx, EvalContext
+// *eval_ctx);
 
 #endif

@@ -9,7 +9,7 @@ SRC := src
 BIN := bin
 GEN := gen
 
-MAIN_SRC := $(SRC)/repl.c
+MAIN_SRC := $(SRC)/clsr.c
 EXEC := $(BIN)/clsr
 
 # Compilers and flags

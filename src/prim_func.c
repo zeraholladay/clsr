@@ -14,7 +14,7 @@ Obj *apply(Obj *void_obj, EvalContext *ctx) {
   assert(OBJ_ISKIND(obj, Obj_Closure));
 
   if (!obj || !(OBJ_ISKIND(obj, Obj_Closure))) {
-    return obj_false; // TODO: error handling
+    return obj_false; // TODO: error message
   }
 
   ObjClosure obj_closure = OBJ_AS(obj, closure);
@@ -36,7 +36,8 @@ Obj *apply(Obj *void_obj, EvalContext *ctx) {
       .env = closure_env,
   };
 
-  return eval(obj_closure.body, &new_ctx); // TODO: force EXIT_FRAME?
+  return eval(obj_closure.body,
+              &new_ctx); // does not EXIT_FRAME (ie force RETURN)
 }
 
 Obj *closure(Obj *obj, EvalContext *ctx) {
@@ -70,7 +71,7 @@ Obj *lookup(Obj *void_obj, EvalContext *ctx) {
   void *rval;
 
   if (env_lookup(ctx->env, OBJ_AS(key, literal).symbol, &rval))
-    PUSH(ctx->stack, NULL); // TODO: what happens if the symbol isn't found?
+    PUSH(ctx->stack, obj_false);
   else
     PUSH(ctx->stack, rval);
 
@@ -89,8 +90,7 @@ Obj *push(Obj *obj, EvalContext *ctx) {
   return obj_true;
 }
 
-/* a/k/a RETURN */
-Obj *ret(Obj *void_obj, EvalContext *ctx) {
+Obj *return_(Obj *void_obj, EvalContext *ctx) {
   (void)void_obj;
 
   Obj *obj_rval = POP(ctx->stack);
@@ -112,10 +112,10 @@ Obj *set(Obj *void_obj, EvalContext *ctx) {
 
   if (!key || !(OBJ_ISKIND(key, Obj_Literal)) ||
       !(OBJ_AS(key, literal).kind == Literal_Sym)) {
-    return obj_false; // TODO: error handling
+    return obj_false; // TODO: error message
   }
 
-  env_set(ctx->env, OBJ_AS(key, literal).symbol, val); // TODO
+  env_set(ctx->env, OBJ_AS(key, literal).symbol, val); // TODO: error handling
   return obj_true;
 }
 

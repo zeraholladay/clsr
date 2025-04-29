@@ -74,7 +74,7 @@ int repl(void) {
 
   ParseContext parser_ctx;
   reset_parse_context(&parser_ctx);
-  parser_ctx.obj_pool = obj_pool_init(4096);
+  parser_ctx.obj_pool = obj_pool_init(OBJ_POOL_CAPACITY);
 
   Stack stack = {};
   STACK_INIT(&stack);
@@ -103,8 +103,12 @@ int repl(void) {
 
     if (parse_status == 0) {
       Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
-      if (eval_status) {
+
+      if (eval_status != obj_false) {
         printf("=>TRUE\n");
+        Obj *obj_peek = PEEK(&stack);
+        obj_fprintf(stdout, obj_peek);
+        printf("\n");
       } else {
         printf("=>FALSE\n");
       }

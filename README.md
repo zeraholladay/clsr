@@ -68,7 +68,7 @@ LOOKUP
 
 ---
 
-### `CLOSURE arg0 arg1 ... argN (expression)`
+### `CLOSURE (arg0 arg1 ... argN) (expression)`
 Create a **closure** from a function `body` and its **captured environment `env`**, and push it onto the stack.
 
 A pure producer that builds a closure object.

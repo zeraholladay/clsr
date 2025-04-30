@@ -5,8 +5,9 @@
 #include "env.h"
 #include "stack.h"
 
-#define FALSE 0
-#define TRUE ((void *)1)
+#ifndef OBJ_POOL_CAPACITY
+#define OBJ_POOL_CAPACITY 4096
+#endif
 
 /* primitive operations */
 
@@ -15,19 +16,9 @@ struct EvalContext;
 
 typedef struct Obj *(*PrimFunc)(struct Obj *obj, struct EvalContext *ctx);
 
-typedef enum {
-  PrimOp_Apply,
-  PrimOp_Closure,
-  PrimOp_Lookup,
-  PrimOp_Push,
-  PrimOp_Return,
-  PrimOp_Set
-} PrimOpCode;
-
 typedef struct PrimOp {
   int tok;
-  PrimOpCode op_code;
-  PrimFunc prim_func;
+  PrimFunc prim_fun;
 } PrimOp;
 
 /* objects */
@@ -37,11 +28,18 @@ typedef struct PrimOp {
 #define OBJ_KIND(obj_ptr) (obj_ptr)->kind
 #define OBJ_ISKIND(obj_ptr, kind) (OBJ_KIND(obj_ptr) == kind)
 
-typedef enum { Obj_Literal, Obj_List, Obj_Call, Obj_Closure } ObjKind;
+typedef enum {
+  Obj_Literal,
+  Obj_List,
+  Obj_Call,
+  Obj_Closure,
+  Obj_If,
+} ObjKind;
 
 typedef enum {
   Literal_Int,
   Literal_Sym,
+  Literal_Keywrd,
 } ObjLiteralKind;
 
 typedef struct {
@@ -68,6 +66,11 @@ typedef struct ObjClosure {
   Env *env;
 } ObjClosure;
 
+typedef struct ObjIf {
+  struct Obj *then;
+  struct Obj *else_;
+} ObjIf;
+
 typedef struct Obj {
   ObjKind kind;
 
@@ -76,6 +79,7 @@ typedef struct Obj {
     ObjList list;
     ObjCall call;
     ObjClosure closure;
+    ObjIf if_;
   } as;
 } Obj;
 
@@ -95,7 +99,7 @@ typedef struct {
 /* eval context */
 
 typedef struct EvalContext {
-  Stack *stack;
+  Stack *stack; // one stack per EvalContext
   Env *env;
 } EvalContext;
 
@@ -103,15 +107,29 @@ typedef struct EvalContext {
 const PrimOp *prim_op_lookup(register const char *str,
                              register unsigned int len);
 
+/* stack.c (stack helpers) */
+
+#define STACK_INIT(stack) stack_init(stack, STACK_GROWTH)
+#define STACK_FREE(stack) stack_free(stack)
+#define PUSH(stack, obj) stack_push(stack, (void *)obj)
+#define POP(stack) (Obj *)stack_pop(stack)
+#define PEEK(stack) (Obj *)stack_peek(stack)
+#define ENTER_FRAME(stack) stack_enter_frame(stack)
+#define EXIT_FRAME(stack) stack_exit_frame(stack)
+
 /* obj.c */
 
-void obj_fprintf(FILE *restrict stream, const Obj *obj);
+extern Obj *const obj_true;
+extern Obj *const obj_false;
+
 Obj *obj_new_literal_int(ObjPool *p, int i);
 Obj *obj_new_literal_sym(ObjPool *p, const char *sym);
 Obj *obj_new_empty_expr_list(ObjPool *p);
 Obj *obj_expr_list_append(Obj *obj, Obj *item);
 Obj *obj_new_call(ObjPool *p, const PrimOp *prim, Obj *args);
 Obj *obj_new_closure(ObjPool *p, Obj *params, Obj *body);
+Obj *obj_new_if(ObjPool *p, Obj *then, Obj *else_);
+void obj_fprintf(FILE *restrict stream, const Obj *obj);
 
 /* obj_pool.c */
 
@@ -119,27 +137,18 @@ ObjPool *obj_pool_init(unsigned int count);
 void obj_pool_destroy(ObjPool **p);
 Obj *obj_pool_alloc(ObjPool *p);
 void obj_pool_free(ObjPool *p, Obj *obj);
-void obj_pool_reset(ObjPool *p);
+void obj_pool_reset_from_mark(ObjPool *p, ObjPoolWrapper *mark);
+void obj_pool_reset_all(ObjPool *p);
 
-/* stack.c (stack helpers) */
-
-#define STACK_INIT(stack) stack_init(stack, STACK_GROWTH)
-#define PUSH(stack, obj) stack_push(stack, (void *)obj)
-#define POP(stack) (Obj *)stack_pop(stack)
-#define PEEK(stack) (Obj *)stack_peek(stack)
-#define ENTER_FRAME(stack) stack_enter_frame(stack)
-#define EXIT_FRAME(stack) stack_exit_frame(stack)
-
-/* prim_func.c */
+/* prim_fun.c */
 
 Obj *apply(Obj *void_obj, EvalContext *ctx);
 Obj *closure(Obj *obj, EvalContext *ctx);
+Obj *if_(Obj *obj, EvalContext *ctx);
 Obj *lookup(Obj *void_obj, EvalContext *ctx);
 Obj *push(Obj *obj, EvalContext *ctx);
-Obj *ret(Obj *void_obj, EvalContext *ctx);
+Obj *return_(Obj *void_obj, EvalContext *ctx);
 Obj *set(Obj *void_obj, EvalContext *ctx);
-Obj *eval(Obj *obj, EvalContext *ctx);
-
 Obj *eval(Obj *obj, EvalContext *ctx);
 
 #endif

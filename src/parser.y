@@ -1,4 +1,5 @@
 %{
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -24,10 +25,7 @@ extern int yylineno;
 typedef struct ParseContext {
     ObjPool *obj_pool;
     Obj *root_obj;
-    // struct {
-    //     unsigned int parens;
-    //     unsigned int eof;
-    // } lexer_state;
+    ObjPoolWrapper *parse_mark;
 } ParseContext;
 
 void reset_parse_context(ParseContext *ctx);
@@ -42,16 +40,16 @@ void reset_parse_context(ParseContext *ctx);
     struct Obj *obj;
 }
 
-%type <prim> nullary_prim_op
-%type <prim> nary_prim_op
-%type <obj> input expression expressions args arg
+%type <prim> nullary
+%type <prim> nary
+%type <obj> input expression expressions args arg literal_keyword
 
 %define api.token.prefix {TOK_}
 
 %token ERROR
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
-%token <prim> APPLY CLOSURE LOOKUP PUSH RETURN SET
+%token <prim> APPLY CLOSURE FALSE IF LOOKUP PUSH RETURN SET TRUE
 
 %%
 
@@ -75,54 +73,76 @@ expressions:
 ;
 
 expression:
-    nullary_prim_op {
+    nullary {
         $$ = obj_new_call(ctx->obj_pool, $1, NULL);
     }
-    | nary_prim_op '(' args ')' {
+    | nary '(' args ')' {
         $$ = obj_new_call(ctx->obj_pool, $1, $3);
       }
     | CLOSURE '(' args ')' '(' expressions ')' {
         $$ = obj_new_closure(ctx->obj_pool, $3, $6);
     }
+    | IF '(' expressions ')' '(' expressions ')' {
+        $$ = obj_new_if(ctx->obj_pool, $3, $6);
+    }
+    | literal_keyword {
+        $$ = $1;
+    }
 ;
 
-nullary_prim_op:
-      APPLY
+nullary:
+    APPLY
     | LOOKUP
     | RETURN
     | SET
 ;
 
-nary_prim_op:
+nary:
       PUSH
 ;
 
+literal_keyword:
+    TRUE {
+        $$ = obj_true;
+    }
+    | FALSE {
+        $$ = obj_false;
+    }
+
 args:
-      /* empty */ {
+    /* empty */ {
         $$ = obj_new_empty_expr_list(ctx->obj_pool);
       }
     | args arg {
         $$ = obj_expr_list_append($1, $2);
-      }
+    }
 ;
 
 arg:
-      INT_LITERAL {
+    INT_LITERAL {
         $$ = obj_new_literal_int(ctx->obj_pool, $1);
-      }
+    }
     | SYM_LITERAL {
         $$ = obj_new_literal_sym(ctx->obj_pool, $1);
-      }
+    }
+    | literal_keyword {
+        $$ = $1;
+    }
 ;
 
 %%
 
 void reset_parse_context(ParseContext *ctx) {
-    // TODO: free any nodes pointed to *root_obj
+    assert(ctx);
+    assert(ctx->obj_pool);
+
+    // no pool. assumes it has already been allocated.
     ctx->root_obj = NULL;
+    ctx->parse_mark = ctx->obj_pool->free_list;
 }
 
 void yyerror_handler(ParseContext *ctx, const char *s) {
     fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
+    obj_pool_reset_from_mark(ctx->obj_pool, ctx->parse_mark);
     reset_parse_context(ctx);
 }

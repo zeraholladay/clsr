@@ -11,6 +11,19 @@ extern FILE *yyin;
 extern int yyparse(ParseContext *ctx);
 extern void yylex_destroy(void);
 
+extern void clsr_init(Stack *stack, ParseContext *parser_ctx,
+                      EvalContext *eval_ctx);
+void clsr_destroy(Stack *stack, ParseContext *parser_ctx,
+                  EvalContext *eval_ctx);
+
+static Stack stack = {};
+static ParseContext parser_ctx = {};
+static EvalContext eval_ctx = {};
+
+static void setup(void) { clsr_init(&stack, &parser_ctx, &eval_ctx); }
+
+static void teardown(void) { clsr_destroy(&stack, &parser_ctx, &eval_ctx); }
+
 const char *valid_expressions[] = {
     // // Newlines
     // "\n",
@@ -130,19 +143,13 @@ const char *invalid_expressions[] = {
 };
 
 int run_parser_on(const char *type, const char *input, int expected_result) {
-  ParseContext ctx;
+  yyin = fmemopen((void *)input, strlen(input), "r");
 
-  reset_parse_context(&ctx);
-  ctx.obj_pool = obj_pool_init(4096);
-
-  yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
-
-  int result = yyparse(&ctx);
+  reset_parse_context(&parser_ctx);
+  int result = yyparse(&parser_ctx);
 
   yylex_destroy();
   fclose(yyin);
-
-  obj_pool_reset(ctx.obj_pool);
 
   if (result != expected_result)
     fprintf(stderr,
@@ -177,6 +184,7 @@ Suite *parser_suite(void) {
   Suite *s = suite_create("Parser");
 
   TCase *tc_core = tcase_create("Core");
+  tcase_add_checked_fixture(tc_core, setup, teardown);
 
   tcase_add_test(tc_core, test_valid_valid_expressions);
   tcase_add_test(tc_core, test_invalid_expressions);

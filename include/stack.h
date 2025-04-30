@@ -3,7 +3,9 @@
 
 #include <stdlib.h>
 
+#ifndef STACK_GROWTH
 #define STACK_GROWTH 4096
+#endif
 
 typedef struct stack {
   uintptr_t sp;

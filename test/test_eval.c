@@ -25,8 +25,8 @@ static void setup(void) { clsr_init(&stack, &parser_ctx, &eval_ctx); }
 static void teardown(void) { clsr_destroy(&stack, &parser_ctx, &eval_ctx); }
 
 START_TEST(test_push) {
-  const char *input = "PUSH ()\n";
-  yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+  const char *input = "push ()";
+  yyin = fmemopen((void *)input, strlen(input), "r");
 
   int parse_status = yyparse(&parser_ctx);
 
@@ -44,8 +44,8 @@ START_TEST(test_push) {
 END_TEST
 
 START_TEST(test_push_args) {
-  const char *input = "PUSH (-1 bar 42 foo)\n";
-  yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+  const char *input = "push (-1 bar 42 foo)";
+  yyin = fmemopen((void *)input, strlen(input), "r");
 
   int parse_status = yyparse(&parser_ctx);
 
@@ -95,15 +95,14 @@ END_TEST
 
 START_TEST(test_set) {
   const char *expressions[] = {
-      "PUSH (foo 42)\n",
-      "SET\n",
+      "push (foo 42) set",
       NULL,
   };
 
   for (unsigned i = 0; expressions[i]; ++i) {
     const char *input = expressions[i];
 
-    yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+    yyin = fmemopen((void *)input, strlen(input), "r");
 
     int parse_status = yyparse(&parser_ctx);
     ck_assert_int_eq(parse_status, 0);
@@ -115,7 +114,7 @@ START_TEST(test_set) {
     fclose(yyin);
   }
 
-  // SET is a pure consumer
+  // set is a pure consumer
 
   Obj *obj;
 
@@ -133,13 +132,15 @@ END_TEST
 
 START_TEST(test_lookup) {
   const char *expressions[] = {
-      "PUSH (foo bar)\n", "SET\n", "PUSH (foo)\n", "LOOKUP\n", NULL,
+      "push (foo bar) set",
+      "push (foo) lookup",
+      NULL,
   };
 
   for (unsigned i = 0; expressions[i]; ++i) {
     const char *input = expressions[i];
 
-    yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+    yyin = fmemopen((void *)input, strlen(input), "r");
 
     int parse_status = yyparse(&parser_ctx);
     ck_assert_int_eq(parse_status, 0);
@@ -179,15 +180,14 @@ START_TEST(test_ret) {
   ENTER_FRAME(&stack);
 
   const char *expressions[] = {
-      "PUSH (foobar)\n",
-      "RETURN\n",
+      "push (foobar) return",
       NULL,
   };
 
   for (unsigned i = 0; expressions[i]; ++i) {
     const char *input = expressions[i];
 
-    yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+    yyin = fmemopen((void *)input, strlen(input), "r");
 
     int parse_status = yyparse(&parser_ctx);
     ck_assert_int_eq(parse_status, 0);
@@ -213,22 +213,22 @@ END_TEST
 
 START_TEST(test_closure) {
   const char *expressions[] = {
-      "CLOSURE ()()\n",
+      "closure ()()",
 
-      "CLOSURE (foo bar) ()\n",
+      "closure (foo bar) ()",
 
-      "CLOSURE (foo bar) (\n"
-      "  PUSH (42)\n"
-      "  RETURN\n"
-      ")\n",
+      "closure (foo bar) ("
+      "  push (42)"
+      "  return"
+      ")",
 
-      "PUSH (foo42)\n",
+      "push (foo42)",
 
-      "SET\n",
+      "set",
 
-      "PUSH (foo42)\n",
+      "push (foo42)",
 
-      "LOOKUP\n",
+      "lookup",
 
       NULL,
   };
@@ -236,7 +236,7 @@ START_TEST(test_closure) {
   for (unsigned i = 0; expressions[i]; ++i) {
     const char *input = expressions[i];
 
-    yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+    yyin = fmemopen((void *)input, strlen(input), "r");
 
     int parse_status = yyparse(&parser_ctx);
     ck_assert_int_eq(parse_status, 0);
@@ -258,15 +258,13 @@ END_TEST
 
 START_TEST(test_apply_with_anonymous_closure) {
   const char *expressions[] = {
-      "PUSH (42 1 3)\n",
+      "push (42 1 3)",
 
-      "CLOSURE (i j k) (\n"
-      "  PUSH (i)\n"
-      "  LOOKUP\n"
-      "  RETURN ; return 42\n"
-      ")\n",
-
-      "APPLY\n",
+      "closure (i j k) ("
+      "  push (i)"
+      "  lookup"
+      "  return"
+      ") apply",
 
       NULL,
   };
@@ -274,7 +272,7 @@ START_TEST(test_apply_with_anonymous_closure) {
   for (unsigned i = 0; expressions[i]; ++i) {
     const char *input = expressions[i];
 
-    yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+    yyin = fmemopen((void *)input, strlen(input), "r");
 
     int parse_status = yyparse(&parser_ctx);
     ck_assert_int_eq(parse_status, 0);
@@ -298,23 +296,13 @@ END_TEST
 
 START_TEST(test_apply_with_named_closure) {
   const char *expressions[] = {
-      "CLOSURE (barvar) (\n"
-      "  PUSH (barvar)\n"
-      "  LOOKUP\n"
-      "  RETURN\n"
-      ")\n",
+      "closure (barvar) ("
+      "  push (barvar)"
+      "  lookup"
+      "  return"
+      ") push (foo42) set",
 
-      "PUSH (foo42)\n",
-
-      "SET\n",
-
-      "PUSH (42)\n",
-
-      "PUSH (foo42)\n",
-
-      "LOOKUP\n",
-
-      "APPLY\n",
+      "push (foo42 42) lookup apply",
 
       NULL,
   };
@@ -322,7 +310,7 @@ START_TEST(test_apply_with_named_closure) {
   for (unsigned i = 0; expressions[i]; ++i) {
     const char *input = expressions[i];
 
-    yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+    yyin = fmemopen((void *)input, strlen(input), "r");
 
     int parse_status = yyparse(&parser_ctx);
     ck_assert_int_eq(parse_status, 0);
@@ -344,6 +332,40 @@ START_TEST(test_apply_with_named_closure) {
 }
 END_TEST
 
+START_TEST(test_if) {
+  const char *expressions[] = {
+      "push (true) if (push(42)) (push(-1))",
+
+      "push (false) if (push(-1)) (push(42))",
+
+      NULL,
+  };
+
+  for (unsigned i = 0; expressions[i]; ++i) {
+    const char *input = expressions[i];
+
+    yyin = fmemopen((void *)input, strlen(input), "r");
+
+    int parse_status = yyparse(&parser_ctx);
+    ck_assert_int_eq(parse_status, 0);
+
+    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    ck_assert_ptr_eq(eval_status, obj_true);
+
+    yylex_destroy();
+    fclose(yyin);
+
+    Obj *obj = POP(&stack);
+    ck_assert(OBJ_ISKIND(obj, Obj_Literal));
+
+    ObjLiteral int_literal = OBJ_AS(obj, literal);
+
+    ck_assert(int_literal.kind == Literal_Int);
+    ck_assert_int_eq(int_literal.integer, 42);
+  }
+}
+END_TEST
+
 Suite *eval_suite(void) {
   Suite *s = suite_create("Eval");
 
@@ -358,6 +380,7 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_closure);
   tcase_add_test(tc_core, test_apply_with_anonymous_closure);
   tcase_add_test(tc_core, test_apply_with_named_closure);
+  tcase_add_test(tc_core, test_if);
 
   suite_add_tcase(s, tc_core);
   return s;

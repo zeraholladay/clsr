@@ -18,7 +18,7 @@ typedef struct Obj *(*PrimFunc)(struct Obj *obj, struct EvalContext *ctx);
 
 typedef struct PrimOp {
   int tok;
-  PrimFunc prim_func;
+  PrimFunc prim_fun;
 } PrimOp;
 
 /* objects */
@@ -140,7 +140,7 @@ void obj_pool_free(ObjPool *p, Obj *obj);
 void obj_pool_reset_from_mark(ObjPool *p, ObjPoolWrapper *mark);
 void obj_pool_reset_all(ObjPool *p);
 
-/* prim_func.c */
+/* prim_fun.c */
 
 Obj *apply(Obj *void_obj, EvalContext *ctx);
 Obj *closure(Obj *obj, EvalContext *ctx);

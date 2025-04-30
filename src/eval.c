@@ -68,8 +68,9 @@ Obj *if_(Obj *obj, EvalContext *ctx) {
     return obj_false; // TODO: error handling
   }
 
-  Obj *branch =
-      (cond == obj_true) ? OBJ_AS(obj, if_).then : OBJ_AS(obj, if_).else_;
+  ObjIf obj_if = OBJ_AS(obj, if_);
+
+  Obj *branch = (cond == obj_true) ? obj_if.then : obj_if.else_;
 
   return eval(branch, ctx);
 }
@@ -161,7 +162,7 @@ Obj *eval(Obj *obj, EvalContext *ctx) {
       }
       break;
     case Obj_Call:
-      result = OBJ_AS(expression, call).prim->prim_func(expression, ctx);
+      result = OBJ_AS(expression, call).prim->prim_fun(expression, ctx);
       break;
     case Obj_Closure:
       result = closure(expression, ctx);

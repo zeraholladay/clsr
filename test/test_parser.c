@@ -143,7 +143,7 @@ const char *invalid_expressions[] = {
 };
 
 int run_parser_on(const char *type, const char *input, int expected_result) {
-  yyin = fmemopen((void *)input, strlen(input) + 1, "r"); // + 1 for one unput
+  yyin = fmemopen((void *)input, strlen(input), "r");
 
   reset_parse_context(&parser_ctx);
   int result = yyparse(&parser_ctx);

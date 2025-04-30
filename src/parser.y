@@ -40,16 +40,16 @@ void reset_parse_context(ParseContext *ctx);
     struct Obj *obj;
 }
 
-%type <prim> nullary_prim_op
-%type <prim> nary_prim_op
-%type <obj> input expression expressions args arg
+%type <prim> nullary
+%type <prim> nary
+%type <obj> input expression expressions args arg literal_keyword
 
 %define api.token.prefix {TOK_}
 
 %token ERROR
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
-%token <prim> APPLY CLOSURE IF LOOKUP PUSH RETURN SET
+%token <prim> APPLY CLOSURE FALSE IF LOOKUP PUSH RETURN SET TRUE
 
 %%
 
@@ -73,10 +73,10 @@ expressions:
 ;
 
 expression:
-    nullary_prim_op {
+    nullary {
         $$ = obj_new_call(ctx->obj_pool, $1, NULL);
     }
-    | nary_prim_op '(' args ')' {
+    | nary '(' args ')' {
         $$ = obj_new_call(ctx->obj_pool, $1, $3);
       }
     | CLOSURE '(' args ')' '(' expressions ')' {
@@ -85,35 +85,49 @@ expression:
     | IF '(' expressions ')' '(' expressions ')' {
         $$ = obj_new_if(ctx->obj_pool, $3, $6);
     }
+    | literal_keyword {
+        $$ = $1;
+    }
 ;
 
-nullary_prim_op:
-      APPLY
+nullary:
+    APPLY
     | LOOKUP
     | RETURN
     | SET
 ;
 
-nary_prim_op:
+nary:
       PUSH
 ;
 
+literal_keyword:
+    TRUE {
+        $$ = obj_true;
+    }
+    | FALSE {
+        $$ = obj_false;
+    }
+
 args:
-      /* empty */ {
+    /* empty */ {
         $$ = obj_new_empty_expr_list(ctx->obj_pool);
       }
     | args arg {
         $$ = obj_expr_list_append($1, $2);
-      }
+    }
 ;
 
 arg:
-      INT_LITERAL {
+    INT_LITERAL {
         $$ = obj_new_literal_int(ctx->obj_pool, $1);
-      }
+    }
     | SYM_LITERAL {
         $$ = obj_new_literal_sym(ctx->obj_pool, $1);
-      }
+    }
+    | literal_keyword {
+        $$ = $1;
+    }
 ;
 
 %%

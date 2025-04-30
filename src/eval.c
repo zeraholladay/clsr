@@ -54,6 +54,26 @@ Obj *closure(Obj *obj, EvalContext *ctx) {
   return obj_true;
 }
 
+Obj *if_(Obj *obj, EvalContext *ctx) {
+  assert(obj);
+  assert(OBJ_ISKIND(obj, Obj_If));
+
+  if (!obj || !(OBJ_ISKIND(obj, Obj_If))) {
+    return obj_false; // TODO: error handling
+  }
+
+  Obj *cond = POP(ctx->stack);
+
+  if (!cond) {
+    return obj_false; // TODO: error handling
+  }
+
+  Obj *branch =
+      (cond == obj_true) ? OBJ_AS(obj, if_).then : OBJ_AS(obj, if_).else_;
+
+  return eval(branch, ctx);
+}
+
 Obj *lookup(Obj *void_obj, EvalContext *ctx) {
   (void)void_obj;
 
@@ -71,7 +91,7 @@ Obj *lookup(Obj *void_obj, EvalContext *ctx) {
   void *rval;
 
   if (env_lookup(ctx->env, OBJ_AS(key, literal).symbol, &rval))
-    PUSH(ctx->stack, obj_false);
+    return obj_false;
   else
     PUSH(ctx->stack, rval);
 
@@ -134,11 +154,22 @@ Obj *eval(Obj *obj, EvalContext *ctx) {
   for (unsigned int i = 0; i < expressions.count; ++i) {
     Obj *expression = expressions.nodes[i];
 
-    if (OBJ_KIND(expression) == Obj_Call) {
+    switch (OBJ_KIND(expression)) {
+    case Obj_Literal:
+      if (OBJ_AS(expression, literal).kind == Literal_Keywrd) {
+        result = expression;
+      }
+      break;
+    case Obj_Call:
       result = OBJ_AS(expression, call).prim->prim_func(expression, ctx);
-    } else if (OBJ_KIND(expression) == Obj_Closure) { // FIXME
+      break;
+    case Obj_Closure:
       result = closure(expression, ctx);
-    } else {
+      break;
+    case Obj_If:
+      result = if_(expression, ctx);
+      break;
+    default:
       die("Unknown to eval\n");
       return obj_false;
     }

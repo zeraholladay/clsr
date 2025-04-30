@@ -17,8 +17,6 @@ extern int yyparse(ParseContext *ctx);
 extern void yylex_destroy(void);
 
 void clsr_init(Stack *stack, ParseContext *parser_ctx, EvalContext *eval_ctx) {
-  obj_init_reserved_literals();
-
   parser_ctx->obj_pool = obj_pool_init(OBJ_POOL_CAPACITY);
   reset_parse_context(parser_ctx);
 
@@ -68,7 +66,7 @@ int clsr_repl(void) {
     if (parse_status == 0) {
       Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
 
-      if (eval_status != obj_false) {
+      if (eval_status == obj_true) {
         printf("=>TRUE\n");
       } else {
         printf("=>FALSE\n");

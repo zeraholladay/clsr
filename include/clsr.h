@@ -16,19 +16,8 @@ struct EvalContext;
 
 typedef struct Obj *(*PrimFunc)(struct Obj *obj, struct EvalContext *ctx);
 
-typedef enum {
-  PrimOp_Apply,
-  PrimOp_Closure,
-  PrimOp_If,
-  PrimOp_Lookup,
-  PrimOp_Push,
-  PrimOp_Return,
-  PrimOp_Set
-} PrimOpCode;
-
 typedef struct PrimOp {
   int tok;
-  PrimOpCode op_code;
   PrimFunc prim_func;
 } PrimOp;
 
@@ -50,6 +39,7 @@ typedef enum {
 typedef enum {
   Literal_Int,
   Literal_Sym,
+  Literal_Keywrd,
 } ObjLiteralKind;
 
 typedef struct {
@@ -132,7 +122,6 @@ const PrimOp *prim_op_lookup(register const char *str,
 extern Obj *const obj_true;
 extern Obj *const obj_false;
 
-void obj_init_reserved_literals(void);
 Obj *obj_new_literal_int(ObjPool *p, int i);
 Obj *obj_new_literal_sym(ObjPool *p, const char *sym);
 Obj *obj_new_empty_expr_list(ObjPool *p);
@@ -155,6 +144,7 @@ void obj_pool_reset_all(ObjPool *p);
 
 Obj *apply(Obj *void_obj, EvalContext *ctx);
 Obj *closure(Obj *obj, EvalContext *ctx);
+Obj *if_(Obj *obj, EvalContext *ctx);
 Obj *lookup(Obj *void_obj, EvalContext *ctx);
 Obj *push(Obj *obj, EvalContext *ctx);
 Obj *return_(Obj *void_obj, EvalContext *ctx);

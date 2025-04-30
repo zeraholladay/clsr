@@ -4,26 +4,18 @@
 
 static Obj _obj_true = {.kind = Obj_Literal,
                         .as.literal = {
-                            .kind = Literal_Sym,
-                            .symbol = NULL,
+                            .kind = Literal_Keywrd,
+                            .symbol = "True",
                         }};
 
 static Obj _obj_false = {.kind = Obj_Literal,
                          .as.literal = {
-                             .kind = Literal_Sym,
-                             .symbol = NULL,
+                             .kind = Literal_Keywrd,
+                             .symbol = "False",
                          }};
 
 Obj *const obj_true = &_obj_true;
 Obj *const obj_false = &_obj_false;
-
-void obj_init_reserved_literals(void) {
-  const char *true_str = "true";
-  const char *false_str = "false";
-
-  OBJ_AS(obj_true, literal).symbol = str_intern(true_str, strlen(true_str));
-  OBJ_AS(obj_false, literal).symbol = str_intern(false_str, strlen(false_str));
-}
 
 Obj *obj_new_literal_int(ObjPool *p, int i) {
   Obj *obj = obj_pool_alloc(p);

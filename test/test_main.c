@@ -1,6 +1,10 @@
 #include <check.h>
 #include <stdlib.h>
 
+#if YYDEBUG
+extern int yydebug;
+#endif
+
 #ifdef TEST_MAIN
 
 extern Suite *parser_suite(void);
@@ -9,6 +13,10 @@ extern Suite *env_suite(void);
 extern Suite *eval_suite(void);
 
 int main(void) {
+#if YYDEBUG
+  yydebug = 1;
+#endif
+
   SRunner *sr = srunner_create(stack_suite());
 
   srunner_add_suite(sr, stack_suite());

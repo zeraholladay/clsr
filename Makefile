@@ -1,8 +1,12 @@
-# src
-
+# export DEBUG=1 # enable debugging
+# make clean; make test
+#
+# make hints
 # $@	The target of the rule (the thing being built)
 # $<	The first prerequisite (typically the input file)
 # $^	All prerequisites, with duplicates removed
+
+# src
 
 # src/ and gen/
 SRC := src
@@ -16,17 +20,20 @@ EXEC := $(BIN)/clsr
 CC ?= gcc
 
 ifeq ($(DEBUG), 1)
-	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O0 -g
+	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O0 -g -DYYDEBUG=1
+	FLEX_FLAGS := -d
+	BISON_FLAGS := -d -v --debug
 else
-	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O2 -DNDEBUG
+	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O2 -DNDEBUG -DYYDEBUG=0
+	FLEX_FLAGS :=
+	BISON_FLAGS :=
 endif
 
 # libs
 LIBS := -lreadline
 
-# Add -d for debugging
-FLEX := flex #-d
-BISON := bison #-d -v --debug
+FLEX := flex
+BISON := bison
 GPERF := gperf
 
 FLEX_SRC := $(SRC)/lexer.l
@@ -46,7 +53,7 @@ SRC_OBJS := $(patsubst $(SRC)/%.c, $(BIN)/%.o, $(SRC_CFILES_ALL))
 all: src exec
 
 exec: $(MAIN_SRC)
-	$(CC) $(CFLAGS) -DREPL_MAIN=1 -o $(EXEC) $(SRC_OBJS) $(MAIN_SRC) $(LIBS)
+	$(CC) $(CFLAGS) -DCLSR_MAIN=1 -o $(EXEC) $(SRC_OBJS) $(MAIN_SRC) $(LIBS)
 
 .PHONY: src
 src: gen $(SRC_OBJS)
@@ -60,10 +67,10 @@ $(BIN)/%.o: $(SRC)/%.c | bin
 gen: $(BISON_C) $(FLEX_C) $(GPERF_C)
 
 $(BISON_C): $(BISON_SRC) | bin
-	$(BISON) -o $(BISON_C) --defines=$(BISON_H) $(BISON_SRC)
+	$(BISON) $(BISON_FLAGS) -o $(BISON_C) --defines=$(BISON_H) $(BISON_SRC)
 
 $(FLEX_C): $(FLEX_SRC) $(BISON_H) | bin
-	$(FLEX) -o $(FLEX_C) $(FLEX_SRC)
+	$(FLEX) $(FLEX_FLAGS) -o $(FLEX_C) $(FLEX_SRC)
 
 $(GPERF_C): $(GPERF_SCR) $(BISON_H) | bin
 	$(GPERF) $(GPERF_SCR) --output-file=$(GPERF_C)

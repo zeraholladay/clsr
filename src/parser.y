@@ -58,7 +58,7 @@ input:
         ctx->root_obj = $1;
         YYACCEPT;
     }
-    | error {
+    | expressions error {
         yyerror(ctx, "Parse error\n");
     }
 ;
@@ -136,7 +136,7 @@ void reset_parse_context(ParseContext *ctx) {
     assert(ctx);
     assert(ctx->obj_pool);
 
-    // no pool. assumes it has already been allocated.
+    /* no ctx->pool. assumes it has already been allocated. */
     ctx->root_obj = NULL;
     ctx->parse_mark = ctx->obj_pool->free_list;
 }

@@ -6,7 +6,11 @@
 #include "parser.h"
 #include "readline.h"
 
-#ifndef REPL_MAIN
+#if YYDEBUG
+extern int yydebug;
+#endif
+
+#ifndef CLSR_MAIN
 
 #ifndef REPL_BUF_SIZ
 #define REPL_BUF_SIZ 8192
@@ -83,6 +87,11 @@ int clsr_repl(void) {
 
 extern int clsr_repl(void);
 
-int main(void) { clsr_repl(); }
+int main(void) {
+#if YYDEBUG
+  yydebug = YYDEBUG;
+#endif
+  clsr_repl();
+}
 
 #endif

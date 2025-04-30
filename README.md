@@ -2,6 +2,26 @@
 
 A simple stack-based interpreted language with support for closures, lexical environments, and basic function application.
 
+## Build and Test
+
+Build:
+
+```bash
+make clean all
+```
+
+Test:
+
+```bash
+make clean test
+```
+
+Debug:
+
+```
+env DEBUG=1 make clean test all
+```
+
 ## Atoms
 
 - A *symbol* (i.e. a variable name to be resolved later via lookup)

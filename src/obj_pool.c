@@ -57,8 +57,6 @@ void obj_pool_reset_from_mark(ObjPool *p, ObjPoolWrapper *mark) {
     cur = next;
     ++num_freed;
   }
-
-  fprintf(stderr, "Reset %u objects\n", num_freed);
 }
 
 void obj_pool_reset_all(ObjPool *p) {

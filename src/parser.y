@@ -1,7 +1,6 @@
 %{
 #include <assert.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "common.h"
 #include "clsr.h"
@@ -13,24 +12,30 @@
     YYABORT;                 \
   } while (0)
 
-int yylex(void);
+int yylex(ParseContext *ctx);
 void yyerror_handler(ParseContext *ctx, const char *s);
 
 extern int yylineno;
 %}
 
 %code requires {
+#include <stddef.h>
+
 #include "clsr.h"
+#include "rb_tree.h"
 
 typedef struct ParseContext {
+    rb_node *sym_tab;
     ObjPool *obj_pool;
     Obj *root_obj;
     ObjPoolWrapper *parse_mark;
 } ParseContext;
 
+const char *sym_intern(rb_node **root, const char *s, size_t n);
 void reset_parse_context(ParseContext *ctx);
 }
 
+%lex-param   {ParseContext *ctx}
 %parse-param {ParseContext *ctx}
 
 %union {
@@ -131,6 +136,27 @@ arg:
 ;
 
 %%
+
+const char *sym_intern(rb_node **root, const char *s, size_t n) {
+  rb_node *node = rb_lookup(*root, s);
+
+  if (node)
+    return RB_KEY(node);
+
+  node = rb_alloc();
+
+  if (!node)
+    die(LOCATION);
+
+  RB_KEY(node) = strndup(s, n);
+
+  if (!RB_KEY(node))
+    die(LOCATION);
+
+  rb_insert(root, node);
+
+  return RB_KEY(node);
+}
 
 void reset_parse_context(ParseContext *ctx) {
     assert(ctx);

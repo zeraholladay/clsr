@@ -10,38 +10,23 @@
 debugging
 */
 
-#define INFO_ENABLED 0
+#ifndef DEBUG
 #define DEBUG_ENABLED 0
-#define TRACE_ENABLED 0
-
-#ifndef INFO
-#define INFO(...)                                                              \
-  do {                                                                         \
-    if (INFO_ENABLED)                                                          \
-      fprintf(stderr, "[INFO] " __VA_ARGS__);                                  \
-  } while (0)
 #endif
 
 #ifndef DEBUG
-#define DEBUG(...)                                                             \
+#define DEBUG(msg)                                                             \
   do {                                                                         \
     if (DEBUG_ENABLED)                                                         \
-      fprintf(stderr, "[DEBUG] " __VA_ARGS__);                                 \
-  } while (0)
-#endif
-
-#ifndef TRACE
-#define TRACE(...)                                                             \
-  do {                                                                         \
-    if (TRACE_ENABLED)                                                         \
-      fprintf(stderr, "[TRACE] " __VA_ARGS__);                                 \
+      fprintf(stderr, "[%s:%d] %s(): %s\n", __FILE__, __LINE__, __func__,      \
+              msg);                                                            \
   } while (0)
 #endif
 
 /* LOCATION */
 
-#define STRINGIFY(x) STRINGIFY2(x)
-#define STRINGIFY2(x) #x
+#define STRINGIFY_HELPER(x) #x
+#define STRINGIFY(x) STRINGIFY_HELPER(x)
 #define LOCATION __FILE__ ":" STRINGIFY(__LINE__)
 
 /*
@@ -76,11 +61,30 @@ static inline void die(const char *msg) {
 
 /* Strings */
 
-inline static int strncmp_minlen(const char *s1, const char *s2, size_t s1_n) {
-  size_t len = strlen(s2) + 1;
-  return strncmp(s1, s2, s1_n < len ? s1_n : len);
-}
+// size_t strnlen(const char *s, size_t maxlen) {
+//   /* Do not use memchr, because on some platforms memchr has
+//      undefined behavior if MAXLEN exceeds the number of bytes in S.  */
+//   size_t i;
+//   for (i = 0; i < maxlen && s[i]; i++)
+//     continue;
+//   return i;
+// }
 
-const char *str_intern(const char *s, size_t s_len);
+// char *strndup(char const *s, size_t n) {
+//   size_t len = strnlen(s, n);
+//   char *new = malloc(len + 1);
+
+//   if (new == NULL)
+//     return NULL;
+
+//   new[len] = '\0';
+//   return memcpy(new, s, len);
+// }
+
+// inline static int strncmp_minlen(const char *s1, const char *s2, size_t s1_n)
+// {
+//   size_t len = strlen(s2) + 1;
+//   return strncmp(s1, s2, s1_n < len ? s1_n : len);
+// }
 
 #endif

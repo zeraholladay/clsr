@@ -236,6 +236,7 @@ rb_node *rb_remove(rb_node **root, rb_node *n) {
 
     RB_KEY(n) = RB_KEY(tmp);
     RB_KEY_LEN(n) = RB_KEY_LEN(tmp);
+    RB_VAL(n) = RB_VAL(tmp);
 
     n = tmp;
   }

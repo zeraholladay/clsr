@@ -151,6 +151,7 @@ const char *sym_intern(rb_node **root, const char *s, size_t n) {
 
   RB_KEY(node) = safe_strndup(s, n);
   RB_KEY_LEN(node) = n;
+  // note: no RB_VAL here. ie symbols don't have values.
 
   if (!RB_KEY(node))
     die(LOCATION);

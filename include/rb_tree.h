@@ -6,11 +6,13 @@
 #define RB_KEY(n) ((n)->key)
 #define RB_KEY_LEN(n) ((n)->key_len)
 
+#define RB_VAL(n) ((n)->val)
+
 typedef struct rb_node {
   struct rb_node *left, *right, *parent;
-  int color;
-  char *key;
-  size_t key_len;
+  size_t color, key_len;
+  const char *key;
+  void *val;
 } rb_node;
 
 rb_node *rb_alloc(void);

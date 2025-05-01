@@ -134,9 +134,9 @@ Example with anonymous clousre:
 push (1 2 3) closure (a b c) ( return )
 ; STACK:
 ;   (closure)
-;   3
-;   2
 ;   1
+;   2
+;   3
 apply
 ```
 

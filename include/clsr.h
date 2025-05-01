@@ -137,7 +137,7 @@ ObjPool *obj_pool_init(unsigned int count);
 void obj_pool_destroy(ObjPool **p);
 Obj *obj_pool_alloc(ObjPool *p);
 void obj_pool_free(ObjPool *p, Obj *obj);
-void obj_pool_reset_from_mark(ObjPool *p, ObjPoolWrapper *mark);
+unsigned int obj_pool_reset_from_mark(ObjPool *p, ObjPoolWrapper *mark);
 void obj_pool_reset_all(ObjPool *p);
 
 /* prim_fun.c */

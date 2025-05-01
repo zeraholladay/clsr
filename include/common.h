@@ -6,59 +6,41 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
-debugging
-*/
+#ifndef CLSR_DEBUG
+#define CLSR_DEBUG_ENABLED 0
+#endif
 
-#define INFO_ENABLED 0
-#define DEBUG_ENABLED 0
-#define TRACE_ENABLED 0
-
-#ifndef INFO
-#define INFO(...)                                                              \
+#ifndef debug
+#define debug(msg)                                                             \
   do {                                                                         \
-    if (INFO_ENABLED)                                                          \
-      fprintf(stderr, "[INFO] " __VA_ARGS__);                                  \
+    if (CLSR_DEBUG_ENABLED)                                                    \
+      fprintf(stderr, "[%s:%d] %s(): %s\n", __FILE__, __LINE__, __func__,      \
+              msg);                                                            \
   } while (0)
 #endif
 
-#ifndef DEBUG
-#define DEBUG(...)                                                             \
-  do {                                                                         \
-    if (DEBUG_ENABLED)                                                         \
-      fprintf(stderr, "[DEBUG] " __VA_ARGS__);                                 \
-  } while (0)
-#endif
-
-#ifndef TRACE
-#define TRACE(...)                                                             \
-  do {                                                                         \
-    if (TRACE_ENABLED)                                                         \
-      fprintf(stderr, "[TRACE] " __VA_ARGS__);                                 \
-  } while (0)
-#endif
-
-/* LOCATION */
-
-#define STRINGIFY(x) STRINGIFY2(x)
-#define STRINGIFY2(x) #x
-#define LOCATION __FILE__ ":" STRINGIFY(__LINE__)
+#define STRINGIFY_HELPER(x) #x
+#define STRINGIFY(x) STRINGIFY_HELPER(x)
+#define LOCATION "[" __FILE__ ":" STRINGIFY(__LINE__) "] "
 
 /*
-memory management
+memory and string management
 Gnulib - The GNU Portability Library
 https://git.savannah.gnu.org/git/gnulib.git
 */
+
+#define container_of(ptr, type, member)                                        \
+  ((type *)((char *)(ptr) - offsetof(type, member)))
 
 inline static int safe_alloc_check(void *ptr) {
   /* Return 0 if the allocation was successful, -1 otherwise.  */
   return -!ptr;
 }
 
-#define ALLOC(ptr) ALLOC_N(ptr, 1)
-
 #define ALLOC_N(ptr, count)                                                    \
   safe_alloc_check((ptr) = calloc(count, sizeof *(ptr)))
+
+#define ALLOC(ptr) ALLOC_N(ptr, 1)
 
 #define REALLOC_N(ptr, count)                                                  \
   safe_alloc_check((ptr) = realloc(ptr, (count) * sizeof *(ptr)))
@@ -71,16 +53,35 @@ static inline void die(const char *msg) {
   abort();
 }
 
-#define container_of(ptr, type, member)                                        \
-  ((type *)((char *)(ptr) - offsetof(type, member)))
-
-/* Strings */
-
-inline static int strncmp_minlen(const char *s1, const char *s2, size_t s1_n) {
-  size_t len = strlen(s2) + 1;
-  return strncmp(s1, s2, s1_n < len ? s1_n : len);
+inline static size_t safe_strnlen(const char *s, size_t maxlen) {
+  /* Do not use memchr, because on some platforms memchr has
+     undefined behavior if MAXLEN exceeds the number of bytes in S.  */
+  size_t i;
+  for (i = 0; i < maxlen && s[i]; i++)
+    continue;
+  return i;
 }
 
-const char *str_intern(const char *s, size_t s_len);
+inline static char *safe_strndup(char const *s, size_t n) {
+  size_t len = safe_strnlen(s, n);
+  char *new = (char *)malloc(len + 1);
+
+  if (new == NULL)
+    return NULL;
+
+  new[len] = '\0';
+  return memcpy(new, s, len);
+}
+
+inline static int safe_strncmp_minlen(const char *s1, const char *s2,
+                                      size_t n) {
+  size_t len1 = safe_strnlen(s1, n);
+  size_t len2 = safe_strnlen(s2, n);
+
+  int cmp = memcmp(s1, s2, len1 < len2 ? len1 : len2);
+  if (cmp != 0 || len1 == len2)
+    return cmp;
+  return (len1 < len2) ? -1 : 1;
+}
 
 #endif

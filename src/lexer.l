@@ -11,6 +11,7 @@
 #include "parser.h"
 #include "common.h"
 
+#define YY_DECL int yylex(ParseContext *ctx)
 %}
 
 NL       \r?\n
@@ -30,7 +31,7 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
                         yylval.prim = p;
                         return p->tok;
                     } 
-                    yylval.sym = str_intern(yytext, yyleng);
+                    yylval.sym = sym_intern(&ctx->sym_tab, yytext, yyleng);
                     return TOK_SYM_LITERAL;
                     }
     {WS}            { /* ignore */ }

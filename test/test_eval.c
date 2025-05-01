@@ -83,10 +83,12 @@ START_TEST(test_push_args) {
   ck_assert_int_eq(pos_int_literal.integer, 42);
   ck_assert_str_eq(sym_foo_literal.symbol, "foo");
 
-  ck_assert_ptr_eq((const void *)sym_bar_literal.symbol,
-                   (const void *)str_intern("bar", strlen("bar")));
-  ck_assert_ptr_eq((const void *)sym_foo_literal.symbol,
-                   (const void *)str_intern("foo", strlen("foo")));
+  ck_assert_ptr_eq(
+      (const void *)sym_bar_literal.symbol,
+      (const void *)sym_intern(&parser_ctx.sym_tab, "bar", strlen("bar")));
+  ck_assert_ptr_eq(
+      (const void *)sym_foo_literal.symbol,
+      (const void *)sym_intern(&parser_ctx.sym_tab, "foo", strlen("foo")));
 
   yylex_destroy();
   fclose(yyin);

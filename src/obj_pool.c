@@ -42,23 +42,22 @@ void obj_pool_free(ObjPool *p, Obj *obj) {
   p->free_list = wrapper;
 }
 
-void obj_pool_reset_from_mark(ObjPool *p, ObjPoolWrapper *mark) {
+unsigned int obj_pool_reset_from_mark(ObjPool *p, ObjPoolWrapper *mark) {
   if (!mark || !p->free_list)
-    return;
+    return 0;
 
   ObjPoolWrapper *cur = mark;
   ObjPoolWrapper *stop_at = p->free_list;
 
-  unsigned int num_freed = 0;
+  unsigned int num_freed;
 
-  while (cur != stop_at) {
+  for (num_freed = 0; cur != stop_at; ++num_freed) {
     ObjPoolWrapper *next = cur->next_free;
     obj_pool_free(p, &cur->obj);
     cur = next;
-    ++num_freed;
   }
 
-  fprintf(stderr, "Reset %u objects\n", num_freed);
+  return num_freed;
 }
 
 void obj_pool_reset_all(ObjPool *p) {

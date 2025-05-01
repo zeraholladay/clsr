@@ -1,10 +1,10 @@
-#include <stdlib.h>
+#include <string.h>
 
+#include "common.h"
 #include "rb_tree.h"
 
 #define RB_BLACK 0
 #define RB_RED 1
-
 #define RB_LEFT(n) ((n)->left)
 #define RB_RIGHT(n) ((n)->right)
 #define RB_PARENT(n) ((n)->parent)
@@ -169,17 +169,19 @@ inline static rb_node *rb_uncle(rb_node *n) {
 }
 
 void rb_insert(rb_node **root, rb_node *n) {
-  rb_node *current, *parent;
+  rb_node *cur, *parent;
 
-  current = *root;
+  cur = *root;
 
-  while (NULL != current) {
-    parent = current;
+  while (cur) {
+    parent = cur;
 
-    if (RB_KEY(n) < RB_KEY(current))
-      current = RB_LEFT(current);
-    else
-      current = RB_RIGHT(current);
+    int cmp = safe_strncmp_minlen(RB_KEY(n), RB_KEY(cur), RB_KEY_LEN(n));
+
+    if (cmp == 0)
+      return;
+
+    cur = (cmp < 0) ? RB_LEFT(cur) : RB_RIGHT(cur);
   }
 
   RB_PARENT(n) = RB_LEFT(n) = RB_RIGHT(n) = NULL;
@@ -189,7 +191,9 @@ void rb_insert(rb_node **root, rb_node *n) {
     *root = n;
   else {
     RB_PARENT(n) = parent;
-    if (RB_KEY(n) < RB_KEY(parent))
+    int cmp = safe_strncmp_minlen(RB_KEY(n), RB_KEY(parent), RB_KEY_LEN(n));
+
+    if (cmp < 0)
       RB_LEFT(parent) = n;
     else
       RB_RIGHT(parent) = n;
@@ -198,49 +202,40 @@ void rb_insert(rb_node **root, rb_node *n) {
   rb_insert_bal(root, n);
 }
 
-rb_node *rb_lookup(rb_node *root, int key) {
-  rb_node *n;
+rb_node *rb_alloc(void) {
+  rb_node *n = calloc(1, sizeof(*n));
 
-  n = root;
+  if (!n)
+    return NULL;
 
-  while (NULL != n) {
-    if (key == RB_KEY(n))
-      return n;
+  return n;
+}
 
-    if (key < RB_KEY(n))
-      n = RB_LEFT(n);
-    else
-      n = RB_RIGHT(n);
+rb_node *rb_lookup(rb_node *root, const char *key, size_t key_len) {
+  rb_node *cur = root;
+
+  while (cur) {
+    int cmp = safe_strncmp_minlen(key, RB_KEY(cur), key_len);
+
+    if (cmp == 0)
+      return cur;
+    cur = (cmp < 0) ? RB_LEFT(cur) : RB_RIGHT(cur);
   }
 
   return NULL;
 }
 
-rb_node *rb_nalloc(int key, void *val) {
-  rb_node *n;
-
-  n = malloc(sizeof(rb_node));
-  if (NULL == n)
-    return NULL;
-
-  RB_LEFT(n) = RB_RIGHT(n) = RB_PARENT(n) = NULL;
-  RB_COLOR(n) = RB_BLACK;
-  RB_KEY(n) = key;
-  RB_VAL(n) = val;
-
-  return n;
-}
-
 rb_node *rb_remove(rb_node **root, rb_node *n) {
-  rb_node *child, *tmp, phantom = {NULL, NULL, NULL, RB_BLACK, 0, NULL};
+  rb_node *child, *tmp, phantom = {};
 
   if (RB_LEFT(n) && RB_RIGHT(n)) {
     tmp = RB_LEFT(n);
 
-    while (NULL != RB_RIGHT(tmp))
+    while (RB_RIGHT(tmp))
       tmp = RB_RIGHT(tmp);
 
     RB_KEY(n) = RB_KEY(tmp);
+    RB_KEY_LEN(n) = RB_KEY_LEN(tmp);
     RB_VAL(n) = RB_VAL(tmp);
 
     n = tmp;

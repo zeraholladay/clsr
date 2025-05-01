@@ -3,22 +3,28 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
 #include "rb_tree.h"
 
-rb_node *make_node(const char *key) {
+rb_node *make_node(const char *key, size_t len) {
   rb_node *n = rb_alloc();
-  size_t len = strlen(key);
-  n->key = malloc(len + 1);
-  memcpy(n->key, key, len + 1);
+
+  RB_KEY(n) = safe_strndup(key, len);
+  RB_KEY_LEN(n) = len;
+
   return n;
 }
 
 START_TEST(test_insert_and_lookup) {
   rb_node *root = NULL;
 
-  rb_node *n1 = make_node("apple");
-  rb_node *n2 = make_node("banana");
-  rb_node *n3 = make_node("cherry");
+  char *apple = "apple";
+  char *cherry = "cherry";
+  char *banana = "banana";
+
+  rb_node *n1 = make_node(apple, sizeof(apple));
+  rb_node *n2 = make_node(banana, sizeof(banana));
+  rb_node *n3 = make_node(cherry, sizeof(cherry));
 
   rb_insert(&root, n1);
   rb_insert(&root, n2);
@@ -26,19 +32,19 @@ START_TEST(test_insert_and_lookup) {
 
   rb_node *result;
 
-  result = rb_lookup(root, "apple");
+  result = rb_lookup(root, apple, sizeof(apple));
   ck_assert_ptr_nonnull(result);
-  ck_assert_str_eq(result->key, "apple");
+  ck_assert_str_eq(result->key, apple);
 
-  result = rb_lookup(root, "banana");
+  result = rb_lookup(root, banana, sizeof(banana));
   ck_assert_ptr_nonnull(result);
-  ck_assert_str_eq(result->key, "banana");
+  ck_assert_str_eq(result->key, banana);
 
-  result = rb_lookup(root, "cherry");
+  result = rb_lookup(root, cherry, sizeof(cherry));
   ck_assert_ptr_nonnull(result);
-  ck_assert_str_eq(result->key, "cherry");
+  ck_assert_str_eq(result->key, cherry);
 
-  result = rb_lookup(root, "date");
+  result = rb_lookup(root, "date", sizeof("date"));
   ck_assert_ptr_null(result);
 
   free(n1->key);
@@ -53,38 +59,42 @@ END_TEST
 START_TEST(test_remove) {
   rb_node *root = NULL;
 
-  rb_insert(&root, make_node("a"));
-  rb_insert(&root, make_node("b"));
-  rb_insert(&root, make_node("c"));
+  char *apple = "apple";
+  char *cherry = "cherry";
+  char *banana = "banana";
+
+  rb_insert(&root, make_node(apple, sizeof(apple)));
+  rb_insert(&root, make_node(banana, sizeof(banana)));
+  rb_insert(&root, make_node(cherry, sizeof(cherry)));
 
   // Test removal
-  rb_node *found_b = rb_lookup(root, "b");
+  rb_node *found_b = rb_lookup(root, banana, sizeof(banana));
   ck_assert_ptr_nonnull(found_b);
-  ck_assert_str_eq(found_b->key, "b");
+  ck_assert_str_eq(found_b->key, banana);
 
   char *removed_key = found_b->key; // ie removed may be a different node.
   rb_node *removed = rb_remove(&root, found_b);
 
   ck_assert_ptr_nonnull(removed);
-  ck_assert_str_eq(removed_key, "b");
-  ck_assert_ptr_null(rb_lookup(root, "b"));
+  ck_assert_str_eq(removed_key, banana);
+  ck_assert_ptr_null(rb_lookup(root, banana, sizeof(banana)));
 
   free(removed_key);
   free(removed);
 
   // Verify the rest and cleanup
-  rb_node *found_a = rb_lookup(root, "a");
-  ck_assert_ptr_nonnull(found_a);
-  ck_assert_str_eq(found_a->key, "a");
+  rb_node *found_apple = rb_lookup(root, apple, sizeof(apple));
+  ck_assert_ptr_nonnull(found_apple);
+  ck_assert_str_eq(found_apple->key, apple);
 
-  rb_node *found_c = rb_lookup(root, "c");
-  ck_assert_ptr_nonnull(found_c);
-  ck_assert_str_eq(found_c->key, "c");
+  rb_node *found_cherry = rb_lookup(root, cherry, sizeof(cherry));
+  ck_assert_ptr_nonnull(found_cherry);
+  ck_assert_str_eq(found_cherry->key, cherry);
 
-  free(found_a->key);
-  free(found_c->key);
-  free(found_a);
-  free(found_c);
+  free(found_apple->key);
+  free(found_cherry->key);
+  free(found_apple);
+  free(found_cherry);
 }
 END_TEST
 

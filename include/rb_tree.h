@@ -4,16 +4,18 @@
 #include <stdlib.h>
 
 #define RB_KEY(n) ((n)->key)
+#define RB_KEY_LEN(n) ((n)->key_len)
 
 typedef struct rb_node {
   struct rb_node *left, *right, *parent;
   int color;
   char *key;
+  size_t key_len;
 } rb_node;
 
-void rb_insert(rb_node **root, rb_node *n);
-rb_node *rb_lookup(rb_node *root, const char *key);
 rb_node *rb_alloc(void);
+void rb_insert(rb_node **root, rb_node *n);
+rb_node *rb_lookup(rb_node *root, const char *key, size_t key_len);
 rb_node *rb_remove(rb_node **root, rb_node *n);
 
 #endif

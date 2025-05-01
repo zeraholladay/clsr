@@ -139,7 +139,7 @@ arg:
 %%
 
 const char *sym_intern(rb_node **root, const char *s, size_t n) {
-  rb_node *node = rb_lookup(*root, s);
+  rb_node *node = rb_lookup(*root, s, n);
 
   if (node)
     return RB_KEY(node);
@@ -149,7 +149,8 @@ const char *sym_intern(rb_node **root, const char *s, size_t n) {
   if (!node)
     die(LOCATION);
 
-  RB_KEY(node) = strndup(s, n);
+  RB_KEY(node) = safe_strndup(s, n);
+  RB_KEY_LEN(node) = n;
 
   if (!RB_KEY(node))
     die(LOCATION);

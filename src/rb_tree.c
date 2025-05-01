@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "common.h"
 #include "rb_tree.h"
 
 #define RB_BLACK 0
@@ -175,7 +176,7 @@ void rb_insert(rb_node **root, rb_node *n) {
   while (cur) {
     parent = cur;
 
-    int cmp = strcmp(RB_KEY(n), RB_KEY(cur));
+    int cmp = safe_strncmp_minlen(RB_KEY(n), RB_KEY(cur), RB_KEY_LEN(n));
 
     if (cmp == 0)
       return;
@@ -190,7 +191,7 @@ void rb_insert(rb_node **root, rb_node *n) {
     *root = n;
   else {
     RB_PARENT(n) = parent;
-    int cmp = strcmp(RB_KEY(n), RB_KEY(parent));
+    int cmp = safe_strncmp_minlen(RB_KEY(n), RB_KEY(parent), RB_KEY_LEN(n));
 
     if (cmp < 0)
       RB_LEFT(parent) = n;
@@ -201,11 +202,20 @@ void rb_insert(rb_node **root, rb_node *n) {
   rb_insert_bal(root, n);
 }
 
-rb_node *rb_lookup(rb_node *root, const char *key) {
+rb_node *rb_alloc(void) {
+  rb_node *n = calloc(1, sizeof(*n));
+
+  if (!n)
+    return NULL;
+
+  return n;
+}
+
+rb_node *rb_lookup(rb_node *root, const char *key, size_t key_len) {
   rb_node *cur = root;
 
   while (cur) {
-    int cmp = strcmp(key, RB_KEY(cur));
+    int cmp = safe_strncmp_minlen(key, RB_KEY(cur), key_len);
 
     if (cmp == 0)
       return cur;
@@ -213,18 +223,6 @@ rb_node *rb_lookup(rb_node *root, const char *key) {
   }
 
   return NULL;
-}
-
-rb_node *rb_alloc(void) {
-  rb_node *n = malloc(sizeof *(n));
-
-  if (!n)
-    return NULL;
-
-  RB_LEFT(n) = RB_RIGHT(n) = RB_PARENT(n) = NULL;
-  RB_COLOR(n) = RB_BLACK;
-
-  return n;
 }
 
 rb_node *rb_remove(rb_node **root, rb_node *n) {
@@ -237,6 +235,7 @@ rb_node *rb_remove(rb_node **root, rb_node *n) {
       tmp = RB_RIGHT(tmp);
 
     RB_KEY(n) = RB_KEY(tmp);
+    RB_KEY_LEN(n) = RB_KEY_LEN(tmp);
 
     n = tmp;
   }

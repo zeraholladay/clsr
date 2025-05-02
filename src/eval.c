@@ -52,6 +52,25 @@ Obj *closure(Obj *obj, ClsrContext *ctx) {
   return obj_true;
 }
 
+Obj *eq(Obj *void_obj, ClsrContext *ctx) {
+  (void)void_obj;
+
+  Obj *arg1 = POP(ctx->eval_ctx.stack);
+  Obj *arg2 = POP(ctx->eval_ctx.stack);
+
+  int result = (uintptr_t)arg1 == (uintptr_t)arg2;
+
+  if (result) {
+    debug("eq is true");
+    PUSH(ctx->eval_ctx.stack, obj_true);
+  } else {
+    debug("eq is false");
+    PUSH(ctx->eval_ctx.stack, obj_false);
+  }
+
+  return obj_true;
+}
+
 Obj *if_(Obj *obj, ClsrContext *ctx) {
   assert(obj);
   assert(OBJ_ISKIND(obj, Obj_If));
@@ -63,12 +82,19 @@ Obj *if_(Obj *obj, ClsrContext *ctx) {
   Obj *cond = POP(ctx->eval_ctx.stack);
 
   if (!cond) {
+    debug("if is NULL");
     return obj_false; // TODO: error handling
   }
 
   ObjIf obj_if = OBJ_AS(obj, if_);
 
   Obj *branch = (cond == obj_true) ? obj_if.then : obj_if.else_;
+
+  if (cond == obj_true) {
+    debug("cond is true branch");
+  } else {
+    debug("cond is false branch");
+  }
 
   return eval(branch, ctx);
 }
@@ -157,6 +183,7 @@ Obj *eval(Obj *obj, ClsrContext *ctx) {
     switch (OBJ_KIND(expression)) {
     case Obj_Literal:
       if (OBJ_AS(expression, literal).kind == Literal_Keywrd) {
+        PUSH(ctx->eval_ctx.stack, obj);
         result = expression;
       }
       break;

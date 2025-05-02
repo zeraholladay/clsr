@@ -49,7 +49,7 @@ int clsr_repl(void) {
     int len = rl_readline(full_input, sizeof(full_input));
 
     if (len < 0) {
-      continue; // TODO: Something
+      break; // TODO: Something
     }
 
     yyin = fmemopen((void *)full_input, len, "r");
@@ -74,6 +74,7 @@ int clsr_repl(void) {
       continue; // TODO: syntax error
     }
   }
+  return 0;
 }
 
 #else
@@ -84,7 +85,7 @@ int main(void) {
 #if YYDEBUG
   yydebug = YYDEBUG;
 #endif
-  clsr_repl();
+  return clsr_repl();
 }
 
 #endif

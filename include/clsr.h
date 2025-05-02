@@ -153,15 +153,23 @@ void obj_pool_free(ObjPool *p, Obj *obj);
 unsigned int obj_pool_reset_from_mark(ObjPool *p, ObjPoolWrapper *mark);
 void obj_pool_reset_all(ObjPool *p);
 
-/* prim_fun.c */
+/* eval.c */
 
 Obj *apply(Obj *void_obj, ClsrContext *ctx);
 Obj *closure(Obj *obj, ClsrContext *ctx);
+Obj *eq(Obj *obj, ClsrContext *ctx);
 Obj *if_(Obj *obj, ClsrContext *ctx);
 Obj *lookup(Obj *void_obj, ClsrContext *ctx);
 Obj *push(Obj *obj, ClsrContext *ctx);
 Obj *return_(Obj *void_obj, ClsrContext *ctx);
 Obj *set(Obj *void_obj, ClsrContext *ctx);
 Obj *eval(Obj *obj, ClsrContext *ctx);
+
+/* math.c */
+
+Obj *add(Obj *void_obj, ClsrContext *ctx);
+Obj *sub(Obj *void_obj, ClsrContext *ctx);
+Obj *mul(Obj *void_obj, ClsrContext *ctx);
+Obj *div_(Obj *void_obj, ClsrContext *ctx);
 
 #endif

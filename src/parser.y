@@ -48,7 +48,10 @@ void reset_parse_context(ClsrContext *ctx);
 %token ERROR
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
-%token <prim> APPLY CLOSURE FALSE IF LOOKUP PUSH RETURN SET TRUE
+%token <prim> APPLY EQ LOOKUP PUSH RETURN SET
+%token <prim> CLOSURE IF
+%token <prim> TRUE FALSE
+%token <prim> ADD SUB MUL DIV
 
 %%
 
@@ -91,9 +94,14 @@ expression:
 
 nullary:
     APPLY
+    | EQ
     | LOOKUP
     | RETURN
     | SET
+    | ADD
+    | SUB
+    | MUL
+    | DIV
 ;
 
 nary:

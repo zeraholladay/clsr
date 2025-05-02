@@ -5,10 +5,10 @@
 extern Obj *const obj_true;
 extern Obj *const obj_false;
 
-Obj *apply(Obj *void_obj, EvalContext *ctx) {
+Obj *apply(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *obj = POP(ctx->stack);
+  Obj *obj = POP(ctx->eval_ctx.stack);
 
   assert(obj);
   assert(OBJ_ISKIND(obj, Obj_Closure));
@@ -24,23 +24,21 @@ Obj *apply(Obj *void_obj, EvalContext *ctx) {
   Env *closure_env = env_new(obj_closure.env); // TODO: error handling
 
   for (unsigned int i = 0; i < params.count; ++i) {
-    Obj *o = POP(ctx->stack);
+    Obj *o = POP(ctx->eval_ctx.stack);
     const char *symbol = OBJ_AS(params.nodes[i], literal).symbol;
     env_set(closure_env, symbol, o);
   }
 
-  ENTER_FRAME(ctx->stack);
+  ENTER_FRAME(ctx->eval_ctx.stack);
 
-  EvalContext new_ctx = {
-      .stack = ctx->stack,
-      .env = closure_env,
-  };
+  ClsrContext new_ctx = *ctx;
+  new_ctx.eval_ctx.env = closure_env;
 
   return eval(obj_closure.body,
               &new_ctx); // does not EXIT_FRAME (ie force RETURN)
 }
 
-Obj *closure(Obj *obj, EvalContext *ctx) {
+Obj *closure(Obj *obj, ClsrContext *ctx) {
   assert(obj);
   assert(OBJ_ISKIND(obj, Obj_Closure));
 
@@ -49,12 +47,12 @@ Obj *closure(Obj *obj, EvalContext *ctx) {
   }
 
   ObjClosure *clsr = OBJ_AS_PTR(obj, closure);
-  clsr->env = ctx->env;
-  PUSH(ctx->stack, obj);
+  clsr->env = ctx->eval_ctx.env;
+  PUSH(ctx->eval_ctx.stack, obj);
   return obj_true;
 }
 
-Obj *if_(Obj *obj, EvalContext *ctx) {
+Obj *if_(Obj *obj, ClsrContext *ctx) {
   assert(obj);
   assert(OBJ_ISKIND(obj, Obj_If));
 
@@ -62,7 +60,7 @@ Obj *if_(Obj *obj, EvalContext *ctx) {
     return obj_false; // TODO: error handling
   }
 
-  Obj *cond = POP(ctx->stack);
+  Obj *cond = POP(ctx->eval_ctx.stack);
 
   if (!cond) {
     return obj_false; // TODO: error handling
@@ -75,10 +73,10 @@ Obj *if_(Obj *obj, EvalContext *ctx) {
   return eval(branch, ctx);
 }
 
-Obj *lookup(Obj *void_obj, EvalContext *ctx) {
+Obj *lookup(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *key = POP(ctx->stack);
+  Obj *key = POP(ctx->eval_ctx.stack);
 
   assert(key);
   assert(OBJ_ISKIND(key, Obj_Literal));
@@ -91,41 +89,41 @@ Obj *lookup(Obj *void_obj, EvalContext *ctx) {
 
   void *rval;
 
-  if (env_lookup(ctx->env, OBJ_AS(key, literal).symbol, &rval))
+  if (env_lookup(ctx->eval_ctx.env, OBJ_AS(key, literal).symbol, &rval))
     return obj_false;
   else
-    PUSH(ctx->stack, rval);
+    PUSH(ctx->eval_ctx.stack, rval);
 
   return obj_true;
 }
 
-Obj *push(Obj *obj, EvalContext *ctx) {
+Obj *push(Obj *obj, ClsrContext *ctx) {
   ObjCall obj_call = OBJ_AS(obj, call);
   ObjList list = OBJ_AS(obj_call.args, list);
 
   for (unsigned int i = list.count; i > 0; --i) {
     assert(OBJ_ISKIND(list.nodes[i - 1], Obj_Literal));
-    PUSH(ctx->stack, list.nodes[i - 1]);
+    PUSH(ctx->eval_ctx.stack, list.nodes[i - 1]);
   }
 
   return obj_true;
 }
 
-Obj *return_(Obj *void_obj, EvalContext *ctx) {
+Obj *return_(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *obj_rval = POP(ctx->stack);
-  EXIT_FRAME(ctx->stack);
-  PUSH(ctx->stack, obj_rval);
+  Obj *obj_rval = POP(ctx->eval_ctx.stack);
+  EXIT_FRAME(ctx->eval_ctx.stack);
+  PUSH(ctx->eval_ctx.stack, obj_rval);
 
   return obj_true;
 }
 
-Obj *set(Obj *void_obj, EvalContext *ctx) {
+Obj *set(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *key = POP(ctx->stack);
-  Obj *val = POP(ctx->stack);
+  Obj *key = POP(ctx->eval_ctx.stack);
+  Obj *val = POP(ctx->eval_ctx.stack);
 
   assert(key);
   assert(OBJ_ISKIND(key, Obj_Literal));
@@ -136,11 +134,12 @@ Obj *set(Obj *void_obj, EvalContext *ctx) {
     return obj_false; // TODO: error message
   }
 
-  env_set(ctx->env, OBJ_AS(key, literal).symbol, val); // TODO: error handling
+  env_set(ctx->eval_ctx.env, OBJ_AS(key, literal).symbol,
+          val); // TODO: error handling
   return obj_true;
 }
 
-Obj *eval(Obj *obj, EvalContext *ctx) {
+Obj *eval(Obj *obj, ClsrContext *ctx) {
   Obj *result = obj_false;
 
   if (obj == NULL) {

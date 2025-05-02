@@ -13,8 +13,8 @@
     YYABORT;                 \
   } while (0)
 
-int yylex(ParseContext *ctx);
-void yyerror_handler(ParseContext *ctx, const char *s);
+int yylex(ClsrContext *ctx);
+void yyerror_handler(ClsrContext *ctx, const char *s);
 
 extern int yylineno;
 %}
@@ -25,19 +25,12 @@ extern int yylineno;
 #include "clsr.h"
 #include "rb_tree.h"
 
-typedef struct ParseContext {
-    rb_node *sym_tab;
-    ObjPool *obj_pool;
-    Obj *root_obj;
-    ObjPoolWrapper *parse_mark;
-} ParseContext;
-
 const char *sym_intern(rb_node **root, const char *s, size_t n);
-void reset_parse_context(ParseContext *ctx);
+void reset_parse_context(ClsrContext *ctx);
 }
 
-%lex-param   {ParseContext *ctx}
-%parse-param {ParseContext *ctx}
+%lex-param   {ClsrContext *ctx}
+%parse-param {ClsrContext *ctx}
 
 %union {
     int num;
@@ -61,7 +54,7 @@ void reset_parse_context(ParseContext *ctx);
 
 input:
     expressions {
-        ctx->root_obj = $1;
+        ctx->parser_ctx.root_obj = $1;
         YYACCEPT;
     }
     | expressions error {
@@ -161,17 +154,17 @@ const char *sym_intern(rb_node **root, const char *s, size_t n) {
   return RB_KEY(node);
 }
 
-void reset_parse_context(ParseContext *ctx) {
+void reset_parse_context(ClsrContext *ctx) {
     assert(ctx);
     assert(ctx->obj_pool);
 
     /* no ctx->pool. assumes it has already been allocated. */
-    ctx->root_obj = NULL;
-    ctx->parse_mark = ctx->obj_pool->free_list;
+    ctx->parser_ctx.root_obj = NULL;
+    ctx->parser_ctx.parse_mark = ctx->obj_pool->free_list;
 }
 
-void yyerror_handler(ParseContext *ctx, const char *s) {
+void yyerror_handler(ClsrContext *ctx, const char *s) {
     fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
-    obj_pool_reset_from_mark(ctx->obj_pool, ctx->parse_mark);
+    obj_pool_reset_from_mark(ctx->obj_pool, ctx->parser_ctx.parse_mark);
     reset_parse_context(ctx);
 }

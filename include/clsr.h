@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "env.h"
+#include "rb_tree.h"
 #include "stack.h"
 
 #ifndef OBJ_POOL_CAPACITY
@@ -12,9 +13,9 @@
 /* primitive operations */
 
 struct Obj;
-struct EvalContext;
+struct ClsrContext;
 
-typedef struct Obj *(*PrimFunc)(struct Obj *obj, struct EvalContext *ctx);
+typedef struct Obj *(*PrimFunc)(struct Obj *obj, struct ClsrContext *ctx);
 
 typedef struct PrimOp {
   int tok;
@@ -96,12 +97,24 @@ typedef struct {
   unsigned int count;
 } ObjPool;
 
-/* eval context */
+/* clsr context */
 
 typedef struct EvalContext {
-  Stack *stack; // one stack per EvalContext
   Env *env;
+  Stack *stack;
 } EvalContext;
+
+typedef struct ParserContext {
+  rb_node *sym_tab;
+  Obj *root_obj;
+  ObjPoolWrapper *parse_mark;
+} ParserContext;
+
+typedef struct ClsrContext {
+  ObjPool *obj_pool;
+  EvalContext eval_ctx;
+  ParserContext parser_ctx;
+} ClsrContext;
 
 /* prim_op.gperf */
 const PrimOp *prim_op_lookup(register const char *str,
@@ -142,13 +155,13 @@ void obj_pool_reset_all(ObjPool *p);
 
 /* prim_fun.c */
 
-Obj *apply(Obj *void_obj, EvalContext *ctx);
-Obj *closure(Obj *obj, EvalContext *ctx);
-Obj *if_(Obj *obj, EvalContext *ctx);
-Obj *lookup(Obj *void_obj, EvalContext *ctx);
-Obj *push(Obj *obj, EvalContext *ctx);
-Obj *return_(Obj *void_obj, EvalContext *ctx);
-Obj *set(Obj *void_obj, EvalContext *ctx);
-Obj *eval(Obj *obj, EvalContext *ctx);
+Obj *apply(Obj *void_obj, ClsrContext *ctx);
+Obj *closure(Obj *obj, ClsrContext *ctx);
+Obj *if_(Obj *obj, ClsrContext *ctx);
+Obj *lookup(Obj *void_obj, ClsrContext *ctx);
+Obj *push(Obj *obj, ClsrContext *ctx);
+Obj *return_(Obj *void_obj, ClsrContext *ctx);
+Obj *set(Obj *void_obj, ClsrContext *ctx);
+Obj *eval(Obj *obj, ClsrContext *ctx);
 
 #endif

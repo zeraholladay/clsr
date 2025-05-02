@@ -8,31 +8,31 @@
 #include "repl.h"
 
 extern FILE *yyin;
-extern int yyparse(ParseContext *ctx);
+extern int yyparse(ClsrContext *ctx);
 extern void yylex_destroy(void);
 
-extern void clsr_init(Stack *stack, ParseContext *parser_ctx,
-                      EvalContext *eval_ctx);
-void clsr_destroy(Stack *stack, ParseContext *parser_ctx,
-                  EvalContext *eval_ctx);
+extern void clsr_init(ClsrContext *ctx);
+extern void clsr_destroy(ClsrContext *ctx);
 
 static Stack stack = {};
-static ParseContext parser_ctx = {};
-static EvalContext eval_ctx = {};
+static ClsrContext ctx = {};
 
-static void setup(void) { clsr_init(&stack, &parser_ctx, &eval_ctx); }
+static void setup(void) {
+  ctx.eval_ctx.stack = &stack;
+  clsr_init(&ctx);
+}
 
-static void teardown(void) { clsr_destroy(&stack, &parser_ctx, &eval_ctx); }
+static void teardown(void) { clsr_destroy(&ctx); }
 
 START_TEST(test_push) {
   const char *input = "push ()";
   yyin = fmemopen((void *)input, strlen(input), "r");
 
-  int parse_status = yyparse(&parser_ctx);
+  int parse_status = yyparse(&ctx);
 
   ck_assert_int_eq(parse_status, 0);
 
-  Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+  Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
 
   ck_assert_ptr_eq(eval_status, obj_true);
 
@@ -47,16 +47,16 @@ START_TEST(test_push_args) {
   const char *input = "push (-1 bar 42 foo)";
   yyin = fmemopen((void *)input, strlen(input), "r");
 
-  int parse_status = yyparse(&parser_ctx);
+  int parse_status = yyparse(&ctx);
 
   ck_assert_int_eq(parse_status, 0);
 
-  uintptr_t sp = eval_ctx.stack->sp;
+  uintptr_t sp = ctx.eval_ctx.stack->sp;
 
-  Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+  Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
 
   ck_assert_ptr_eq(eval_status, obj_true);
-  ck_assert_int_eq(sp + 4, eval_ctx.stack->sp);
+  ck_assert_int_eq(sp + 4, ctx.eval_ctx.stack->sp);
 
   Obj *neg_int = POP(&stack);
   Obj *sym_bar = POP(&stack);
@@ -85,10 +85,10 @@ START_TEST(test_push_args) {
 
   ck_assert_ptr_eq(
       (const void *)sym_bar_literal.symbol,
-      (const void *)sym_intern(&parser_ctx.sym_tab, "bar", strlen("bar")));
+      (const void *)sym_intern(&ctx.parser_ctx.sym_tab, "bar", strlen("bar")));
   ck_assert_ptr_eq(
       (const void *)sym_foo_literal.symbol,
-      (const void *)sym_intern(&parser_ctx.sym_tab, "foo", strlen("foo")));
+      (const void *)sym_intern(&ctx.parser_ctx.sym_tab, "foo", strlen("foo")));
 
   yylex_destroy();
   fclose(yyin);
@@ -106,10 +106,10 @@ START_TEST(test_set) {
 
     yyin = fmemopen((void *)input, strlen(input), "r");
 
-    int parse_status = yyparse(&parser_ctx);
+    int parse_status = yyparse(&ctx);
     ck_assert_int_eq(parse_status, 0);
 
-    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
     ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
@@ -120,7 +120,7 @@ START_TEST(test_set) {
 
   Obj *obj;
 
-  int status = env_lookup(eval_ctx.env, "foo", (void **)&obj);
+  int status = env_lookup(ctx.eval_ctx.env, "foo", (void **)&obj);
   ck_assert_int_eq(status, 0);
 
   ck_assert(OBJ_ISKIND(obj, Obj_Literal));
@@ -144,10 +144,10 @@ START_TEST(test_lookup) {
 
     yyin = fmemopen((void *)input, strlen(input), "r");
 
-    int parse_status = yyparse(&parser_ctx);
+    int parse_status = yyparse(&ctx);
     ck_assert_int_eq(parse_status, 0);
 
-    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
     ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
@@ -168,7 +168,7 @@ START_TEST(test_lookup) {
 
   Obj *ob_ptr;
 
-  int status = env_lookup(eval_ctx.env, "foo", (void **)&ob_ptr);
+  int status = env_lookup(ctx.eval_ctx.env, "foo", (void **)&ob_ptr);
 
   ck_assert_int_eq(status, 0);
   ck_assert_ptr_eq(obj, ob_ptr);
@@ -191,10 +191,10 @@ START_TEST(test_ret) {
 
     yyin = fmemopen((void *)input, strlen(input), "r");
 
-    int parse_status = yyparse(&parser_ctx);
+    int parse_status = yyparse(&ctx);
     ck_assert_int_eq(parse_status, 0);
 
-    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
     ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
@@ -240,10 +240,10 @@ START_TEST(test_closure) {
 
     yyin = fmemopen((void *)input, strlen(input), "r");
 
-    int parse_status = yyparse(&parser_ctx);
+    int parse_status = yyparse(&ctx);
     ck_assert_int_eq(parse_status, 0);
 
-    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
     ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
@@ -276,10 +276,10 @@ START_TEST(test_apply_with_anonymous_closure) {
 
     yyin = fmemopen((void *)input, strlen(input), "r");
 
-    int parse_status = yyparse(&parser_ctx);
+    int parse_status = yyparse(&ctx);
     ck_assert_int_eq(parse_status, 0);
 
-    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
     ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
@@ -314,10 +314,10 @@ START_TEST(test_apply_with_named_closure) {
 
     yyin = fmemopen((void *)input, strlen(input), "r");
 
-    int parse_status = yyparse(&parser_ctx);
+    int parse_status = yyparse(&ctx);
     ck_assert_int_eq(parse_status, 0);
 
-    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
     ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();
@@ -348,10 +348,10 @@ START_TEST(test_if) {
 
     yyin = fmemopen((void *)input, strlen(input), "r");
 
-    int parse_status = yyparse(&parser_ctx);
+    int parse_status = yyparse(&ctx);
     ck_assert_int_eq(parse_status, 0);
 
-    Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+    Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
     ck_assert_ptr_eq(eval_status, obj_true);
 
     yylex_destroy();

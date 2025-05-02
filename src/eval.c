@@ -22,7 +22,7 @@ Obj *apply(Obj *void_obj, ClsrContext *ctx) {
   Obj *obj = CTX_POP(ctx);
 
   if (!OBJ_IS_CLOSURE(obj)) {
-    assert(0 && "Obj is not a closure");
+    assert(0 && "Obj is not a closure.");
     return obj_false; // TODO: error message
   }
 
@@ -48,10 +48,8 @@ Obj *apply(Obj *void_obj, ClsrContext *ctx) {
 }
 
 Obj *closure(Obj *obj, ClsrContext *ctx) {
-  assert(obj);
-  assert(OBJ_ISKIND(obj, Obj_Closure));
-
   if (!OBJ_IS_CLOSURE(obj)) {
+    assert(0 && "Obj is not a closure.");
     return obj_false; // TODO: error handling
   }
 
@@ -61,21 +59,29 @@ Obj *closure(Obj *obj, ClsrContext *ctx) {
   return obj_true;
 }
 
-// TODO: FIXME: this is IS
-Obj *eq(Obj *void_obj, ClsrContext *ctx) {
-  (void)void_obj;
+Obj *eq(Obj *obj, ClsrContext *ctx) {
+  Obj *obj1 = CTX_POP(ctx);
+  Obj *obj2 = CTX_POP(ctx);
 
-  Obj *arg1 = CTX_POP(ctx);
-  Obj *arg2 = CTX_POP(ctx);
+  // Literal ints are special
+  if (OBJ_IS_LITERAL_INT(obj1) && OBJ_IS_LITERAL_INT(obj2)) {
+    Obj *result = OBJ_AS(obj1, literal).integer == OBJ_AS(obj2, literal).integer
+                      ? obj_true
+                      : obj_false;
+    CTX_PUSH(ctx, result);
+    return obj_true;
+  }
 
-  Obj *result = (uintptr_t)arg1 == (uintptr_t)arg2 ? obj_true : obj_false;
-  CTX_PUSH(ctx, result);
-  return obj_true;
+  // Symbols, keyword literals, lists, calls, closures, ifs, etc.
+  // if we get lists, a comparison would be cool.
+  CTX_PUSH(ctx, obj2);
+  CTX_PUSH(ctx, obj1);
+  return is(obj, ctx);
 }
 
 Obj *if_(Obj *obj, ClsrContext *ctx) {
   if (!OBJ_IS_IF(obj)) {
-    assert(0 && "Obj is not an if");
+    assert(0 && "Obj is not an if.");
     return obj_false; // TODO: error handling
   }
 
@@ -95,18 +101,18 @@ Obj *if_(Obj *obj, ClsrContext *ctx) {
 Obj *is(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *arg1 = CTX_POP(ctx);
-  Obj *arg2 = CTX_POP(ctx);
+  Obj *obj1 = CTX_POP(ctx);
+  Obj *obj2 = CTX_POP(ctx);
 
   Obj *result = NULL;
 
   // symbols are globally unique
-  if (OBJ_IS_LITERAL_SYM(arg1) && OBJ_IS_LITERAL_SYM(arg1)) {
-    const char *sym1 = OBJ_AS(arg1, literal).symbol;
-    const char *sym2 = OBJ_AS(arg2, literal).symbol;
+  if (OBJ_IS_LITERAL_SYM(obj1) && OBJ_IS_LITERAL_SYM(obj1)) {
+    const char *sym1 = OBJ_AS(obj1, literal).symbol;
+    const char *sym2 = OBJ_AS(obj2, literal).symbol;
     result = (uintptr_t)sym1 == (uintptr_t)sym2 ? obj_true : obj_false;
   } else
-    result = (uintptr_t)arg1 == (uintptr_t)arg2 ? obj_true : obj_false;
+    result = (uintptr_t)obj1 == (uintptr_t)obj2 ? obj_true : obj_false;
 
   CTX_PUSH(ctx, result);
 
@@ -118,11 +124,8 @@ Obj *lookup(Obj *void_obj, ClsrContext *ctx) {
 
   Obj *key = CTX_POP(ctx);
 
-  assert(key);
-  assert(OBJ_ISKIND(key, Obj_Literal));
-  assert(OBJ_AS(key, literal).kind == Literal_Sym);
-
   if (!OBJ_IS_LITERAL_SYM(key)) {
+    assert(0 && "Obj is not a literal symbol.");
     return obj_false; // TODO: error handling
   }
 
@@ -165,7 +168,7 @@ Obj *set(Obj *void_obj, ClsrContext *ctx) {
   Obj *val = CTX_POP(ctx);
 
   if (!OBJ_IS_LITERAL_SYM(key)) {
-    assert(0 && "Obj is not literal symbol");
+    assert(0 && "Obj is not a literal symbol.");
     return obj_false; // TODO: error handling
   }
 
@@ -182,8 +185,10 @@ Obj *eval(Obj *obj, ClsrContext *ctx) {
     return obj_false;
   }
 
-  assert(obj);
-  assert(OBJ_ISKIND(obj, Obj_List));
+  if (!OBJ_IS_LIST(obj)) {
+    assert(0 && "Obj is not a list.");
+    return obj_false; // TODO: error handling
+  }
 
   ObjList expressions = OBJ_AS(obj, list);
 

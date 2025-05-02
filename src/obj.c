@@ -105,7 +105,7 @@ void obj_fprintf(FILE *restrict stream, const Obj *obj) {
     break;
 
   case Obj_Call:
-    fprintf(stream, "<call ");
+    fprintf(stream, "<%p::call ", obj);
     if (OBJ_AS(obj, call).prim) {
       fprintf(stream, "%p ", (void *)OBJ_AS(obj, call).prim);
     } else {
@@ -116,7 +116,7 @@ void obj_fprintf(FILE *restrict stream, const Obj *obj) {
     break;
 
   case Obj_Closure:
-    fprintf(stream, "<closure params=");
+    fprintf(stream, "<%p::closure params=", obj);
     obj_fprintf(stream, OBJ_AS(obj, closure).params);
     fprintf(stream, " body=");
     obj_fprintf(stream, OBJ_AS(obj, closure).body);
@@ -124,7 +124,7 @@ void obj_fprintf(FILE *restrict stream, const Obj *obj) {
     break;
 
   case Obj_If:
-    fprintf(stream, "<if then=");
+    fprintf(stream, "<%p::if then=", obj);
     obj_fprintf(stream, OBJ_AS(obj, if_).then);
     fprintf(stream, " else=");
     obj_fprintf(stream, OBJ_AS(obj, if_).else_);

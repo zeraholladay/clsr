@@ -17,36 +17,29 @@ extern int yydebug;
 #endif
 
 extern FILE *yyin;
-extern int yyparse(ParseContext *ctx);
+extern int yyparse(ClsrContext *ctx);
 extern void yylex_destroy(void);
 
-void clsr_init(Stack *stack, ParseContext *parser_ctx, EvalContext *eval_ctx) {
-  parser_ctx->obj_pool = obj_pool_init(OBJ_POOL_CAPACITY);
-  reset_parse_context(parser_ctx);
-
-  STACK_INIT(stack);
-
-  eval_ctx->stack = stack;
-  eval_ctx->env = env_new(NULL);
+void clsr_init(ClsrContext *ctx) {
+  ctx->obj_pool = obj_pool_init(OBJ_POOL_CAPACITY);
+  ctx->eval_ctx.env = env_new(NULL);
+  STACK_INIT(ctx->eval_ctx.stack);
+  reset_parse_context(ctx);
 }
 
-void clsr_destroy(Stack *stack, ParseContext *parser_ctx,
-                  EvalContext *eval_ctx) {
-  reset_parse_context(parser_ctx);
-  obj_pool_destroy(&(parser_ctx->obj_pool));
-
-  STACK_FREE(stack);
-
-  eval_ctx->stack = NULL;
-  FREE(eval_ctx->env);
+void clsr_destroy(ClsrContext *ctx) {
+  reset_parse_context(ctx);
+  STACK_FREE(ctx->eval_ctx.stack);
+  FREE(ctx->eval_ctx.env);
+  obj_pool_destroy(&ctx->obj_pool);
 }
 
 int clsr_repl(void) {
   Stack stack = {};
-  ParseContext parser_ctx = {};
-  EvalContext eval_ctx = {};
+  ClsrContext ctx = {};
+  ctx.eval_ctx.stack = &stack;
 
-  clsr_init(&stack, &parser_ctx, &eval_ctx);
+  clsr_init(&ctx);
 
   rl_init();
 
@@ -61,14 +54,14 @@ int clsr_repl(void) {
 
     yyin = fmemopen((void *)full_input, len, "r");
 
-    reset_parse_context(&parser_ctx);
-    int parse_status = yyparse(&parser_ctx);
+    reset_parse_context(&ctx);
+    int parse_status = yyparse(&ctx);
 
     yylex_destroy();
     fclose(yyin);
 
     if (parse_status == 0) {
-      Obj *eval_status = eval(parser_ctx.root_obj, &eval_ctx);
+      Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
 
       if (eval_status == obj_true) {
         printf("=>TRUE\n");

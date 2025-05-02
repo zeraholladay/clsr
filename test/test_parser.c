@@ -8,21 +8,21 @@
 #include "parser.h"
 
 extern FILE *yyin;
-extern int yyparse(ParseContext *ctx);
+extern int yyparse(ClsrContext *ctx);
 extern void yylex_destroy(void);
 
-extern void clsr_init(Stack *stack, ParseContext *parser_ctx,
-                      EvalContext *eval_ctx);
-void clsr_destroy(Stack *stack, ParseContext *parser_ctx,
-                  EvalContext *eval_ctx);
+extern void clsr_init(ClsrContext *ctx);
+extern void clsr_destroy(ClsrContext *ctx);
 
 static Stack stack = {};
-static ParseContext parser_ctx = {};
-static EvalContext eval_ctx = {};
+static ClsrContext ctx = {};
 
-static void setup(void) { clsr_init(&stack, &parser_ctx, &eval_ctx); }
+static void setup(void) {
+  ctx.eval_ctx.stack = &stack;
+  clsr_init(&ctx);
+}
 
-static void teardown(void) { clsr_destroy(&stack, &parser_ctx, &eval_ctx); }
+static void teardown(void) { clsr_destroy(&ctx); }
 
 const char *valid_expressions[] = {
     // // Newlines
@@ -145,8 +145,8 @@ const char *invalid_expressions[] = {
 int run_parser_on(const char *type, const char *input, int expected_result) {
   yyin = fmemopen((void *)input, strlen(input), "r");
 
-  reset_parse_context(&parser_ctx);
-  int result = yyparse(&parser_ctx);
+  reset_parse_context(&ctx);
+  int result = yyparse(&ctx);
 
   yylex_destroy();
   fclose(yyin);

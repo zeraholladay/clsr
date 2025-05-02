@@ -21,7 +21,7 @@ CC ?= gcc
 
 ifeq ($(DEBUG), 1)
 	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O0 -g -DYYDEBUG=0 -DCLSR_DEBUG
-	FLEX_FLAGS := # -d
+	FLEX_FLAGS := -d
 	BISON_FLAGS := -d -v --debug
 else
 	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O2 -DNDEBUG -DYYDEBUG=0

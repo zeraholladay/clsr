@@ -368,6 +368,66 @@ START_TEST(test_if) {
 }
 END_TEST
 
+START_TEST(test_is) {
+  const char *true_expressions[] = {
+      "true true is",
+      "false false is",
+      "push (a c b c) set set push(a) lookup push(b) lookup is",
+      NULL,
+  };
+  const char *false_expressions[] = {
+      "true false is",
+      "true false is",
+      "push (a c b d) set set push(a) lookup push(b) lookup is",
+      NULL,
+  };
+
+  for (unsigned i = 0; true_expressions[i]; ++i) {
+    const char *input = true_expressions[i];
+
+    yyin = fmemopen((void *)input, strlen(input), "r");
+
+    int parse_status = yyparse(&ctx);
+    ck_assert_int_eq(parse_status, 0);
+
+    Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
+    ck_assert_ptr_eq(eval_status, obj_true);
+
+    yylex_destroy();
+    fclose(yyin);
+
+    Obj *obj = POP(&stack);
+    ck_assert(OBJ_ISKIND(obj, Obj_Literal));
+    ck_assert_ptr_eq(obj, obj_true);
+
+    ObjLiteral *obj_bool = OBJ_AS_PTR(obj, literal);
+    ck_assert(obj_bool->kind == Literal_Keywrd);
+  }
+
+  for (unsigned i = 0; false_expressions[i]; ++i) {
+    const char *input = false_expressions[i];
+
+    yyin = fmemopen((void *)input, strlen(input), "r");
+
+    int parse_status = yyparse(&ctx);
+    ck_assert_int_eq(parse_status, 0);
+
+    Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
+    ck_assert_ptr_eq(eval_status, obj_true);
+
+    yylex_destroy();
+    fclose(yyin);
+
+    Obj *obj = POP(&stack);
+    ck_assert(OBJ_ISKIND(obj, Obj_Literal));
+    ck_assert_ptr_eq(obj, obj_false);
+
+    ObjLiteral *obj_bool = OBJ_AS_PTR(obj, literal);
+    ck_assert(obj_bool->kind == Literal_Keywrd);
+  }
+}
+END_TEST
+
 Suite *eval_suite(void) {
   Suite *s = suite_create("Eval");
 
@@ -383,6 +443,7 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_apply_with_anonymous_closure);
   tcase_add_test(tc_core, test_apply_with_named_closure);
   tcase_add_test(tc_core, test_if);
+  tcase_add_test(tc_core, test_is);
 
   suite_add_tcase(s, tc_core);
   return s;

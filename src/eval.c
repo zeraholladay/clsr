@@ -2,18 +2,27 @@
 
 #include "clsr.h"
 
-extern Obj *const obj_true;
-extern Obj *const obj_false;
+static Obj _obj_true = {.kind = Obj_Literal,
+                        .as.literal = {
+                            .kind = Literal_Keywrd,
+                            .symbol = "True",
+                        }};
+static Obj _obj_false = {.kind = Obj_Literal,
+                         .as.literal = {
+                             .kind = Literal_Keywrd,
+                             .symbol = "False",
+                         }};
+
+Obj *const obj_true = &_obj_true;
+Obj *const obj_false = &_obj_false;
 
 Obj *apply(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *obj = POP(ctx->eval_ctx.stack);
+  Obj *obj = CTX_POP(ctx);
 
-  assert(obj);
-  assert(OBJ_ISKIND(obj, Obj_Closure));
-
-  if (!obj || !(OBJ_ISKIND(obj, Obj_Closure))) {
+  if (!OBJ_IS_CLOSURE(obj)) {
+    assert(0 && "Obj is not a closure");
     return obj_false; // TODO: error message
   }
 
@@ -24,7 +33,7 @@ Obj *apply(Obj *void_obj, ClsrContext *ctx) {
   Env *closure_env = env_new(obj_closure.env); // TODO: error handling
 
   for (unsigned int i = 0; i < params.count; ++i) {
-    Obj *o = POP(ctx->eval_ctx.stack);
+    Obj *o = CTX_POP(ctx);
     const char *symbol = OBJ_AS(params.nodes[i], literal).symbol;
     env_set(closure_env, symbol, o);
   }
@@ -42,47 +51,37 @@ Obj *closure(Obj *obj, ClsrContext *ctx) {
   assert(obj);
   assert(OBJ_ISKIND(obj, Obj_Closure));
 
-  if (!obj || !(OBJ_ISKIND(obj, Obj_Closure))) {
+  if (!OBJ_IS_CLOSURE(obj)) {
     return obj_false; // TODO: error handling
   }
 
   ObjClosure *clsr = OBJ_AS_PTR(obj, closure);
-  clsr->env = ctx->eval_ctx.env;
-  PUSH(ctx->eval_ctx.stack, obj);
+  clsr->env = CTX_ENV(ctx);
+  CTX_PUSH(ctx, obj);
   return obj_true;
 }
 
+// TODO: FIXME: this is IS
 Obj *eq(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *arg1 = POP(ctx->eval_ctx.stack);
-  Obj *arg2 = POP(ctx->eval_ctx.stack);
+  Obj *arg1 = CTX_POP(ctx);
+  Obj *arg2 = CTX_POP(ctx);
 
-  int result = (uintptr_t)arg1 == (uintptr_t)arg2;
-
-  if (result) {
-    debug("eq is true");
-    PUSH(ctx->eval_ctx.stack, obj_true);
-  } else {
-    debug("eq is false");
-    PUSH(ctx->eval_ctx.stack, obj_false);
-  }
-
+  Obj *result = (uintptr_t)arg1 == (uintptr_t)arg2 ? obj_true : obj_false;
+  CTX_PUSH(ctx, result);
   return obj_true;
 }
 
 Obj *if_(Obj *obj, ClsrContext *ctx) {
-  assert(obj);
-  assert(OBJ_ISKIND(obj, Obj_If));
-
-  if (!obj || !(OBJ_ISKIND(obj, Obj_If))) {
+  if (!OBJ_IS_IF(obj)) {
+    assert(0 && "Obj is not an if");
     return obj_false; // TODO: error handling
   }
 
-  Obj *cond = POP(ctx->eval_ctx.stack);
+  Obj *cond = CTX_POP(ctx);
 
   if (!cond) {
-    debug("if is NULL");
     return obj_false; // TODO: error handling
   }
 
@@ -90,35 +89,49 @@ Obj *if_(Obj *obj, ClsrContext *ctx) {
 
   Obj *branch = (cond == obj_true) ? obj_if.then : obj_if.else_;
 
-  if (cond == obj_true) {
-    debug("cond is true branch");
-  } else {
-    debug("cond is false branch");
-  }
-
   return eval(branch, ctx);
+}
+
+Obj *is(Obj *void_obj, ClsrContext *ctx) {
+  (void)void_obj;
+
+  Obj *arg1 = CTX_POP(ctx);
+  Obj *arg2 = CTX_POP(ctx);
+
+  Obj *result = NULL;
+
+  // symbols are globally unique
+  if (OBJ_IS_LITERAL_SYM(arg1) && OBJ_IS_LITERAL_SYM(arg1)) {
+    const char *sym1 = OBJ_AS(arg1, literal).symbol;
+    const char *sym2 = OBJ_AS(arg2, literal).symbol;
+    result = (uintptr_t)sym1 == (uintptr_t)sym2 ? obj_true : obj_false;
+  } else
+    result = (uintptr_t)arg1 == (uintptr_t)arg2 ? obj_true : obj_false;
+
+  CTX_PUSH(ctx, result);
+
+  return obj_true;
 }
 
 Obj *lookup(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *key = POP(ctx->eval_ctx.stack);
+  Obj *key = CTX_POP(ctx);
 
   assert(key);
   assert(OBJ_ISKIND(key, Obj_Literal));
   assert(OBJ_AS(key, literal).kind == Literal_Sym);
 
-  if (!key || !(OBJ_ISKIND(key, Obj_Literal)) ||
-      !(OBJ_AS(key, literal).kind == Literal_Sym)) {
+  if (!OBJ_IS_LITERAL_SYM(key)) {
     return obj_false; // TODO: error handling
   }
 
   void *rval;
 
-  if (env_lookup(ctx->eval_ctx.env, OBJ_AS(key, literal).symbol, &rval))
+  if (env_lookup(CTX_ENV(ctx), OBJ_AS(key, literal).symbol, &rval))
     return obj_false;
   else
-    PUSH(ctx->eval_ctx.stack, rval);
+    CTX_PUSH(ctx, rval);
 
   return obj_true;
 }
@@ -129,7 +142,7 @@ Obj *push(Obj *obj, ClsrContext *ctx) {
 
   for (unsigned int i = list.count; i > 0; --i) {
     assert(OBJ_ISKIND(list.nodes[i - 1], Obj_Literal));
-    PUSH(ctx->eval_ctx.stack, list.nodes[i - 1]);
+    CTX_PUSH(ctx, list.nodes[i - 1]);
   }
 
   return obj_true;
@@ -138,9 +151,9 @@ Obj *push(Obj *obj, ClsrContext *ctx) {
 Obj *return_(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *obj_rval = POP(ctx->eval_ctx.stack);
+  Obj *obj_rval = CTX_POP(ctx);
   EXIT_FRAME(ctx->eval_ctx.stack);
-  PUSH(ctx->eval_ctx.stack, obj_rval);
+  CTX_PUSH(ctx, obj_rval);
 
   return obj_true;
 }
@@ -148,20 +161,17 @@ Obj *return_(Obj *void_obj, ClsrContext *ctx) {
 Obj *set(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *key = POP(ctx->eval_ctx.stack);
-  Obj *val = POP(ctx->eval_ctx.stack);
+  Obj *key = CTX_POP(ctx);
+  Obj *val = CTX_POP(ctx);
 
-  assert(key);
-  assert(OBJ_ISKIND(key, Obj_Literal));
-  assert(OBJ_AS(key, literal).kind == Literal_Sym);
-
-  if (!key || !(OBJ_ISKIND(key, Obj_Literal)) ||
-      !(OBJ_AS(key, literal).kind == Literal_Sym)) {
-    return obj_false; // TODO: error message
+  if (!OBJ_IS_LITERAL_SYM(key)) {
+    assert(0 && "Obj is not literal symbol");
+    return obj_false; // TODO: error handling
   }
 
-  env_set(ctx->eval_ctx.env, OBJ_AS(key, literal).symbol,
+  env_set(CTX_ENV(ctx), OBJ_AS(key, literal).symbol,
           val); // TODO: error handling
+
   return obj_true;
 }
 
@@ -182,8 +192,8 @@ Obj *eval(Obj *obj, ClsrContext *ctx) {
 
     switch (OBJ_KIND(expression)) {
     case Obj_Literal:
-      if (OBJ_AS(expression, literal).kind == Literal_Keywrd) {
-        PUSH(ctx->eval_ctx.stack, obj);
+      if (OBJ_IS_LITERAL_KEYWRD(expression)) {
+        CTX_PUSH(ctx, expression);
         result = expression;
       }
       break;

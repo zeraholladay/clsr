@@ -64,9 +64,9 @@ int clsr_repl(void) {
       Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
 
       if (eval_status == obj_true) {
-        printf("=>TRUE\n");
+        obj_fprintf(stdout, PEEK(ctx.eval_ctx.stack)), printf("\n");
       } else {
-        printf("=>FALSE\n");
+        printf("=>error\n"); // TODO
       }
 
     } else {

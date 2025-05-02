@@ -34,7 +34,7 @@ int env_set(Env *env, const char *sym, void *addr) {
   rb_node *node = rb_lookup(env->root, sym, len);
 
   if (node)
-    RB_KEY(node) = sym;
+    RB_VAL(node) = addr;
   else {
     node = rb_alloc();
 

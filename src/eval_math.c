@@ -3,29 +3,14 @@
 #include "clsr.h"
 #include "stack.h"
 
-int is_integer(Obj *obj) {
-  if (!obj || !(OBJ_ISKIND(obj, Obj_Literal)) ||
-      !(OBJ_AS(obj, literal).kind == Literal_Int)) {
-    return 0;
-  }
-  return 1;
-}
-
 Obj *add(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *arg1 = POP(ctx->eval_ctx.stack);
-  Obj *arg2 = POP(ctx->eval_ctx.stack);
+  Obj *arg1 = CTX_POP(ctx);
+  Obj *arg2 = CTX_POP(ctx);
 
-  assert(arg1);
-  assert(OBJ_ISKIND(arg1, Obj_Literal));
-  assert(OBJ_AS(arg1, literal).kind == Literal_Int);
-
-  assert(arg2);
-  assert(OBJ_ISKIND(arg2, Obj_Literal));
-  assert(OBJ_AS(arg2, literal).kind == Literal_Int);
-
-  if (!is_integer(arg1) || !is_integer(arg2)) {
+  if (!OBJ_IS_LITERAL_INT(arg1) || !OBJ_IS_LITERAL_INT(arg2)) {
+    assert(0 && "Objs must be an integer in add");
     return obj_false; // TODO: error message
   }
 
@@ -41,18 +26,11 @@ Obj *add(Obj *void_obj, ClsrContext *ctx) {
 Obj *sub(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *arg1 = POP(ctx->eval_ctx.stack);
-  Obj *arg2 = POP(ctx->eval_ctx.stack);
+  Obj *arg1 = CTX_POP(ctx);
+  Obj *arg2 = CTX_POP(ctx);
 
-  assert(arg1);
-  assert(OBJ_ISKIND(arg1, Obj_Literal));
-  assert(OBJ_AS(arg1, literal).kind == Literal_Int);
-
-  assert(arg2);
-  assert(OBJ_ISKIND(arg2, Obj_Literal));
-  assert(OBJ_AS(arg2, literal).kind == Literal_Int);
-
-  if (!is_integer(arg1) || !is_integer(arg2)) {
+  if (!OBJ_IS_LITERAL_INT(arg1) || !OBJ_IS_LITERAL_INT(arg2)) {
+    assert(0 && "Objs must be an integer in sub");
     return obj_false; // TODO: error message
   }
 
@@ -68,18 +46,11 @@ Obj *sub(Obj *void_obj, ClsrContext *ctx) {
 Obj *mul(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *arg1 = POP(ctx->eval_ctx.stack);
-  Obj *arg2 = POP(ctx->eval_ctx.stack);
+  Obj *arg1 = CTX_POP(ctx);
+  Obj *arg2 = CTX_POP(ctx);
 
-  assert(arg1);
-  assert(OBJ_ISKIND(arg1, Obj_Literal));
-  assert(OBJ_AS(arg1, literal).kind == Literal_Int);
-
-  assert(arg2);
-  assert(OBJ_ISKIND(arg2, Obj_Literal));
-  assert(OBJ_AS(arg2, literal).kind == Literal_Int);
-
-  if (!is_integer(arg1) || !is_integer(arg2)) {
+  if (!OBJ_IS_LITERAL_INT(arg1) || !OBJ_IS_LITERAL_INT(arg2)) {
+    assert(0 && "Objs must be an integer in mul");
     return obj_false; // TODO: error message
   }
 
@@ -95,18 +66,11 @@ Obj *mul(Obj *void_obj, ClsrContext *ctx) {
 Obj *div_(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
-  Obj *arg1 = POP(ctx->eval_ctx.stack);
-  Obj *arg2 = POP(ctx->eval_ctx.stack);
+  Obj *arg1 = CTX_POP(ctx);
+  Obj *arg2 = CTX_POP(ctx);
 
-  assert(arg1);
-  assert(OBJ_ISKIND(arg1, Obj_Literal));
-  assert(OBJ_AS(arg1, literal).kind == Literal_Int);
-
-  assert(arg2);
-  assert(OBJ_ISKIND(arg2, Obj_Literal));
-  assert(OBJ_AS(arg2, literal).kind == Literal_Int);
-
-  if (!is_integer(arg1) || !is_integer(arg2)) {
+  if (!OBJ_IS_LITERAL_INT(arg1) || !OBJ_IS_LITERAL_INT(arg2)) {
+    assert(0 && "Objs must be an integer in div");
     return obj_false; // TODO: error message
   }
 

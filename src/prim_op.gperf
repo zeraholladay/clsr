@@ -21,6 +21,7 @@ APPLY,   {TOK_APPLY,   apply   }
 CLOSURE, {TOK_CLOSURE, 0       }
 EQ,      {TOK_EQ,      eq      }
 IF,      {TOK_IF,      0       }
+IS,      {TOK_IS,      is      }
 LOOKUP,  {TOK_LOOKUP,  lookup  }
 PUSH,    {TOK_PUSH,    push    }
 RETURN,  {TOK_RETURN,  return_ }

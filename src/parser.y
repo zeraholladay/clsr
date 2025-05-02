@@ -46,11 +46,13 @@ void reset_parse_context(ClsrContext *ctx);
 %define api.token.prefix {TOK_}
 
 %token ERROR
+
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
-%token <prim> APPLY EQ LOOKUP PUSH RETURN SET
-%token <prim> CLOSURE IF
+
 %token <prim> TRUE FALSE
+%token <prim> APPLY EQ IS LOOKUP PUSH RETURN SET
+%token <prim> CLOSURE IF
 %token <prim> ADD SUB MUL DIV
 
 %%
@@ -95,6 +97,7 @@ expression:
 nullary:
     APPLY
     | EQ
+    | IS
     | LOOKUP
     | RETURN
     | SET

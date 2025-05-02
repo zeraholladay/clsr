@@ -2,21 +2,6 @@
 
 #include <stdio.h>
 
-static Obj _obj_true = {.kind = Obj_Literal,
-                        .as.literal = {
-                            .kind = Literal_Keywrd,
-                            .symbol = "True",
-                        }};
-
-static Obj _obj_false = {.kind = Obj_Literal,
-                         .as.literal = {
-                             .kind = Literal_Keywrd,
-                             .symbol = "False",
-                         }};
-
-Obj *const obj_true = &_obj_true;
-Obj *const obj_false = &_obj_false;
-
 Obj *obj_new_literal_int(ObjPool *p, int i) {
   Obj *obj = obj_pool_alloc(p);
   OBJ_KIND(obj) = Obj_Literal;
@@ -94,10 +79,13 @@ void obj_fprintf(FILE *restrict stream, const Obj *obj) {
   case Obj_Literal:
     switch (OBJ_AS(obj, literal).kind) {
     case Literal_Int:
-      fprintf(stream, "%d", OBJ_AS(obj, literal).integer);
+      fprintf(stream, "%p::Int::%d", obj, OBJ_AS(obj, literal).integer);
       break;
     case Literal_Sym:
-      fprintf(stream, "%s", OBJ_AS(obj, literal).symbol);
+      fprintf(stream, "%p::Symbol::%s", obj, OBJ_AS(obj, literal).symbol);
+      break;
+    case Literal_Keywrd:
+      fprintf(stream, "%p::Keyword::%s", obj, OBJ_AS(obj, literal).symbol);
       break;
     default:
       fprintf(stream, "<unknown literal>");

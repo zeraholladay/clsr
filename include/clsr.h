@@ -15,6 +15,9 @@
 struct Obj;
 struct ClsrContext;
 
+extern struct Obj *const obj_true;
+extern struct Obj *const obj_false;
+
 typedef struct Obj *(*PrimFunc)(struct Obj *obj, struct ClsrContext *ctx);
 
 typedef struct PrimOp {
@@ -28,6 +31,20 @@ typedef struct PrimOp {
 #define OBJ_AS_PTR(obj_ptr, kind) (&((obj_ptr)->as.kind))
 #define OBJ_KIND(obj_ptr) (obj_ptr)->kind
 #define OBJ_ISKIND(obj_ptr, kind) (OBJ_KIND(obj_ptr) == kind)
+#define OBJ_IS_LITERAL_INT(obj_ptr)                                            \
+  ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_Literal)) &&                          \
+   (OBJ_AS(obj_ptr, literal).kind == Literal_Int))
+#define OBJ_IS_LITERAL_KEYWRD(obj_ptr)                                         \
+  ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_Literal)) &&                          \
+   (OBJ_AS(obj_ptr, literal).kind == Literal_Keywrd))
+#define OBJ_IS_LITERAL_SYM(obj_ptr)                                            \
+  ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_Literal)) &&                          \
+   (OBJ_AS(obj_ptr, literal).kind == Literal_Sym))
+#define OBJ_IS_LIST(obj_ptr) ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_List)))
+#define OBJ_IS_CALL(obj_ptr) ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_Call)))
+#define OBJ_IS_CLOSURE(obj_ptr)                                                \
+  ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_Closure)))
+#define OBJ_IS_IF(obj_ptr) ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_If)))
 
 typedef enum {
   Obj_Literal,
@@ -39,8 +56,8 @@ typedef enum {
 
 typedef enum {
   Literal_Int,
-  Literal_Sym,
   Literal_Keywrd,
+  Literal_Sym,
 } ObjLiteralKind;
 
 typedef struct {
@@ -99,6 +116,10 @@ typedef struct {
 
 /* clsr context */
 
+#define CTX_POP(ctx) POP((ctx)->eval_ctx.stack)
+#define CTX_PUSH(ctx, obj) PUSH((ctx)->eval_ctx.stack, obj)
+#define CTX_ENV(ctx) ((ctx)->eval_ctx.env)
+
 typedef struct EvalContext {
   Env *env;
   Stack *stack;
@@ -132,9 +153,6 @@ const PrimOp *prim_op_lookup(register const char *str,
 
 /* obj.c */
 
-extern Obj *const obj_true;
-extern Obj *const obj_false;
-
 Obj *obj_new_literal_int(ObjPool *p, int i);
 Obj *obj_new_literal_sym(ObjPool *p, const char *sym);
 Obj *obj_new_empty_expr_list(ObjPool *p);
@@ -153,15 +171,24 @@ void obj_pool_free(ObjPool *p, Obj *obj);
 unsigned int obj_pool_reset_from_mark(ObjPool *p, ObjPoolWrapper *mark);
 void obj_pool_reset_all(ObjPool *p);
 
-/* prim_fun.c */
+/* eval.c */
 
 Obj *apply(Obj *void_obj, ClsrContext *ctx);
 Obj *closure(Obj *obj, ClsrContext *ctx);
+Obj *eq(Obj *obj, ClsrContext *ctx);
 Obj *if_(Obj *obj, ClsrContext *ctx);
+Obj *is(Obj *obj, ClsrContext *ctx);
 Obj *lookup(Obj *void_obj, ClsrContext *ctx);
 Obj *push(Obj *obj, ClsrContext *ctx);
 Obj *return_(Obj *void_obj, ClsrContext *ctx);
 Obj *set(Obj *void_obj, ClsrContext *ctx);
 Obj *eval(Obj *obj, ClsrContext *ctx);
+
+/* math.c */
+
+Obj *add(Obj *void_obj, ClsrContext *ctx);
+Obj *sub(Obj *void_obj, ClsrContext *ctx);
+Obj *mul(Obj *void_obj, ClsrContext *ctx);
+Obj *div_(Obj *void_obj, ClsrContext *ctx);
 
 #endif

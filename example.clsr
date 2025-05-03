@@ -1,0 +1,22 @@
+push(counter 0) set
+closure (i j) (
+    push(i) lookup
+    push(j) lookup
+    eq
+    if (
+        return
+    ) (
+        push(counter 1) lookup
+        add
+        push(counter) set
+        ; 
+        push(j) lookup
+        push(1)
+        push(i) lookup
+        add
+        push(range) lookup apply
+        return
+    )
+) push (range) set
+push(range 0 42) lookup apply
+push(counter) lookup

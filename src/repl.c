@@ -49,7 +49,7 @@ int clsr_repl(void) {
     int len = rl_readline(full_input, sizeof(full_input));
 
     if (len < 0) {
-      continue; // TODO: Something
+      break; // TODO: Something
     }
 
     yyin = fmemopen((void *)full_input, len, "r");
@@ -64,9 +64,9 @@ int clsr_repl(void) {
       Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
 
       if (eval_status == obj_true) {
-        printf("=>TRUE\n");
+        obj_fprintf(stdout, PEEK(ctx.eval_ctx.stack)), printf("\n");
       } else {
-        printf("=>FALSE\n");
+        printf("=>error\n"); // TODO
       }
 
     } else {
@@ -74,6 +74,7 @@ int clsr_repl(void) {
       continue; // TODO: syntax error
     }
   }
+  return 0;
 }
 
 #else
@@ -84,7 +85,7 @@ int main(void) {
 #if YYDEBUG
   yydebug = YYDEBUG;
 #endif
-  clsr_repl();
+  return clsr_repl();
 }
 
 #endif

@@ -6,7 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef CLSR_DEBUG
+#ifdef CLSR_DEBUG
+#define CLSR_DEBUG_ENABLED 1
+#else
 #define CLSR_DEBUG_ENABLED 0
 #endif
 

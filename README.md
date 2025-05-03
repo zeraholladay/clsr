@@ -188,9 +188,134 @@ Side effect:
 1. Evaluates either the `(then)` expression otherwise the `(else)` expression
 
 ```lisp
-push (true) if (push(42)) (push(-1)) ; 42
+push (true)
+if (
+  push(42)
+) (
+  push(-1)
+) ; 42
 
-push (false) if (push(-1)) (push(42)) ; 42
+push (false)
+if (
+  push(-1)
+  ) (
+    push(42)
+  ) ; 42
 ```
 
 ---
+
+### `is`
+An conditional instruction that pops the top two values from the stack and pushes `true` or `false` if the values are the same object.
+
+Consumes:
+1. A two values from the top of the *stack*.
+
+Produces:
+1. `true` or `false`.
+
+```lisp
+push (a a) is ;true
+push (b a) is ;false
+push (1 1) is ;false
+```
+
+---
+
+### `eq`
+An conditional instruction that pops the top two values from the stack and pushes `true` or `false` if the values are equal.
+
+Consumes:
+1. A two values from the top of the *stack*.
+
+Produces:
+1. `true` or `false`.
+
+```lisp
+push (a a) eq ;true
+push (b a) eq ;false
+push (1 1) eq ;true
+```
+
+---
+
+### `add sub mul div`
+Instructions that pops the top tow values from the stack .
+
+Consumes:
+1. Two integers.
+
+Produces:
+1. A single `result`.
+
+```lisp
+push (0 0) add
+push(0) eq
+
+push (42 1) add
+push(42) eq
+
+push (0 1) sub
+push(-1) eq
+
+push (1 0) sub
+push(1) eq
+
+push (1 0) mul
+push(0) eq
+
+push (1 42) mul
+push(42) eq
+
+push (42 6) div
+push(7) eq
+
+push (42 1) div
+push(1) eq
+```
+
+---
+
+## Examples
+
+### `range`
+
+Create a closure called `range` from `0..42`:
+
+```lisp
+; counter=0
+push(counter 0)
+set
+; closure named range
+closure (i j) (
+    ; i == j
+    push(i) lookup
+    push(j) lookup
+    eq
+    if (
+        ; return 0
+        push(0)
+        return
+    ) (
+        ; count += 1
+        push(counter 1) lookup
+        add
+        push(counter)
+        set
+        ; range(++i, j)
+        push(j)
+        lookup
+        push(1)
+        push(i)
+        lookup
+        add
+        push(range) lookup apply
+        return
+    )
+)
+push (range) set
+; call range(0,42)
+push(range 0 42) lookup apply
+; counter
+push(counter) lookup
+```

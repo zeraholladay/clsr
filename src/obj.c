@@ -2,21 +2,6 @@
 
 #include <stdio.h>
 
-static Obj _obj_true = {.kind = Obj_Literal,
-                        .as.literal = {
-                            .kind = Literal_Keywrd,
-                            .symbol = "True",
-                        }};
-
-static Obj _obj_false = {.kind = Obj_Literal,
-                         .as.literal = {
-                             .kind = Literal_Keywrd,
-                             .symbol = "False",
-                         }};
-
-Obj *const obj_true = &_obj_true;
-Obj *const obj_false = &_obj_false;
-
 Obj *obj_new_literal_int(ObjPool *p, int i) {
   Obj *obj = obj_pool_alloc(p);
   OBJ_KIND(obj) = Obj_Literal;
@@ -94,10 +79,13 @@ void obj_fprintf(FILE *restrict stream, const Obj *obj) {
   case Obj_Literal:
     switch (OBJ_AS(obj, literal).kind) {
     case Literal_Int:
-      fprintf(stream, "%d", OBJ_AS(obj, literal).integer);
+      fprintf(stream, "%p::Int::%d", obj, OBJ_AS(obj, literal).integer);
       break;
     case Literal_Sym:
-      fprintf(stream, "%s", OBJ_AS(obj, literal).symbol);
+      fprintf(stream, "%p::Symbol::%s", obj, OBJ_AS(obj, literal).symbol);
+      break;
+    case Literal_Keywrd:
+      fprintf(stream, "%p::Keyword::%s", obj, OBJ_AS(obj, literal).symbol);
       break;
     default:
       fprintf(stream, "<unknown literal>");
@@ -117,7 +105,7 @@ void obj_fprintf(FILE *restrict stream, const Obj *obj) {
     break;
 
   case Obj_Call:
-    fprintf(stream, "<call ");
+    fprintf(stream, "<%p::call ", obj);
     if (OBJ_AS(obj, call).prim) {
       fprintf(stream, "%p ", (void *)OBJ_AS(obj, call).prim);
     } else {
@@ -128,7 +116,7 @@ void obj_fprintf(FILE *restrict stream, const Obj *obj) {
     break;
 
   case Obj_Closure:
-    fprintf(stream, "<closure params=");
+    fprintf(stream, "<%p::closure params=", obj);
     obj_fprintf(stream, OBJ_AS(obj, closure).params);
     fprintf(stream, " body=");
     obj_fprintf(stream, OBJ_AS(obj, closure).body);
@@ -136,7 +124,7 @@ void obj_fprintf(FILE *restrict stream, const Obj *obj) {
     break;
 
   case Obj_If:
-    fprintf(stream, "<if then=");
+    fprintf(stream, "<%p::if then=", obj);
     obj_fprintf(stream, OBJ_AS(obj, if_).then);
     fprintf(stream, " else=");
     obj_fprintf(stream, OBJ_AS(obj, if_).else_);

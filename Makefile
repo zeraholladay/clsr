@@ -13,14 +13,14 @@ SRC := src
 BIN := bin
 GEN := gen
 
-MAIN_SRC := $(SRC)/clsr.c
+MAIN_SRC := $(SRC)/repl.c
 EXEC := $(BIN)/clsr
 
 # Compilers and flags
 CC ?= gcc
 
 ifeq ($(DEBUG), 1)
-	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O0 -g -DYYDEBUG=1
+	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O0 -g -DYYDEBUG=0 -DCLSR_DEBUG
 	FLEX_FLAGS := -d
 	BISON_FLAGS := -d -v --debug
 else

@@ -19,13 +19,19 @@ struct _prim_op_gperf {
 %%
 APPLY,   {TOK_APPLY,   apply   }
 CLOSURE, {TOK_CLOSURE, 0       }
-FALSE,   {TOK_FALSE,   0       }
+EQ,      {TOK_EQ,      eq      }
 IF,      {TOK_IF,      0       }
+IS,      {TOK_IS,      is      }
 LOOKUP,  {TOK_LOOKUP,  lookup  }
 PUSH,    {TOK_PUSH,    push    }
 RETURN,  {TOK_RETURN,  return_ }
 SET,     {TOK_SET,     set     }
 TRUE,    {TOK_TRUE,    0       }
+FALSE,   {TOK_FALSE,   0       }
+ADD,     {TOK_ADD,     add     }
+SUB,     {TOK_SUB,     sub     }
+MUL,     {TOK_MUL,     mul     }
+DIV,     {TOK_DIV,     div_    }
 %%
 
 const PrimOp * prim_op_lookup(register const char *str, register unsigned int len) {

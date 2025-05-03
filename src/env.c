@@ -31,22 +31,25 @@ int env_lookup(Env *env, const char *sym, void **addr) {
 int env_set(Env *env, const char *sym, void *addr) {
   size_t len = strlen(sym);
 
-  rb_node *node = rb_lookup(env->root, sym, len);
+  for (Env *cur_env = env; cur_env; cur_env = cur_env->parent) {
+    rb_node *node = rb_lookup(cur_env->root, sym, len);
 
-  if (node)
-    RB_VAL(node) = addr;
-  else {
-    node = rb_alloc();
-
-    if (!node)
-      die(LOCATION);
-
-    RB_KEY(node) = sym;
-    RB_KEY_LEN(node) = len;
-    RB_VAL(node) = addr;
-
-    rb_insert(&env->root, node);
+    if (node) {
+      RB_VAL(node) = addr;
+      return 0;
+    }
   }
+
+  rb_node *node = rb_alloc();
+
+  if (!node)
+    die(LOCATION);
+
+  RB_KEY(node) = sym;
+  RB_KEY_LEN(node) = len;
+  RB_VAL(node) = addr;
+
+  rb_insert(&env->root, node);
 
   return 0;
 }

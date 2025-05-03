@@ -18,5 +18,5 @@ closure (i j) (
         return
     )
 ) push (range) set
-push(range 0 10) lookup apply
+push(range 0 42) lookup apply
 push(counter) lookup

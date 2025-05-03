@@ -13,6 +13,8 @@ typedef struct {
   size_t count, stride;
 } Pool;
 
+typedef void (*palloc_oom_handler_t)(Pool *, const char *msg);
+
 Pool *pool_init(size_t count, size_t size);
 void pool_destroy(Pool **p);
 void *pool_alloc(Pool *p);

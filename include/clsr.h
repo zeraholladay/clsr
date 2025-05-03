@@ -7,8 +7,12 @@
 #include "rb_tree.h"
 #include "stack.h"
 
-#ifndef SYMTAB_COUNT
-#define SYMTAB_COUNT 4096
+#ifndef SYMTAB_POOL_COUNT
+#define SYMTAB_POOL_COUNT 4096
+#endif
+
+#ifndef SYM_SAVE_BUMP_SIZE
+#define SYM_SAVE_BUMP_SIZE 4096
 #endif
 
 #ifndef OBJ_POOL_COUNT

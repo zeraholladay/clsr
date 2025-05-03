@@ -1,7 +1,7 @@
 #include <string.h>
 
-#include "common.h"
 #include "rb_tree.h"
+#include "safe_str.h"
 
 #define RB_BLACK 0
 #define RB_RED 1

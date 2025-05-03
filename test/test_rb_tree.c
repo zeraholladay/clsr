@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
 #include "rb_tree.h"
+#include "safe_str.h"
 
 rb_node *make_node(const char *key, size_t len) {
   rb_node *n = rb_alloc();

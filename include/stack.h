@@ -7,16 +7,14 @@
 #define STACK_GROWTH 4096
 #endif
 
-struct Stack;
-typedef void (*stack_OOM_func_t)(struct Stack *);
-
 typedef struct Stack {
   uintptr_t sp;
   uintptr_t fp;
   unsigned int data_size;
   uintptr_t *data;
-  stack_OOM_func_t stack_OOM_function;
 } Stack;
+
+typedef void (*stack_oom_handler_t)(Stack *, const char *msg);
 
 void stack_init(Stack *s_ptr, unsigned int count);
 void stack_free(Stack *s_ptr);

@@ -1,6 +1,7 @@
 #include <stdalign.h>
 #include <stddef.h>
 
+#include "oom_handlers.h"
 #include "palloc.h"
 
 #define STRIDE(size)                                                           \
@@ -9,18 +10,23 @@
 #define INDEX(base, index, stride)                                             \
   ((Wrapper *)((char *)(base) + ((index) * (stride))))
 
+extern palloc_oom_handler_t palloc_oom_handler;
+
 Pool *pool_init(size_t count, size_t size) {
   Pool *p = calloc(1, sizeof *(p));
   size_t stride =
       STRIDE(sizeof(Wrapper) + size); // array-aligned Wrapper and size
 
-  if (!p)
+  if (!p) {
+    palloc_oom_handler(NULL, OOM_LOCATION);
     return NULL;
+  }
 
   p->pool = calloc(count, stride);
 
   if (!p->pool) {
     free(p), p = NULL;
+    palloc_oom_handler(NULL, OOM_LOCATION);
     return NULL;
   }
 
@@ -37,8 +43,10 @@ void pool_destroy(Pool **p) {
 }
 
 void *pool_alloc(Pool *p) {
-  if (!p->free_list)
+  if (!p->free_list) {
+    palloc_oom_handler(p, OOM_LOCATION "free_list empty");
     return NULL;
+  }
   Wrapper *wrapper = p->free_list;
   p->free_list = wrapper->next_free;
   return &wrapper->ptr;

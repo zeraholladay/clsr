@@ -40,7 +40,7 @@ int env_set(Env *env, const char *sym, void *addr) {
     }
   }
 
-  rb_node *node = rb_alloc();
+  rb_node *node = rb_alloc(); // FIXME
 
   if (!node)
     die(LOCATION);

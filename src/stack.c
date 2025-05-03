@@ -1,21 +1,11 @@
-#include <stdio.h>
 #include <stdlib.h>
 
+#include "oom_handlers.h"
 #include "stack.h"
 
-static void oom_handler(Stack *stack) {
-  stack_OOM_func_t oom_cb = stack->stack_OOM_function;
+extern stack_oom_handler_t stack_oom_handler;
 
-  if (oom_cb)
-    oom_cb(stack);
-  else {
-    perror(__func__);
-    exit(1);
-    abort();
-  }
-}
-
-static int stack_ralloc(Stack *stack, unsigned int count) {
+static int stack_realloc(Stack *stack, unsigned int count) {
   uintptr_t *new_ptr = realloc(stack->data, (count) * sizeof *(stack->data));
   if (!new_ptr) {
     return 1;
@@ -26,8 +16,8 @@ static int stack_ralloc(Stack *stack, unsigned int count) {
 }
 
 void stack_init(Stack *stack, unsigned int count) {
-  if (stack_ralloc(stack, count))
-    oom_handler(stack);
+  if (stack_realloc(stack, count))
+    stack_oom_handler(stack, OOM_LOCATION);
   else
     stack->sp = stack->fp = 0;
 }
@@ -36,8 +26,8 @@ void stack_free(Stack *stack) { free(stack->data), stack->data = NULL; }
 
 void stack_push(Stack *stack, void *value) {
   if (stack->sp >= stack->data_size &&
-      stack_ralloc(stack, stack->data_size + STACK_GROWTH))
-    oom_handler(stack);
+      stack_realloc(stack, stack->data_size + STACK_GROWTH))
+    stack_oom_handler(stack, OOM_LOCATION);
   else
     stack->data[stack->sp++] = (uintptr_t)value;
 }

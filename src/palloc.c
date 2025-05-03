@@ -1,27 +1,31 @@
+#include <stdalign.h>
 #include <stddef.h>
 
 #include "palloc.h"
 
+#define STRIDE(size)                                                           \
+  ((size) + alignof(max_align_t) - 1) & ~(alignof(max_align_t) - 1)
+
+#define INDEX(base, index, stride)                                             \
+  ((Wrapper *)((char *)(base) + ((index) * (stride))))
+
 Pool *pool_init(size_t count, size_t size) {
   Pool *p = calloc(1, sizeof *(p));
+  size_t stride = STRIDE(sizeof(Wrapper) + size); // array-aligned Wrapper and size
 
   if (!p)
     return NULL;
 
-  p->pool = calloc(count, sizeof *(p->pool) + size);
+  p->pool = calloc(count, stride);
 
   if (!p->pool) {
     free(p), p = NULL;
     return NULL;
   }
 
-  for (unsigned int i = 0; i < count - 1; ++i) {
-    p->pool[i].next_free = &p->pool[i + 1];
-  }
-
-  p->pool[count - 1].next_free = NULL;
-  p->free_list = &p->pool[0];
   p->count = count;
+  p->stride = stride;
+  pool_reset_all(p);
 
   return p;
 }
@@ -36,7 +40,7 @@ void *pool_alloc(Pool *p) {
     return NULL;
   Wrapper *wrapper = p->free_list;
   p->free_list = wrapper->next_free;
-  return wrapper->ptr;
+  return &wrapper->ptr;
 }
 
 void pool_free(Pool *p, void *ptr) {
@@ -64,9 +68,16 @@ unsigned int pool_reset_from_mark(Pool *p, Wrapper *mark) {
 }
 
 void pool_reset_all(Pool *p) {
-  for (unsigned int i = 0; i < p->count - 1; ++i) {
-    p->pool[i].next_free = &p->pool[i + 1];
+  size_t count = p->count;
+  size_t stride = p->stride;
+
+  Wrapper *cur;
+
+  for (unsigned int i = 0; i < count - 1; ++i) {
+    cur = INDEX(p->pool, i, stride);
+    cur->next_free = INDEX(p->pool, i + 1, stride);
   }
-  p->pool[p->count - 1].next_free = NULL;
-  p->free_list = &p->pool[0];
+
+  INDEX(p->pool, count - 1, stride)->next_free = NULL;
+  p->free_list = INDEX(p->pool, 0, stride);
 }

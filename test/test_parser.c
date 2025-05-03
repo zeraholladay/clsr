@@ -18,7 +18,7 @@ static Stack stack = {};
 static ClsrContext ctx = {};
 
 static void setup(void) {
-  ctx.eval_ctx.stack = &stack;
+  CTX_STACK(&ctx) = &stack;
   clsr_init(&ctx);
 }
 

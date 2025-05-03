@@ -21,7 +21,7 @@ extern int yyparse(ClsrContext *ctx);
 extern void yylex_destroy(void);
 
 void clsr_init(ClsrContext *ctx) {
-  ctx->obj_pool = obj_pool_init(OBJ_POOL_CAPACITY);
+  ctx->obj_pool = pool_init(OBJ_POOL_COUNT, sizeof(Obj));
   ctx->eval_ctx.env = env_new(NULL);
   STACK_INIT(ctx->eval_ctx.stack);
   reset_parse_context(ctx);
@@ -31,7 +31,7 @@ void clsr_destroy(ClsrContext *ctx) {
   reset_parse_context(ctx);
   STACK_FREE(ctx->eval_ctx.stack);
   FREE(ctx->eval_ctx.env);
-  obj_pool_destroy(&ctx->obj_pool);
+  pool_destroy(&ctx->obj_pool);
 }
 
 int clsr_repl(void) {

@@ -36,7 +36,7 @@ void clsr_init(ClsrContext *ctx) {
 void clsr_destroy(ClsrContext *ctx) {
   reset_parse_context(ctx);
   STACK_FREE(CTX_STACK(ctx));
-  FREE(CTX_ENV(ctx));
+  free(CTX_ENV(ctx)), CTX_ENV(ctx) = NULL;
   pool_destroy(&CTX_POOL(ctx));
 }
 

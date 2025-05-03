@@ -1,49 +1,68 @@
-#include "stack.h"
-#include "common.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-static int stack_data_alloc(Stack *s_ptr, unsigned int count) {
-  if (REALLOC_N(s_ptr->data, count))
+#include "stack.h"
+
+static void oom_handler(Stack *stack) {
+  stack_OOM_func_t oom_cb = stack->stack_OOM_function;
+
+  if (oom_cb)
+    oom_cb(stack);
+  else {
+    perror(__func__);
+    exit(1);
+    abort();
+  }
+}
+
+static int stack_ralloc(Stack *stack, unsigned int count) {
+  uintptr_t *new_ptr = realloc(stack->data, (count) * sizeof *(stack->data));
+  if (!new_ptr) {
     return 1;
-  s_ptr->data_size = count;
+  }
+  stack->data = new_ptr;
+  stack->data_size = count;
   return 0;
 }
 
-void stack_init(Stack *s_ptr, unsigned int count) {
-  if (stack_data_alloc(s_ptr, count))
-    die(LOCATION);
-  s_ptr->sp = s_ptr->fp = 0;
+void stack_init(Stack *stack, unsigned int count) {
+  if (stack_ralloc(stack, count))
+    oom_handler(stack);
+  else
+    stack->sp = stack->fp = 0;
 }
 
-void stack_free(Stack *s_ptr) { FREE(s_ptr->data); }
+void stack_free(Stack *stack) { free(stack->data), stack->data = NULL; }
 
-void stack_push(Stack *s_ptr, void *value) {
-  if (s_ptr->sp >= s_ptr->data_size &&
-      stack_data_alloc(s_ptr, s_ptr->data_size + STACK_GROWTH))
-    die(LOCATION);
-  s_ptr->data[s_ptr->sp++] = (uintptr_t)value;
+void stack_push(Stack *stack, void *value) {
+  if (stack->sp >= stack->data_size &&
+      stack_ralloc(stack, stack->data_size + STACK_GROWTH))
+    oom_handler(stack);
+  else
+    stack->data[stack->sp++] = (uintptr_t)value;
 }
 
-void *stack_pop(Stack *s_ptr) {
-  if (s_ptr->sp <= s_ptr->fp)
+void *stack_pop(Stack *stack) {
+  if (stack->sp <= stack->fp)
     return NULL;
-  return (void *)s_ptr->data[--s_ptr->sp];
+  return (void *)stack->data[--stack->sp];
 }
 
-void *stack_peek(Stack *s_ptr) {
-  if (s_ptr->sp <= s_ptr->fp)
+void *stack_peek(Stack *stack) {
+  if (stack->sp <= stack->fp)
     return NULL;
-  return (void *)(s_ptr->data[s_ptr->sp - 1]);
+  return (void *)(stack->data[stack->sp - 1]);
 }
 
-void stack_enter_frame(Stack *s_ptr) {
-  stack_push(s_ptr, (void *)s_ptr->fp);
-  s_ptr->fp = s_ptr->sp;
+void stack_enter_frame(Stack *stack) {
+  stack_push(stack, (void *)stack->fp);
+  stack->fp = stack->sp;
 }
 
-void stack_exit_frame(Stack *s_ptr) {
-  if (s_ptr->fp > 0) {
-    uintptr_t old_fp = (uintptr_t)(s_ptr->data[s_ptr->fp - 1]);
-    s_ptr->sp = s_ptr->fp - 1;
-    s_ptr->fp = old_fp;
+void stack_exit_frame(Stack *stack) {
+  if (stack->fp > 0) {
+    uintptr_t old_fp = (uintptr_t)(stack->data[stack->fp - 1]);
+    stack->sp = stack->fp - 1;
+    stack->fp = old_fp;
   }
 }

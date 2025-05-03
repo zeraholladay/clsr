@@ -47,8 +47,6 @@ inline static int safe_alloc_check(void *ptr) {
 #define REALLOC_N(ptr, count)                                                  \
   safe_alloc_check((ptr) = realloc(ptr, (count) * sizeof *(ptr)))
 
-#define FREE(ptr) ((void)(free(ptr), (ptr) = NULL))
-
 static inline void die(const char *msg) {
   perror(msg);
   exit(1);

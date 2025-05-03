@@ -3,11 +3,12 @@
 
 #include "common.h"
 #include "env.h"
+#include "palloc.h"
 #include "rb_tree.h"
 #include "stack.h"
 
-#ifndef OBJ_POOL_CAPACITY
-#define OBJ_POOL_CAPACITY 4096
+#ifndef OBJ_POOL_COUNT
+#define OBJ_POOL_COUNT 4096
 #endif
 
 /* primitive operations */
@@ -101,19 +102,6 @@ typedef struct Obj {
   } as;
 } Obj;
 
-/* object pool */
-
-typedef struct ObjPoolWrapper {
-  struct ObjPoolWrapper *next_free;
-  Obj obj;
-} ObjPoolWrapper;
-
-typedef struct {
-  ObjPoolWrapper *free_list;
-  ObjPoolWrapper *pool;
-  unsigned int count;
-} ObjPool;
-
 /* clsr context */
 
 #define CTX_POP(ctx) POP((ctx)->eval_ctx.stack)
@@ -128,11 +116,11 @@ typedef struct EvalContext {
 typedef struct ParserContext {
   rb_node *sym_tab;
   Obj *root_obj;
-  ObjPoolWrapper *parse_mark;
+  Wrapper *parse_mark;
 } ParserContext;
 
 typedef struct ClsrContext {
-  ObjPool *obj_pool;
+  Pool *obj_pool;
   EvalContext eval_ctx;
   ParserContext parser_ctx;
 } ClsrContext;
@@ -153,23 +141,14 @@ const PrimOp *prim_op_lookup(register const char *str,
 
 /* obj.c */
 
-Obj *obj_new_literal_int(ObjPool *p, int i);
-Obj *obj_new_literal_sym(ObjPool *p, const char *sym);
-Obj *obj_new_empty_expr_list(ObjPool *p);
+Obj *obj_new_literal_int(Pool *p, int i);
+Obj *obj_new_literal_sym(Pool *p, const char *sym);
+Obj *obj_new_empty_expr_list(Pool *p);
 Obj *obj_expr_list_append(Obj *obj, Obj *item);
-Obj *obj_new_call(ObjPool *p, const PrimOp *prim, Obj *args);
-Obj *obj_new_closure(ObjPool *p, Obj *params, Obj *body);
-Obj *obj_new_if(ObjPool *p, Obj *then, Obj *else_);
+Obj *obj_new_call(Pool *p, const PrimOp *prim, Obj *args);
+Obj *obj_new_closure(Pool *p, Obj *params, Obj *body);
+Obj *obj_new_if(Pool *p, Obj *then, Obj *else_);
 void obj_fprintf(FILE *restrict stream, const Obj *obj);
-
-/* obj_pool.c */
-
-ObjPool *obj_pool_init(unsigned int count);
-void obj_pool_destroy(ObjPool **p);
-Obj *obj_pool_alloc(ObjPool *p);
-void obj_pool_free(ObjPool *p, Obj *obj);
-unsigned int obj_pool_reset_from_mark(ObjPool *p, ObjPoolWrapper *mark);
-void obj_pool_reset_all(ObjPool *p);
 
 /* eval.c */
 

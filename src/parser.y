@@ -176,6 +176,6 @@ void reset_parse_context(ClsrContext *ctx) {
 
 void yyerror_handler(ClsrContext *ctx, const char *s) {
     fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
-    obj_pool_reset_from_mark(ctx->obj_pool, ctx->parser_ctx.parse_mark);
+    pool_reset_from_mark(ctx->obj_pool, ctx->parser_ctx.parse_mark);
     reset_parse_context(ctx);
 }

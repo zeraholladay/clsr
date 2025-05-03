@@ -5,6 +5,7 @@
 #include "common.h"
 #include "parser.h"
 #include "readline.h"
+#include "sym_save.h"
 
 #if YYDEBUG
 extern int yydebug;
@@ -21,23 +22,28 @@ extern int yyparse(ClsrContext *ctx);
 extern void yylex_destroy(void);
 
 void clsr_init(ClsrContext *ctx) {
-  ctx->obj_pool = pool_init(OBJ_POOL_COUNT, sizeof(Obj));
-  ctx->eval_ctx.env = env_new(NULL);
-  STACK_INIT(ctx->eval_ctx.stack);
+  static int sym_save_bool = 0;
+
+  if (!sym_save_bool && (sym_save_bool = 1))
+    sym_save_init();
+
+  CTX_POOL(ctx) = pool_init(OBJ_POOL_COUNT, sizeof(Obj));
+  CTX_ENV(ctx) = env_new(NULL);
+  STACK_INIT(CTX_STACK(ctx));
   reset_parse_context(ctx);
 }
 
 void clsr_destroy(ClsrContext *ctx) {
   reset_parse_context(ctx);
-  STACK_FREE(ctx->eval_ctx.stack);
-  FREE(ctx->eval_ctx.env);
-  pool_destroy(&ctx->obj_pool);
+  STACK_FREE(CTX_STACK(ctx));
+  free(CTX_ENV(ctx)), CTX_ENV(ctx) = NULL;
+  pool_destroy(&CTX_POOL(ctx));
 }
 
 int clsr_repl(void) {
   Stack stack = {};
   ClsrContext ctx = {};
-  ctx.eval_ctx.stack = &stack;
+  CTX_STACK(&ctx) = &stack;
 
   clsr_init(&ctx);
 
@@ -61,10 +67,10 @@ int clsr_repl(void) {
     fclose(yyin);
 
     if (parse_status == 0) {
-      Obj *eval_status = eval(ctx.parser_ctx.root_obj, &ctx);
+      Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
 
       if (eval_status == obj_true) {
-        obj_fprintf(stdout, PEEK(ctx.eval_ctx.stack)), printf("\n");
+        obj_fprintf(stdout, CTX_PEEK(&ctx)), printf("\n");
       } else {
         printf("=>error\n"); // TODO
       }

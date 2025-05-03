@@ -11,7 +11,8 @@
 
 Pool *pool_init(size_t count, size_t size) {
   Pool *p = calloc(1, sizeof *(p));
-  size_t stride = STRIDE(sizeof(Wrapper) + size); // array-aligned Wrapper and size
+  size_t stride =
+      STRIDE(sizeof(Wrapper) + size); // array-aligned Wrapper and size
 
   if (!p)
     return NULL;

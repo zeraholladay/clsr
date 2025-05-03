@@ -38,10 +38,10 @@ Obj *apply(Obj *void_obj, ClsrContext *ctx) {
     env_set(closure_env, symbol, o);
   }
 
-  ENTER_FRAME(ctx->eval_ctx.stack);
+  ENTER_FRAME(CTX_STACK(ctx));
 
   ClsrContext new_ctx = *ctx;
-  new_ctx.eval_ctx.env = closure_env;
+  CTX_ENV(&new_ctx) = closure_env;
 
   return eval(obj_closure.body,
               &new_ctx); // does not EXIT_FRAME (ie force RETURN)
@@ -155,7 +155,7 @@ Obj *return_(Obj *void_obj, ClsrContext *ctx) {
   (void)void_obj;
 
   Obj *obj_rval = CTX_POP(ctx);
-  EXIT_FRAME(ctx->eval_ctx.stack);
+  EXIT_FRAME(CTX_STACK(ctx));
   CTX_PUSH(ctx, obj_rval);
 
   return obj_true;

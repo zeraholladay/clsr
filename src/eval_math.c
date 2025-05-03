@@ -16,9 +16,9 @@ Obj *add(Obj *void_obj, ClsrContext *ctx) {
 
   int result = OBJ_AS(arg1, literal).integer + OBJ_AS(arg2, literal).integer;
 
-  Obj *new_obj = obj_new_literal_int(ctx->obj_pool, result);
+  Obj *new_obj = obj_new_literal_int(CTX_POOL(ctx), result);
 
-  PUSH(ctx->eval_ctx.stack, new_obj);
+  CTX_PUSH(ctx, new_obj);
 
   return obj_true;
 }
@@ -36,9 +36,9 @@ Obj *sub(Obj *void_obj, ClsrContext *ctx) {
 
   int result = OBJ_AS(arg1, literal).integer - OBJ_AS(arg2, literal).integer;
 
-  Obj *new_obj = obj_new_literal_int(ctx->obj_pool, result);
+  Obj *new_obj = obj_new_literal_int(CTX_POOL(ctx), result);
 
-  PUSH(ctx->eval_ctx.stack, new_obj);
+  CTX_PUSH(ctx, new_obj);
 
   return obj_true;
 }
@@ -56,9 +56,9 @@ Obj *mul(Obj *void_obj, ClsrContext *ctx) {
 
   int result = OBJ_AS(arg1, literal).integer * OBJ_AS(arg2, literal).integer;
 
-  Obj *new_obj = obj_new_literal_int(ctx->obj_pool, result);
+  Obj *new_obj = obj_new_literal_int(CTX_POOL(ctx), result);
 
-  PUSH(ctx->eval_ctx.stack, new_obj);
+  CTX_PUSH(ctx, new_obj);
 
   return obj_true;
 }
@@ -79,9 +79,9 @@ Obj *div_(Obj *void_obj, ClsrContext *ctx) {
 
   int result = OBJ_AS(arg1, literal).integer / OBJ_AS(arg2, literal).integer;
 
-  Obj *new_obj = obj_new_literal_int(ctx->obj_pool, result);
+  Obj *new_obj = obj_new_literal_int(CTX_POOL(ctx), result);
 
-  PUSH(ctx->eval_ctx.stack, new_obj);
+  CTX_PUSH(ctx, new_obj);
 
   return obj_true;
 }

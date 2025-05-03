@@ -4,12 +4,9 @@
 %option nounput
 
 %{
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "clsr.h"
 #include "parser.h"
-#include "common.h"
+#include "sym_save.h"
 
 #define YY_DECL int yylex(ClsrContext *ctx)
 %}
@@ -31,7 +28,7 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
                         yylval.prim = p;
                         return p->tok;
                     } 
-                    yylval.sym = sym_intern(&ctx->parser_ctx.sym_tab, yytext, yyleng);
+                    yylval.sym = sym_save(&CTX_SYMTAB(ctx), yytext, yyleng);
                     return TOK_SYM_LITERAL;
                     }
     {WS}            { /* ignore */ }

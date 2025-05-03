@@ -1,9 +1,7 @@
 %{
 #include <assert.h>
-#include <string.h>
 #include <stdio.h>
 
-#include "common.h"
 #include "clsr.h"
 #include "parser.h"
 
@@ -20,12 +18,8 @@ extern int yylineno;
 %}
 
 %code requires {
-#include <stddef.h>
-
 #include "clsr.h"
-#include "rb_tree.h"
 
-const char *sym_intern(rb_node **root, const char *s, size_t n);
 void reset_parse_context(ClsrContext *ctx);
 }
 
@@ -59,7 +53,7 @@ void reset_parse_context(ClsrContext *ctx);
 
 input:
     expressions {
-        ctx->parser_ctx.root_obj = $1;
+        CTX_PARSE_ROOT(ctx) = $1;
         YYACCEPT;
     }
     | expressions error {
@@ -69,7 +63,7 @@ input:
 
 expressions:
     /* empty */ {
-        $$ = obj_new_empty_expr_list(ctx->obj_pool);
+        $$ = obj_new_empty_expr_list(CTX_POOL(ctx));
     }
     | expressions expression {
         $$ = obj_expr_list_append($1, $2);
@@ -78,16 +72,16 @@ expressions:
 
 expression:
     nullary {
-        $$ = obj_new_call(ctx->obj_pool, $1, NULL);
+        $$ = obj_new_call(CTX_POOL(ctx), $1, NULL);
     }
     | nary '(' args ')' {
-        $$ = obj_new_call(ctx->obj_pool, $1, $3);
+        $$ = obj_new_call(CTX_POOL(ctx), $1, $3);
       }
     | CLOSURE '(' args ')' '(' expressions ')' {
-        $$ = obj_new_closure(ctx->obj_pool, $3, $6);
+        $$ = obj_new_closure(CTX_POOL(ctx), $3, $6);
     }
     | IF '(' expressions ')' '(' expressions ')' {
-        $$ = obj_new_if(ctx->obj_pool, $3, $6);
+        $$ = obj_new_if(CTX_POOL(ctx), $3, $6);
     }
     | literal_keyword {
         $$ = $1;
@@ -121,7 +115,7 @@ literal_keyword:
 
 args:
     /* empty */ {
-        $$ = obj_new_empty_expr_list(ctx->obj_pool);
+        $$ = obj_new_empty_expr_list(CTX_POOL(ctx));
       }
     | args arg {
         $$ = obj_expr_list_append($1, $2);
@@ -130,10 +124,10 @@ args:
 
 arg:
     INT_LITERAL {
-        $$ = obj_new_literal_int(ctx->obj_pool, $1);
+        $$ = obj_new_literal_int(CTX_POOL(ctx), $1);
     }
     | SYM_LITERAL {
-        $$ = obj_new_literal_sym(ctx->obj_pool, $1);
+        $$ = obj_new_literal_sym(CTX_POOL(ctx), $1);
     }
     | literal_keyword {
         $$ = $1;
@@ -142,40 +136,17 @@ arg:
 
 %%
 
-const char *sym_intern(rb_node **root, const char *s, size_t n) {
-  rb_node *node = rb_lookup(*root, s, n);
-
-  if (node)
-    return RB_KEY(node);
-
-  node = rb_alloc();
-
-  if (!node)
-    die(LOCATION);
-
-  RB_KEY(node) = safe_strndup(s, n);
-  RB_KEY_LEN(node) = n;
-  // note: no RB_VAL here. ie symbols don't have values.
-
-  if (!RB_KEY(node))
-    die(LOCATION);
-
-  rb_insert(root, node);
-
-  return RB_KEY(node);
-}
-
 void reset_parse_context(ClsrContext *ctx) {
     assert(ctx);
-    assert(ctx->obj_pool);
+    assert(CTX_POOL(ctx));
 
-    /* no ctx->pool. assumes it has already been allocated. */
-    ctx->parser_ctx.root_obj = NULL;
-    ctx->parser_ctx.parse_mark = ctx->obj_pool->free_list;
+    /* assumes pool has already been allocated. */
+    CTX_PARSE_ROOT(ctx) = NULL;
+    CTX_PARSE_MARK(ctx) = CTX_POOL(ctx)->free_list;
 }
 
 void yyerror_handler(ClsrContext *ctx, const char *s) {
     fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
-    pool_reset_from_mark(ctx->obj_pool, ctx->parser_ctx.parse_mark);
+    pool_reset_from_mark(CTX_POOL(ctx), CTX_PARSE_MARK(ctx));
     reset_parse_context(ctx);
 }

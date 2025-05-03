@@ -7,6 +7,10 @@
 #include "rb_tree.h"
 #include "stack.h"
 
+#ifndef SYMTAB_COUNT
+#define SYMTAB_COUNT 4096
+#endif
+
 #ifndef OBJ_POOL_COUNT
 #define OBJ_POOL_COUNT 4096
 #endif
@@ -104,9 +108,15 @@ typedef struct Obj {
 
 /* clsr context */
 
-#define CTX_POP(ctx) POP((ctx)->eval_ctx.stack)
-#define CTX_PUSH(ctx, obj) PUSH((ctx)->eval_ctx.stack, obj)
+#define CTX_POOL(ctx) ((ctx)->obj_pool)
 #define CTX_ENV(ctx) ((ctx)->eval_ctx.env)
+#define CTX_STACK(ctx) ((ctx)->eval_ctx.stack)
+#define CTX_SYMTAB(ctx) ((ctx)->parser_ctx.sym_tab)
+#define CTX_PARSE_ROOT(ctx) ((ctx)->parser_ctx.root_obj)
+#define CTX_PARSE_MARK(ctx) ((ctx)->parser_ctx.parse_mark)
+#define CTX_PEEK(ctx) PEEK(CTX_STACK(ctx))
+#define CTX_POP(ctx) POP(CTX_STACK(ctx))
+#define CTX_PUSH(ctx, obj) PUSH(CTX_STACK(ctx), obj)
 
 typedef struct EvalContext {
   Env *env;

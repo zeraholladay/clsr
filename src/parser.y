@@ -5,6 +5,8 @@
 #include "clsr.h"
 #include "parser.h"
 
+#define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
+
 #define yyerror(ctx, s)      \
   do {                       \
     yyerror_handler(ctx, s); \
@@ -35,7 +37,8 @@ void reset_parse_context(ClsrContext *ctx);
 
 %type <prim> nullary
 %type <prim> nary
-%type <obj> input expression expressions args arg literal_keyword
+%type <obj> input expression expressions literal_expression
+%type <obj> args arg
 
 %define api.token.prefix {TOK_}
 
@@ -76,14 +79,14 @@ expression:
     }
     | nary '(' args ')' {
         $$ = obj_new_call(CTX_POOL(ctx), $1, $3);
-      }
+    }
     | CLOSURE '(' args ')' '(' expressions ')' {
         $$ = obj_new_closure(CTX_POOL(ctx), $3, $6);
     }
     | IF '(' expressions ')' '(' expressions ')' {
         $$ = obj_new_if(CTX_POOL(ctx), $3, $6);
     }
-    | literal_keyword {
+    | literal_expression {
         $$ = $1;
     }
 ;
@@ -105,13 +108,52 @@ nary:
       PUSH
 ;
 
-literal_keyword:
+literal_expression:
     TRUE {
         $$ = obj_true;
     }
     | FALSE {
         $$ = obj_false;
     }
+    | INT_LITERAL {
+        Obj *integer = obj_new_literal_int(CTX_POOL(ctx), $1);
+
+        Obj *args = obj_new_empty_expr_list(CTX_POOL(ctx));
+        args = obj_expr_list_append(args, integer);
+
+        const PrimOp *push = PRIM_OP(PUSH);
+        Obj *call = obj_new_call(CTX_POOL(ctx), push, args);
+
+        Obj *list = obj_new_empty_expr_list(CTX_POOL(ctx));
+        list = obj_expr_list_append(list, call);
+
+        $$ = list;
+    }
+    | SYM_LITERAL {
+        const char *sym = $1;
+
+        // Create symbol literal
+        Obj *sym_lit = obj_new_literal_sym(CTX_POOL(ctx), sym);
+
+        // Construct (PUSH sym)
+        Obj *push_args = obj_new_empty_expr_list(CTX_POOL(ctx));
+        push_args = obj_expr_list_append(push_args, sym_lit);
+        const PrimOp *push_op = PRIM_OP(PUSH);
+        Obj *push_call = obj_new_call(CTX_POOL(ctx), push_op, push_args);
+
+        // Construct (LOOKUP)
+        const PrimOp *lookup_op = PRIM_OP(LOOKUP);
+        Obj *lookup_call = obj_new_call(CTX_POOL(ctx), lookup_op, NULL);
+
+        // Combine into expression list
+        Obj *expr_list = obj_new_empty_expr_list(CTX_POOL(ctx));
+        expr_list = obj_expr_list_append(expr_list, push_call);
+        expr_list = obj_expr_list_append(expr_list, lookup_call);
+
+        // Set result
+        $$ = expr_list;
+    }
+;
 
 args:
     /* empty */ {
@@ -123,14 +165,17 @@ args:
 ;
 
 arg:
-    INT_LITERAL {
+    TRUE {
+        $$ = obj_true;
+    }
+    | FALSE {
+        $$ = obj_false;
+    }
+    | INT_LITERAL {
         $$ = obj_new_literal_int(CTX_POOL(ctx), $1);
     }
     | SYM_LITERAL {
         $$ = obj_new_literal_sym(CTX_POOL(ctx), $1);
-    }
-    | literal_keyword {
-        $$ = $1;
     }
 ;
 

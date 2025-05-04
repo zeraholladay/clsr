@@ -202,6 +202,9 @@ Obj *eval(Obj *obj, ClsrContext *ctx) {
         result = expression;
       }
       break;
+    case Obj_List:
+      return eval(expression, ctx);
+      break;
     case Obj_Call:
       result = OBJ_AS(expression, call).prim->prim_fun(expression, ctx);
       break;

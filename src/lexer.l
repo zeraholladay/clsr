@@ -23,7 +23,7 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
     ")"             { return ')'; }
     {NUM}           { yylval.num = atoi(yytext); return TOK_INT_LITERAL; }
     {ID}            {
-                    const PrimOp *p = prim_op_lookup(yytext, strlen(yytext));
+                    const PrimOp *p = prim_op_lookup(yytext, yyleng);
                     if (p) {
                         yylval.prim = p;
                         return p->tok;

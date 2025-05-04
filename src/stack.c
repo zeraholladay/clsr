@@ -3,7 +3,7 @@
 #include "oom_handlers.h"
 #include "stack.h"
 
-extern stack_oom_handler_t stack_oom_handler;
+extern oom_handler_t stack_oom_handler;
 
 static int stack_realloc(Stack *stack, unsigned int count) {
   uintptr_t *new_ptr = realloc(stack->data, (count) * sizeof *(stack->data));

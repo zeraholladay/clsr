@@ -1,6 +1,7 @@
-#include "clsr.h"
-
 #include <stdio.h>
+#include <stdlib.h>
+
+#include "clsr.h"
 
 Obj *obj_new_literal_int(Pool *p, int i) {
   Obj *obj = pool_alloc(p);
@@ -23,21 +24,20 @@ Obj *obj_new_literal_sym(Pool *p, const char *sym) {
 Obj *obj_new_empty_expr_list(Pool *p) {
   Obj *obj = pool_alloc(p);
   OBJ_KIND(obj) = Obj_List;
-  ObjList *list_ptr = OBJ_AS_PTR(obj, list);
-  list_ptr->nodes = NULL; // XXX: nodes
-  list_ptr->count = 0;
+  ObjList *obj_list = obj_list_new();
+  if (!obj_list) {
+    return NULL;
+  }
+  OBJ_AS(obj, list) = obj_list;
   return obj;
 }
 
 Obj *obj_expr_list_append(Obj *obj, Obj *item) {
-  size_t count = OBJ_AS(obj, list).count;
-  Obj **new_objs = OBJ_AS(obj, list).nodes; // XXX: nodes
-  if (REALLOC_N(new_objs, count + 1))       // TODO: FIX
-    die(LOCATION);
-  new_objs[count] = item;
-  ObjList *list_ptr = OBJ_AS_PTR(obj, list);
-  list_ptr->nodes = new_objs; // XXX: nodes
-  list_ptr->count++;
+  ObjList *obj_list = OBJ_AS(obj, list);
+  int fail = obj_list_append(obj_list, item);
+  if (fail) {
+    return NULL;
+  }
   return obj;
 }
 
@@ -95,11 +95,11 @@ void obj_fprintf(FILE *restrict stream, const Obj *obj) {
 
   case Obj_List:
     fprintf(stream, "(");
-    for (unsigned int i = 0; i < OBJ_AS(obj, list).count; ++i) {
+    for (unsigned int i = 0; i < OBJ_AS(obj, list)->count; ++i) {
       if (i > 0) {
         fprintf(stream, " ");
       }
-      obj_fprintf(stream, OBJ_AS(obj, list).nodes[i]);
+      obj_fprintf(stream, OBJ_AS(obj, list)->nodes[i]);
     }
     fprintf(stream, ")");
     break;

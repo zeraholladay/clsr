@@ -28,13 +28,13 @@ Obj *apply(Obj *void_obj, ClsrContext *ctx) {
 
   ObjClosure obj_closure = OBJ_AS(obj, closure);
 
-  ObjList params = OBJ_AS(obj_closure.params, list);
+  ObjList *params = OBJ_AS(obj_closure.params, list);
 
   Env *closure_env = env_new(obj_closure.env); // TODO: error handling
 
-  for (unsigned int i = 0; i < params.count; ++i) {
+  for (unsigned int i = 0; i < params->count; ++i) {
     Obj *o = CTX_POP(ctx);
-    const char *symbol = OBJ_AS(params.nodes[i], literal).symbol;
+    const char *symbol = OBJ_AS(params->nodes[i], literal).symbol;
     env_set(closure_env, symbol, o);
   }
 
@@ -141,11 +141,11 @@ Obj *lookup(Obj *void_obj, ClsrContext *ctx) {
 
 Obj *push(Obj *obj, ClsrContext *ctx) {
   ObjCall obj_call = OBJ_AS(obj, call);
-  ObjList list = OBJ_AS(obj_call.args, list);
+  ObjList *list = OBJ_AS(obj_call.args, list);
 
-  for (unsigned int i = list.count; i > 0; --i) {
-    assert(OBJ_ISKIND(list.nodes[i - 1], Obj_Literal));
-    CTX_PUSH(ctx, list.nodes[i - 1]);
+  for (unsigned int i = list->count; i > 0; --i) {
+    assert(OBJ_ISKIND(list->nodes[i - 1], Obj_Literal));
+    CTX_PUSH(ctx, list->nodes[i - 1]);
   }
 
   return obj_true;
@@ -190,10 +190,10 @@ Obj *eval(Obj *obj, ClsrContext *ctx) {
     return obj_false; // TODO: error handling
   }
 
-  ObjList expressions = OBJ_AS(obj, list);
+  ObjList *expressions = OBJ_AS(obj, list);
 
-  for (unsigned int i = 0; i < expressions.count; ++i) {
-    Obj *expression = expressions.nodes[i];
+  for (unsigned int i = 0; i < expressions->count; ++i) {
+    Obj *expression = expressions->nodes[i];
 
     switch (OBJ_KIND(expression)) {
     case Obj_Literal:

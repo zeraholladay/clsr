@@ -7,16 +7,20 @@
 #include "rb_tree.h"
 #include "stack.h"
 
-#ifndef SYMTAB_POOL_COUNT
-#define SYMTAB_POOL_COUNT 4096
+#ifndef SYMTAB_POOL_CAPACITY
+#define SYMTAB_POOL_CAPACITY 4096
 #endif
 
 #ifndef SYM_SAVE_BUMP_SIZE
 #define SYM_SAVE_BUMP_SIZE 4096
 #endif
 
-#ifndef OBJ_POOL_COUNT
-#define OBJ_POOL_COUNT 4096
+#ifndef OBJ_POOL_CAPACITY
+#define OBJ_POOL_CAPACITY 4096
+#endif
+
+#ifndef OBJ_LIST_INITIAL_CAPACITY
+#define OBJ_LIST_INITIAL_CAPACITY 4
 #endif
 
 /* primitive operations */
@@ -79,7 +83,7 @@ typedef struct {
 
 typedef struct ObjList {
   struct Obj **nodes;
-  unsigned int count;
+  size_t count, capacity;
 } ObjList;
 
 typedef struct ObjCall {
@@ -103,7 +107,7 @@ typedef struct Obj {
 
   union {
     ObjLiteral literal;
-    ObjList list;
+    ObjList *list;
     ObjCall call;
     ObjClosure closure;
     ObjIf if_;
@@ -163,6 +167,11 @@ Obj *obj_new_call(Pool *p, const PrimOp *prim, Obj *args);
 Obj *obj_new_closure(Pool *p, Obj *params, Obj *body);
 Obj *obj_new_if(Pool *p, Obj *then, Obj *else_);
 void obj_fprintf(FILE *restrict stream, const Obj *obj);
+
+/* obj_list.c */
+
+ObjList *obj_list_new(void);
+int obj_list_append(ObjList *obj_list, Obj *obj);
 
 /* eval.c */
 

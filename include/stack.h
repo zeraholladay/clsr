@@ -14,8 +14,6 @@ typedef struct Stack {
   uintptr_t *data;
 } Stack;
 
-typedef void (*stack_oom_handler_t)(Stack *, const char *msg);
-
 void stack_init(Stack *s_ptr, unsigned int count);
 void stack_free(Stack *s_ptr);
 void stack_push(Stack *s_ptr, void *value);

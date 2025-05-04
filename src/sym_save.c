@@ -6,7 +6,7 @@
 #include "rb_tree.h"
 #include "sym_save.h"
 
-extern sym_save_oom_handler_t sym_save_oom_handler;
+extern oom_handler_t sym_save_oom_handler;
 
 typedef struct BumpPool {
   size_t offset;
@@ -30,7 +30,7 @@ static BumpPool *bump_pool_new(void) {
 }
 
 static char *bump_pool_alloc(size_t n) {
-  if (bump_pool->offset + n > SYM_SAVE_BUMP_SIZE) {
+  if (bump_pool->offset + n > SYM_SAVE_BUMP_SIZE) { // FIXME: large symbols
     BumpPool *new = bump_pool_new();
     new->next = bump_pool;
     bump_pool = new;
@@ -49,7 +49,7 @@ static char *bump_pool_strndup(const char *s, size_t n) {
 
 void sym_save_init(void) {
   bump_pool = bump_pool_new();
-  pool = pool_init(SYMTAB_POOL_COUNT, sizeof(rb_node));
+  pool = pool_init(SYMTAB_POOL_CAPACITY, sizeof(rb_node));
 }
 
 const char *sym_save(rb_node **root, const char *s, size_t n) {

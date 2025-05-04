@@ -10,7 +10,7 @@
 #define INDEX(base, index, stride)                                             \
   ((Wrapper *)((char *)(base) + ((index) * (stride))))
 
-extern palloc_oom_handler_t palloc_oom_handler;
+extern oom_handler_t palloc_oom_handler;
 
 Pool *pool_init(size_t count, size_t size) {
   Pool *p = calloc(1, sizeof *(p));

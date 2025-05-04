@@ -27,7 +27,7 @@ void clsr_init(ClsrContext *ctx) {
   if (!sym_save_bool && (sym_save_bool = 1))
     sym_save_init();
 
-  CTX_POOL(ctx) = pool_init(OBJ_POOL_COUNT, sizeof(Obj));
+  CTX_POOL(ctx) = pool_init(OBJ_POOL_CAPACITY, sizeof(Obj));
   CTX_ENV(ctx) = env_new(NULL);
   STACK_INIT(CTX_STACK(ctx));
   reset_parse_context(ctx);

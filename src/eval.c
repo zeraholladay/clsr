@@ -55,12 +55,19 @@ static Node *apply(Node *node, Node *args, Context *ctx) {
 //   return Node_true;
 // }
 
-Node *cons(Node *first, Node *rest, Context *ctx) {
+Node *cons(Node *car, Node *cdr, Context *ctx) {
   Node *node = list_cons(CTX_POOL(ctx), NULL, NULL);
-
-  
-
+  node = list_append(node, car);
+  node = list_append(node, cdr);
   return node;
+}
+
+Node *first(Node *node, Context *ctx) {
+  (void)ctx;
+  if (!is_list(node)) {
+    return const_false;
+  }
+  return list_first(node);
 }
 
 // Node *eq(Node *Node, Context *ctx) {
@@ -126,13 +133,16 @@ Node *cons(Node *first, Node *rest, Context *ctx) {
 
 Node *lookup(Node *node, Context *ctx) {
   if (!is_symbol(node)) {
+    debug("here");
     return const_false; // TODO: error handling
   }
 
   void *rval;
 
-  if (env_lookup(CTX_ENV(ctx), node->as.literal.as.symbol, &rval))
+  if (env_lookup(CTX_ENV(ctx), node->as.literal.as.symbol, &rval)) {
+    debug("der");
     return const_false;
+  }
 
   return rval;
 }
@@ -149,9 +159,16 @@ Node *lookup(Node *node, Context *ctx) {
 //   return Node_true;
 // }
 
-Node *quote(Node *args, Context *ctx) {
+Node *quote(Node *list, Context *ctx) {
+  if (!is_list(list)) {
+    return const_false;
+  }
+  return first(list, ctx);
+}
+
+Node *rest(Node *args, Context *ctx) {
   if (!is_list(args)) {
-    return NULL;
+    return const_false;
   }
   return list_rest(CTX_POOL(ctx), args);
 }
@@ -175,7 +192,8 @@ Node *set(Node *args, Context *ctx) {
     return const_false; // TODO: error handling
   }
 
-  env_set(CTX_ENV(ctx), first->as.literal.as.symbol, rest); // TODO: error handling
+  env_set(CTX_ENV(ctx), first->as.literal.as.symbol,
+          rest); // TODO: error handling
 
   return rest;
 }
@@ -198,11 +216,12 @@ Node *eval(Node *expr, Context *ctx) {
       return expr; // NIL or '()
     }
 
-    Node *op = list_first(expr);
+    Node *op = first(expr, ctx);
     Node *args = list_rest(CTX_POOL(ctx), expr);
 
     Node *fn = eval(op, ctx);
     Node *evaluated_args = eval_list(args, ctx);
+
     return apply(fn, evaluated_args, ctx);
   }
 
@@ -214,10 +233,10 @@ Node *eval_list(Node *list, Context *ctx) {
   if (is_empty_list(list))
     return empty_list(CTX_POOL(ctx));
 
-  Node *first = eval(list_first(list), ctx);
-  Node *rest = eval_list(list_rest(CTX_POOL(ctx), list), ctx);
+  Node *car = eval(first(list, ctx), ctx);
+  Node *cdr = eval_list(rest(list, ctx), ctx);
 
-  return cons(first, rest, ctx);
+  return cons(car, cdr, ctx);
 }
 
 Node *eval_program(Node *program, Context *ctx) {

@@ -65,7 +65,7 @@ struct Node {
   } as;
 };
 
-#define CTX_POOL(ctx) ((ctx)->Node_pool)
+#define CTX_POOL(ctx) ((ctx)->node_pool)
 #define CTX_ENV(ctx) ((ctx)->eval_ctx.env)
 #define CTX_STACK(ctx) ((ctx)->eval_ctx.stack)
 #define CTX_SYMTAB(ctx) ((ctx)->parser_ctx.sym_tab)
@@ -87,7 +87,7 @@ typedef struct ParserContext {
 } ParserContext;
 
 typedef struct Context {
-  Pool *Node_pool;
+  Pool *node_pool;
   EvalContext eval_ctx;
   ParserContext parser_ctx;
 } Context;

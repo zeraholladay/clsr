@@ -4,7 +4,7 @@
 %option nounput
 
 %{
-#include "clsr.h"
+#include "core_def.h"
 #include "parser.h"
 #include "sym_save.h"
 

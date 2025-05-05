@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "list.h"
+#include "core_list.h"
 #include "oom_handlers.h"
 
 #ifndef LIST_INITIAL_CAPACITY
@@ -20,8 +20,7 @@ static List *_nlist_alloc(void) {
     return NULL;
   }
 
-  list->items =
-      calloc(LIST_INITIAL_CAPACITY, sizeof *(list->items));
+  list->items = calloc(LIST_INITIAL_CAPACITY, sizeof *(list->items));
 
   if (!list->items) {
     free(list), list = NULL;
@@ -55,12 +54,12 @@ static int _nlist_resize(List *list, size_t min_capacity) {
   return 0;
 }
 
-static int _nlist_append(Node *node, List *list) {
+static int _nlist_append(List *list, Node *item) {
   if ((list->count >= list->capacity) &&
       (_nlist_resize(list, list->count + 1) != 0)) {
     return -1;
   }
-  list->items[list->count++] = node;
+  list->items[list->count++] = item;
   return 0;
 }
 
@@ -77,13 +76,15 @@ static Node *_list_alloc(Pool *p) {
 }
 
 Node *list_append(Node *node, Node *item) {
-  List *node_list = node->as.list;
-  int fail = _nlist_append(node_list, item);
+  int fail = _nlist_append(node->as.list, item);
   if (fail) {
+    node_oom_list_handler(NULL, OOM_LOCATION);
     return NULL;
   }
   return node;
 }
+
+Node *list_first(Node *node) { return node->as.list->items[0]; }
 
 Node *list_cons(Pool *p, Node *first, Node *rest) {
   Node *new_node = _list_alloc(p);
@@ -113,8 +114,24 @@ Node *list_cons(Pool *p, Node *first, Node *rest) {
   if (rest_count) {
     void *dst = &new_list->items[first_count];
     void *src = rest->as.list->items;
-    memcpy(dst, src, sizeof(Node *) * rest_count);  
+    memcpy(dst, src, sizeof(Node *) * rest_count);
   }
 
-  return new_list;
+  return new_node;
+}
+
+Node *list_rest(Pool *p, Node *node) {
+  Node *new_node = list_cons(p, NULL, NULL);
+
+  if (!new_node) {
+    node_oom_list_handler(NULL, OOM_LOCATION);
+    return NULL;
+  }
+
+  List *list = node->as.list;
+
+  for (size_t i = 1; i < list->count; ++i) {
+    new_node = list_append(new_node, list->items[i]);
+  }
+  return new_node;
 }

@@ -1,6 +1,7 @@
 %{
-#include "parser.h"
 #include "core_def.h"
+#include "eval.h"
+#include "parser.h"
 %}
 
 %includes
@@ -17,21 +18,21 @@ struct _prim_op_gperf {
 };
 
 %%
-ADD,     {TOK_ADD,     add     }
-APPLY,   {TOK_APPLY,   apply   }
-CLOSURE, {TOK_CLOSURE, closure }
-DIV,     {TOK_DIV,     div_    }
-EQ,      {TOK_EQ,      eq      }
+ADD,     {TOK_ADD,     0     }
+APPLY,   {TOK_APPLY,   0   }
+CLOSURE, {TOK_CLOSURE, 0 }
+DIV,     {TOK_DIV,     0    }
+EQ,      {TOK_EQ,      0      }
 FALSE,   {TOK_FALSE,   0       }
 IF,      {TOK_IF,      0       }
-IS,      {TOK_IS,      is      }
-LOOKUP,  {TOK_LOOKUP,  lookup  }
-MUL,     {TOK_MUL,     mul     }
-PUSH,    {TOK_PUSH,    push    }
+IS,      {TOK_IS,      0      }
+LOOKUP,  {TOK_LOOKUP,  0  }
+MUL,     {TOK_MUL,     0     }
+PUSH,    {TOK_PUSH,    0    }
 QUOTE,   {TOK_QUOTE,   quote   }
-RETURN,  {TOK_RETURN,  return_ }
+RETURN,  {TOK_RETURN,  0 }
 SET,     {TOK_SET,     set     }
-SUB,     {TOK_SUB,     sub     }
+SUB,     {TOK_SUB,     0     }
 TRUE,    {TOK_TRUE,    0       }
 %%
 

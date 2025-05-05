@@ -3,8 +3,7 @@
 #include <stdio.h>
 
 #include "core_def.h"
-#include "list.h"
-#include "node_alloc.h"
+#include "core_list.h"
 #include "parser.h"
 
 #define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
@@ -22,7 +21,7 @@ extern int yylineno;
 %}
 
 %code requires {
-#include "clsr.h"
+#include "core_def.h"
 
 void reset_parse_context(Context *ctx);
 }
@@ -35,10 +34,10 @@ void reset_parse_context(Context *ctx);
     int num;
     const char *sym;
     const struct PrimOp *prim;
-    struct Obj *obj;
+    struct Node *node;
 }
 
-%type <obj> program expressions expression expression_list list number symbol 
+%type <node> program expressions expression expression_list list number symbol 
 %type <prim> primitive
 
 %token QUOTE ERROR
@@ -78,7 +77,7 @@ expression
     | list
     | QUOTE expression {
         $$ = list_cons(CTX_POOL(ctx), NULL, NULL);
-        Obj *quote = alloc_prim_func(CTX_POOL(ctx), PRIM_OP(QUOTE));
+        Node *quote = new_prim_func(CTX_POOL(ctx), PRIM_OP(QUOTE)->fn_ptr);
         $$ = list_append($$, quote);
         $$ = list_append($$, $2);
     }
@@ -103,10 +102,10 @@ expression_list
 
 symbol
     : primitive {
-        $$ = alloc_prim_func(CTX_POOL(ctx), $1);
+        $$ = new_prim_func(CTX_POOL(ctx), $1->fn_ptr);
     }
     | SYM_LITERAL {
-        $$ = alloc_symbol(CTX_POOL(ctx), $1);
+        $$ = new_symbol(CTX_POOL(ctx), $1);
     }
     ;
 
@@ -128,7 +127,7 @@ primitive
 
 number
     : INT_LITERAL {
-        $$ = alloc_integer(CTX_POOL(ctx), $1);
+        $$ = new_integer(CTX_POOL(ctx), $1);
     }
     ;
 

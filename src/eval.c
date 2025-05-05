@@ -1,58 +1,52 @@
 #include <assert.h>
 
+#include "common.h"
 #include "core_def.h"
-#include "list.h"
-#include "node_alloc.h"
+#include "core_list.h"
+#include "eval.h"
 
-// static Node _true = {.kind = Node_Literal,
-//                         .as.literal = {
-//                             .kind = Literal_Keywrd,
-//                             .symbol = "True",
-//                         }};
-// static Node _false = {.kind = Node_Literal,
-//                          .as.literal = {
-//                              .kind = Literal_Keywrd,
-//                              .symbol = "False",
-//                          }};
+extern Node *const const_false;
+extern Node *const const_true;
 
-// Node *const Node_true = &_true;
-// Node *const Node_false = &_false;
+static Node *apply(Node *node, Node *args, Context *ctx) {
+  // node must be a function either a closure or prim
+  // args must be a list of nodes
+  // params must be a list of symbols
+  // count of args and params must be the same
 
-// Node *apply(Node *void_Node, Context *ctx) {
-//   (void)void_Node;
+  Function fn = node->as.function;
+  List *fn_args = args->as.list;
 
-//   Node *Node = CTX_POP(ctx);
+  if (is_closure_fn(node)) {
+    List *params = fn.as.closure.params->as.list;
+    Node *body = fn.as.closure.body;
+    Env *env = fn.as.closure.env;
 
-//   if (!Node_IS_CLOSURE(Node)) {
-//     assert(0 && "Node is not a closure.");
-//     return Node_false; // TODO: error message
-//   }
+    Env *new_env = env_new(env); // TODO: error handling
 
-//   Closure closure = Node_AS(Node, closure);
+    for (unsigned int i = 0; i < params->count; ++i) {
+      const char *symbol = params->items[i]->as.literal.as.symbol;
+      env_set(new_env, symbol, fn_args->items[i]);
+    }
 
-//   jList *params = Node_AS(closure.params, list);
+    Context new_ctx = *ctx;
+    CTX_ENV(&new_ctx) = env;
 
-//   Env *closure_env = env_new(closure.env); // TODO: error handling
+    return eval(body, &new_ctx);
+  }
 
-//   for (unsigned int i = 0; i < params->count; ++i) {
-//     Node *o = CTX_POP(ctx);
-//     const char *symbol = Node_AS(params->nodes[i], literal).symbol;
-//     env_set(closure_env, symbol, o);
-//   }
+  if (is_primitive_fn(node)) {
+    const PrimFunc fn_ptr = fn.as.primitive.fn_ptr;
+    return fn_ptr(args, ctx);
+  }
 
-//   ENTER_FRAME(CTX_STACK(ctx));
-
-//   Context new_ctx = *ctx;
-//   CTX_ENV(&new_ctx) = closure_env;
-
-//   return eval(closure.body,
-//               &new_ctx); // does not EXIT_FRAME (ie force RETURN)
-// }
+  return NULL;
+}
 
 // Node *closure(Node *Node, Context *ctx) {
 //   if (!Node_IS_CLOSURE(Node)) {
 //     assert(0 && "Node is not a closure.");
-//     return Node_false; // TODO: error handling
+//     return false; // TODO: error handling
 //   }
 
 //   Closure *closure = Node_AS_PTR(Node, closure);
@@ -61,15 +55,24 @@
 //   return Node_true;
 // }
 
+Node *cons(Node *first, Node *rest, Context *ctx) {
+  Node *node = list_cons(CTX_POOL(ctx), NULL, NULL);
+
+  
+
+  return node;
+}
+
 // Node *eq(Node *Node, Context *ctx) {
 //   Node *Node1 = CTX_POP(ctx);
 //   Node *Node2 = CTX_POP(ctx);
 
 //   // Literal ints are special
 //   if (Node_IS_LITERAL_INT(Node1) && Node_IS_LITERAL_INT(Node2)) {
-//     Node *result = Node_AS(Node1, literal).integer == Node_AS(Node2, literal).integer
+//     Node *result = Node_AS(Node1, literal).integer == Node_AS(Node2,
+//     literal).integer
 //                       ? Node_true
-//                       : Node_false;
+//                       : false;
 //     CTX_PUSH(ctx, result);
 //     return Node_true;
 //   }
@@ -84,13 +87,13 @@
 // Node *if_(Node *Node, Context *ctx) {
 //   if (!Node_IS_IF(Node)) {
 //     assert(0 && "Node is not an if.");
-//     return Node_false; // TODO: error handling
+//     return false; // TODO: error handling
 //   }
 
 //   Node *cond = CTX_POP(ctx);
 
 //   if (!cond) {
-//     return Node_false; // TODO: error handling
+//     return false; // TODO: error handling
 //   }
 
 //   NodeIf Node_if = Node_AS(Node, if_);
@@ -112,34 +115,27 @@
 //   if (Node_IS_LITERAL_SYM(Node1) && Node_IS_LITERAL_SYM(Node1)) {
 //     const char *sym1 = Node_AS(Node1, literal).symbol;
 //     const char *sym2 = Node_AS(Node2, literal).symbol;
-//     result = (uintptr_t)sym1 == (uintptr_t)sym2 ? Node_true : Node_false;
+//     result = (uintptr_t)sym1 == (uintptr_t)sym2 ? Node_true : false;
 //   } else
-//     result = (uintptr_t)Node1 == (uintptr_t)Node2 ? Node_true : Node_false;
+//     result = (uintptr_t)Node1 == (uintptr_t)Node2 ? Node_true : false;
 
 //   CTX_PUSH(ctx, result);
 
 //   return Node_true;
 // }
 
-// Node *lookup(Node *void_Node, Context *ctx) {
-//   (void)void_Node;
+Node *lookup(Node *node, Context *ctx) {
+  if (!is_symbol(node)) {
+    return const_false; // TODO: error handling
+  }
 
-//   Node *key = CTX_POP(ctx);
+  void *rval;
 
-//   if (!Node_IS_LITERAL_SYM(key)) {
-//     assert(0 && "Node is not a literal symbol.");
-//     return Node_false; // TODO: error handling
-//   }
+  if (env_lookup(CTX_ENV(ctx), node->as.literal.as.symbol, &rval))
+    return const_false;
 
-//   void *rval;
-
-//   if (env_lookup(CTX_ENV(ctx), Node_AS(key, literal).symbol, &rval))
-//     return Node_false;
-//   else
-//     CTX_PUSH(ctx, rval);
-
-//   return Node_true;
-// }
+  return rval;
+}
 
 // Node *push(Node *Node, Context *ctx) {
 //   NodeCall Node_call = Node_AS(Node, call);
@@ -153,12 +149,12 @@
 //   return Node_true;
 // }
 
-// Node *quote(Node *Node, Context *void_ctx) {
-//   (void)void_ctx;
-//   jList *list = Node_AS(Node, list);
-//   assert(list->count == 2);
-//   return list->nodes[1];
-// }
+Node *quote(Node *args, Context *ctx) {
+  if (!is_list(args)) {
+    return NULL;
+  }
+  return list_rest(CTX_POOL(ctx), args);
+}
 
 // Node *return_(Node *void_Node, Context *ctx) {
 //   (void)void_Node;
@@ -170,33 +166,31 @@
 //   return Node_true;
 // }
 
-// Node *set(Node *void_Node, Context *ctx) {
-//   (void)void_Node;
+Node *set(Node *args, Context *ctx) {
+  Node *first = list_first(args);
+  Node *rest = list_rest(CTX_POOL(ctx), args);
 
-//   Node *key = CTX_POP(ctx);
-//   Node *val = CTX_POP(ctx);
-
-//   if (!Node_IS_LITERAL_SYM(key)) {
-//     assert(0 && "Node is not a literal symbol.");
-//     return Node_false; // TODO: error handling
-//   }
-
-//   env_set(CTX_ENV(ctx), Node_AS(key, literal).symbol,
-//           val); // TODO: error handling
-
-//   return Node_true;
-// }
-
-Node *eval(Node *expr, Context *ctx) {
-  if (is_literal(expr)) {
-    return expr;
+  if (!is_symbol(first)) {
+    assert(0 && "Node is not a literal symbol.");
+    return const_false; // TODO: error handling
   }
 
+  env_set(CTX_ENV(ctx), first->as.literal.as.symbol, rest); // TODO: error handling
+
+  return rest;
+}
+
+Node *eval(Node *expr, Context *ctx) {
   if (is_symbol(expr)) {
     return lookup(expr, ctx);
   }
 
-  if (is_call(expr)) {
+  if (is_literal(expr)) { // othere literals
+    return expr;
+  }
+
+  if (is_function(expr)) {
+    return expr;
   }
 
   if (is_list(expr)) {
@@ -204,32 +198,31 @@ Node *eval(Node *expr, Context *ctx) {
       return expr; // NIL or '()
     }
 
-    Node *op = first(expr);
-    Node *args = rest(expr);
+    Node *op = list_first(expr);
+    Node *args = list_rest(CTX_POOL(ctx), expr);
 
     Node *fn = eval(op, ctx);
     Node *evaluated_args = eval_list(args, ctx);
-
-    return apply(fn, evaluated_args, ctx); // XXX
+    return apply(fn, evaluated_args, ctx);
   }
 
-  error("Cannot evaluate expression");
+  assert(0 && "unknown to eval");
   return NULL;
 }
 
 Node *eval_list(Node *list, Context *ctx) {
   if (is_empty_list(list))
-    return empty_list();
+    return empty_list(CTX_POOL(ctx));
 
-  Node *first_result = eval(first(list), ctx);
-  Node *rest_results = eval_list(rest(list), ctx);
+  Node *first = eval(list_first(list), ctx);
+  Node *rest = eval_list(list_rest(CTX_POOL(ctx), list), ctx);
 
-  return cons(first_result, rest_results);
+  return cons(first, rest, ctx);
 }
 
 Node *eval_program(Node *program, Context *ctx) {
   List *expressions = program->as.list;
-  Node *result = false;
+  Node *result = const_false;
 
   for (unsigned int i = 0; i < expressions->count; ++i) {
     result = eval(expressions->items[i], ctx);

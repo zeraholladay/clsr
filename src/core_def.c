@@ -1,0 +1,56 @@
+#include <assert.h>
+
+#include "core_def.h"
+
+static Node _const_false = {.kind = KIND_LITERAL,
+                            .as = {.literal = {
+                                       .kind = LITERAL_SYMBOL,
+                                       .as.symbol = "False",
+                                   }}};
+
+static Node _const_true = {.kind = KIND_LITERAL,
+                           .as = {.literal = {
+                                      .kind = LITERAL_SYMBOL,
+                                      .as.symbol = "True",
+                                  }}};
+
+Node *const const_false = &_const_false;
+Node *const const_true = &_const_true;
+
+Node *new_integer(Pool *p, int i) {
+  Node *node = pool_alloc(p);
+  node->kind = KIND_LITERAL;
+  Literal *literal = &node->as.literal;
+  literal->kind = LITERAL_INTEGER;
+  literal->as.integer = i;
+  return node;
+}
+
+Node *new_symbol(Pool *p, const char *sym) {
+  Node *node = pool_alloc(p);
+  node->kind = KIND_LITERAL;
+  Literal *literal = &node->as.literal;
+  literal->kind = LITERAL_SYMBOL;
+  literal->as.symbol = sym;
+  return node;
+}
+
+Node *new_prim_func(Pool *p, const PrimFunc fn_ptr) {
+  Node *node = pool_alloc(p);
+  node->kind = KIND_FUNCTION;
+  Function *func = &node->as.function;
+  func->kind = FN_PRIMITIVE;
+  func->as.primitive.fn_ptr = fn_ptr;
+  return node;
+}
+
+Node *new_closure(Pool *p, Node *params, Node *body) {
+  Node *node = pool_alloc(p);
+  node->kind = KIND_FUNCTION;
+  Function *func = &node->as.function;
+  func->kind = FN_CLOSURE;
+  func->as.closure.params = params;
+  func->as.closure.body = body;
+  func->as.closure.env = NULL;
+  return node;
+}

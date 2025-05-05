@@ -8,27 +8,20 @@
 #include "rb_tree.h"
 #include "stack.h"
 
+// Forward declarations
 struct Node;
 struct Context;
 
 typedef struct Node *(*PrimFunc)(struct Node *Node, struct Context *ctx);
 
 typedef struct PrimOp {
-  int tok;
-  PrimFunc prim_fun;
+  const int tok;
+  const PrimFunc fn_ptr;
 } PrimOp;
 
-typedef enum {
-  KIND_LITERAL,
-  KIND_LIST,
-  KIND_FUNCTION
-} Kind;
+typedef enum { KIND_LITERAL, KIND_LIST, KIND_FUNCTION } Kind;
 
-typedef enum {
-  LITERAL_INTEGER,
-  LITERAL_KEYWORD,
-  LITERAL_SYMBOL
-} LiteralKind;
+typedef enum { LITERAL_INTEGER, LITERAL_KEYWORD, LITERAL_SYMBOL } LiteralKind;
 
 typedef struct {
   LiteralKind kind;
@@ -46,16 +39,13 @@ typedef struct {
   Node **items;
 } List;
 
-typedef enum {
-  FN_PRIMITIVE,
-  FN_CLOSURE
-} FnKind;
+typedef enum { FN_PRIMITIVE, FN_CLOSURE } FnKind;
 
 typedef struct {
   FnKind kind;
   union {
     struct {
-      PrimFunc *fn_ptr;
+      PrimFunc fn_ptr;
     } primitive;
 
     struct {
@@ -102,38 +92,48 @@ typedef struct Context {
   ParserContext parser_ctx;
 } Context;
 
-static inline bool is_literal(const Node *node) {
+static inline int is_literal(const Node *node) {
   return node && node->kind == KIND_LITERAL;
 }
 
-static inline bool is_list(const Node *node) {
+static inline int is_list(const Node *node) {
   return node && node->kind == KIND_LIST;
 }
 
-static inline bool is_function(const Node *node) {
+static inline int is_function(const Node *node) {
   return node && node->kind == KIND_FUNCTION;
 }
 
 // Literal kind checks
-static inline bool is_integer(const Node *node) {
+static inline int is_integer(const Node *node) {
   return is_literal(node) && node->as.literal.kind == LITERAL_INTEGER;
 }
 
-static inline bool is_keyword(const Node *node) {
+static inline int is_keyword(const Node *node) {
   return is_literal(node) && node->as.literal.kind == LITERAL_KEYWORD;
 }
 
-static inline bool is_symbol(const Node *node) {
+static inline int is_symbol(const Node *node) {
   return is_literal(node) && node->as.literal.kind == LITERAL_SYMBOL;
 }
 
 // Function kind checks
-static inline bool is_primitive_fn(const Node *node) {
+static inline int is_primitive_fn(const Node *node) {
   return is_function(node) && node->as.function.kind == FN_PRIMITIVE;
 }
 
-static inline bool is_closure_fn(const Node *node) {
+static inline int is_closure_fn(const Node *node) {
   return is_function(node) && node->as.function.kind == FN_CLOSURE;
 }
+
+/* core_def.c */
+Node *new_integer(Pool *p, int i);
+Node *new_symbol(Pool *p, const char *sym);
+Node *new_prim_func(Pool *p, const PrimFunc fn_ptr);
+Node *new_closure(Pool *p, Node *params, Node *body);
+
+/* prim_op.gperf */
+const PrimOp *prim_op_lookup(register const char *str,
+                             register unsigned int len);
 
 #endif

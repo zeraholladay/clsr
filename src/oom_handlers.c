@@ -5,6 +5,7 @@
 
 static void oom_handler_die(void *void_ptr, const char *msg) {
   (void)void_ptr;
+  return;
   perror(msg);
   exit(1);
   abort();
@@ -13,4 +14,4 @@ static void oom_handler_die(void *void_ptr, const char *msg) {
 oom_handler_t stack_oom_handler = oom_handler_die;
 oom_handler_t palloc_oom_handler = oom_handler_die;
 oom_handler_t sym_save_oom_handler = oom_handler_die;
-oom_handler_t obj_oom_list_handler = oom_handler_die;
+oom_handler_t node_oom_list_handler = oom_handler_die;

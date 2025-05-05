@@ -1,11 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "clsr.h"
 #include "common.h"
+#include "core_def.h"
+#include "eval.h"
 #include "parser.h"
 #include "readline.h"
 #include "sym_save.h"
+
+#ifndef OBJ_POOL_CAPACITY
+#define OBJ_POOL_CAPACITY 4096
+#endif
 
 #if YYDEBUG
 extern int yydebug;
@@ -17,6 +22,9 @@ extern int yydebug;
 #define REPL_BUF_SIZ 8192
 #endif
 
+extern Node *const const_false;
+extern Node *const const_true;
+
 extern FILE *yyin;
 extern int yyparse(Context *ctx);
 extern void yylex_destroy(void);
@@ -27,15 +35,15 @@ void clsr_init(Context *ctx) {
   if (!sym_save_bool && (sym_save_bool = 1))
     sym_save_init();
 
-  CTX_POOL(ctx) = pool_init(OBJ_POOL_CAPACITY, sizeof(Obj));
+  CTX_POOL(ctx) = pool_init(OBJ_POOL_CAPACITY, sizeof(Node));
   CTX_ENV(ctx) = env_new(NULL);
-  STACK_INIT(CTX_STACK(ctx));
+  // STACK_INIT(CTX_STACK(ctx));
   reset_parse_context(ctx);
 }
 
 void clsr_destroy(Context *ctx) {
   reset_parse_context(ctx);
-  STACK_FREE(CTX_STACK(ctx));
+  // STACK_FREE(CTX_STACK(ctx));
   free(CTX_ENV(ctx)), CTX_ENV(ctx) = NULL;
   pool_destroy(&CTX_POOL(ctx));
 }
@@ -67,10 +75,11 @@ int clsr_repl(void) {
     fclose(yyin);
 
     if (parse_status == 0) {
-      Obj *eval_status = eval_program(CTX_PARSE_ROOT(&ctx), &ctx);
+      Node *eval_status = eval_program(CTX_PARSE_ROOT(&ctx), &ctx);
 
-      if (eval_status == obj_true) {
-        obj_fprintf(stdout, CTX_PEEK(&ctx)), printf("\n");
+      if (eval_status == const_true) {
+        // obj_fprintf(stdout, CTX_PEEK(&ctx)), printf("\n");
+        ;
       } else {
         printf("=>error\n"); // TODO
       }

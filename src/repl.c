@@ -18,10 +18,10 @@ extern int yydebug;
 #endif
 
 extern FILE *yyin;
-extern int yyparse(ClsrContext *ctx);
+extern int yyparse(Context *ctx);
 extern void yylex_destroy(void);
 
-void clsr_init(ClsrContext *ctx) {
+void clsr_init(Context *ctx) {
   static int sym_save_bool = 0;
 
   if (!sym_save_bool && (sym_save_bool = 1))
@@ -33,7 +33,7 @@ void clsr_init(ClsrContext *ctx) {
   reset_parse_context(ctx);
 }
 
-void clsr_destroy(ClsrContext *ctx) {
+void clsr_destroy(Context *ctx) {
   reset_parse_context(ctx);
   STACK_FREE(CTX_STACK(ctx));
   free(CTX_ENV(ctx)), CTX_ENV(ctx) = NULL;
@@ -42,7 +42,7 @@ void clsr_destroy(ClsrContext *ctx) {
 
 int clsr_repl(void) {
   Stack stack = {};
-  ClsrContext ctx = {};
+  Context ctx = {};
   CTX_STACK(&ctx) = &stack;
 
   clsr_init(&ctx);
@@ -67,7 +67,7 @@ int clsr_repl(void) {
     fclose(yyin);
 
     if (parse_status == 0) {
-      Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
+      Obj *eval_status = eval_program(CTX_PARSE_ROOT(&ctx), &ctx);
 
       if (eval_status == obj_true) {
         obj_fprintf(stdout, CTX_PEEK(&ctx)), printf("\n");

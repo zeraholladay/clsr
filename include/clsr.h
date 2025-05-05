@@ -1,196 +1,153 @@
 #ifndef CLSR_H
 #define CLSR_H
 
-#include "common.h"
-#include "env.h"
-#include "palloc.h"
-#include "rb_tree.h"
-#include "stack.h"
+// #include "common.h"
+// #include "env.h"
+// #include "palloc.h"
+// #include "rb_tree.h"
+// #include "stack.h"
 
-#ifndef SYMTAB_POOL_CAPACITY
-#define SYMTAB_POOL_CAPACITY 4096
-#endif
+// /* primitive operations */
 
-#ifndef SYM_SAVE_BUMP_SIZE
-#define SYM_SAVE_BUMP_SIZE 4096
-#endif
+// extern struct Node *const true;
+// extern struct Node *const false;
 
-#ifndef OBJ_POOL_CAPACITY
-#define OBJ_POOL_CAPACITY 4096
-#endif
+// struct Node;
+// struct Context;
 
-#ifndef OBJ_LIST_INITIAL_CAPACITY
-#define OBJ_LIST_INITIAL_CAPACITY 4
-#endif
+// typedef struct Node *(*PrimFunc)(struct Node *Node, struct Context *ctx);
 
-/* primitive operations */
+// typedef struct PrimOp {
+//   int tok;
+//   PrimFunc prim_fun;
+// } PrimOp;
 
-struct Obj;
-struct ClsrContext;
+// typedef enum { KIND_LITERAL, KIND_LIST, KIND_FUNCTION } Kind;
 
-extern struct Obj *const obj_true;
-extern struct Obj *const obj_false;
+// typedef enum { LITERAL_INTEGER, LITERAL_KEYWORD, LITERAL_SYMBOL } LiteralKind;
 
-typedef struct Obj *(*PrimFunc)(struct Obj *obj, struct ClsrContext *ctx);
+// typedef struct {
+//   LiteralKind kind;
+//   union {
+//     int integer;
+//     const char *symbol;
+//   } as;
+// } Literal;
 
-typedef struct PrimOp {
-  int tok;
-  PrimFunc prim_fun;
-} PrimOp;
+// typedef struct Node Node;
 
-/* objects */
+// typedef struct {
+//   size_t count;
+//   size_t capacity;
+//   Node **items;
+// } List;
 
-#define OBJ_AS(obj_ptr, kind) ((obj_ptr)->as.kind)
-#define OBJ_AS_PTR(obj_ptr, kind) (&((obj_ptr)->as.kind))
-#define OBJ_KIND(obj_ptr) (obj_ptr)->kind
-#define OBJ_ISKIND(obj_ptr, kind) (OBJ_KIND(obj_ptr) == kind)
-#define OBJ_IS_LITERAL_INT(obj_ptr)                                            \
-  ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_Literal)) &&                          \
-   (OBJ_AS(obj_ptr, literal).kind == Literal_Int))
-#define OBJ_IS_LITERAL_KEYWRD(obj_ptr)                                         \
-  ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_Literal)) &&                          \
-   (OBJ_AS(obj_ptr, literal).kind == Literal_Keywrd))
-#define OBJ_IS_LITERAL_SYM(obj_ptr)                                            \
-  ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_Literal)) &&                          \
-   (OBJ_AS(obj_ptr, literal).kind == Literal_Sym))
-#define OBJ_IS_LIST(obj_ptr) ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_List)))
-#define OBJ_IS_CALL(obj_ptr) ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_Call)))
-#define OBJ_IS_CLOSURE(obj_ptr)                                                \
-  ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_Closure)))
-#define OBJ_IS_IF(obj_ptr) ((obj_ptr) && (OBJ_ISKIND(obj_ptr, Obj_If)))
+// typedef enum { FN_PRIMITIVE, FN_CLOSURE } FnKind;
 
-typedef enum {
-  Obj_Literal,
-  Obj_List,
-  Obj_Call,
-  Obj_Closure,
-  Obj_If,
-} ObjKind;
+// typedef struct {
+//   FnKind kind;
+//   union {
+//     struct {
+//       PrimFunc *fn_ptr;
+//     } primitive;
 
-typedef enum {
-  Literal_Int,
-  Literal_Keywrd,
-  Literal_Sym,
-} ObjLiteralKind;
+//     struct {
+//       Node *params;
+//       Node *body;
+//       Env *env;
+//     } closure;
+//   } as;
+// } Function;
 
-typedef struct {
-  ObjLiteralKind kind;
-  union {
-    int integer;
-    const char *symbol;
-  };
-} ObjLiteral;
+// struct Node {
+//   Kind kind;
+//   union {
+//     List *list;
+//     Literal literal;
+//     Function function;
+//   } as;
+// };
 
-typedef struct ObjList {
-  struct Obj **nodes;
-  size_t count, capacity;
-} ObjList;
+// /* clsr context */
 
-typedef struct ObjCall {
-  const PrimOp *prim;
-  struct Obj *args;
-} ObjCall;
+// #define CTX_POOL(ctx) ((ctx)->Node_pool)
+// #define CTX_ENV(ctx) ((ctx)->eval_ctx.env)
+// #define CTX_STACK(ctx) ((ctx)->eval_ctx.stack)
+// #define CTX_SYMTAB(ctx) ((ctx)->parser_ctx.sym_tab)
+// #define CTX_PARSE_ROOT(ctx) ((ctx)->parser_ctx.root_Node)
+// #define CTX_PARSE_MARK(ctx) ((ctx)->parser_ctx.parse_mark)
+// #define CTX_PEEK(ctx) PEEK(CTX_STACK(ctx))
+// #define CTX_POP(ctx) POP(CTX_STACK(ctx))
+// #define CTX_PUSH(ctx, Node) PUSH(CTX_STACK(ctx), Node)
 
-typedef struct ObjClosure {
-  struct Obj *params;
-  struct Obj *body;
-  Env *env;
-} ObjClosure;
+// typedef struct EvalContext {
+//   Env *env;
+//   Stack *stack;
+// } EvalContext;
 
-typedef struct ObjIf {
-  struct Obj *then;
-  struct Obj *else_;
-} ObjIf;
+// typedef struct ParserContext {
+//   rb_node *sym_tab;
+//   Node *root_Node;
+//   Wrapper *parse_mark;
+// } ParserContext;
 
-typedef struct Obj {
-  ObjKind kind;
+// typedef struct Context {
+//   Pool *Node_pool;
+//   EvalContext eval_ctx;
+//   ParserContext parser_ctx;
+// } Context;
 
-  union {
-    ObjLiteral literal;
-    ObjList *list;
-    ObjCall call;
-    ObjClosure closure;
-    ObjIf if_;
-  } as;
-} Obj;
+// /* prim_op.gperf */
+// const PrimOp *prim_op_lookup(register const char *str,
+//                              register unsigned int len);
 
-/* clsr context */
+// /* stack.c (stack helpers) */
 
-#define CTX_POOL(ctx) ((ctx)->obj_pool)
-#define CTX_ENV(ctx) ((ctx)->eval_ctx.env)
-#define CTX_STACK(ctx) ((ctx)->eval_ctx.stack)
-#define CTX_SYMTAB(ctx) ((ctx)->parser_ctx.sym_tab)
-#define CTX_PARSE_ROOT(ctx) ((ctx)->parser_ctx.root_obj)
-#define CTX_PARSE_MARK(ctx) ((ctx)->parser_ctx.parse_mark)
-#define CTX_PEEK(ctx) PEEK(CTX_STACK(ctx))
-#define CTX_POP(ctx) POP(CTX_STACK(ctx))
-#define CTX_PUSH(ctx, obj) PUSH(CTX_STACK(ctx), obj)
+// #define STACK_INIT(stack) stack_init(stack, STACK_GROWTH)
+// #define STACK_FREE(stack) stack_free(stack)
+// #define PUSH(stack, Node) stack_push(stack, (void *)Node)
+// #define POP(stack) (Node *)stack_pop(stack)
+// #define PEEK(stack) (Node *)stack_peek(stack)
+// #define ENTER_FRAME(stack) stack_enter_frame(stack)
+// #define EXIT_FRAME(stack) stack_exit_frame(stack)
 
-typedef struct EvalContext {
-  Env *env;
-  Stack *stack;
-} EvalContext;
+/* Node.c */
 
-typedef struct ParserContext {
-  rb_node *sym_tab;
-  Obj *root_obj;
-  Wrapper *parse_mark;
-} ParserContext;
+// Node *Node_new_integer(Pool *p, int i);
+// Node *Node_new_literal_sym(Pool *p, const char *sym);
+// Node *Node_new_empty_expr_list(Pool *p);
+// Node *Node_expr_list_append(Node *Node, Node *item);
+// Node *Node_new_call(Pool *p, const PrimOp *prim, Node *args);
+// Node *Node_new_closure(Pool *p, Node *params, Node *body);
+// Node *Node_new_if(Pool *p, Node *then, Node *else_);
+// void Node_fprintf(FILE *restrict stream, const Node *Node);
 
-typedef struct ClsrContext {
-  Pool *obj_pool;
-  EvalContext eval_ctx;
-  ParserContext parser_ctx;
-} ClsrContext;
+/* list.c */
 
-/* prim_op.gperf */
-const PrimOp *prim_op_lookup(register const char *str,
-                             register unsigned int len);
-
-/* stack.c (stack helpers) */
-
-#define STACK_INIT(stack) stack_init(stack, STACK_GROWTH)
-#define STACK_FREE(stack) stack_free(stack)
-#define PUSH(stack, obj) stack_push(stack, (void *)obj)
-#define POP(stack) (Obj *)stack_pop(stack)
-#define PEEK(stack) (Obj *)stack_peek(stack)
-#define ENTER_FRAME(stack) stack_enter_frame(stack)
-#define EXIT_FRAME(stack) stack_exit_frame(stack)
-
-/* obj.c */
-
-Obj *obj_new_literal_int(Pool *p, int i);
-Obj *obj_new_literal_sym(Pool *p, const char *sym);
-Obj *obj_new_empty_expr_list(Pool *p);
-Obj *obj_expr_list_append(Obj *obj, Obj *item);
-Obj *obj_new_call(Pool *p, const PrimOp *prim, Obj *args);
-Obj *obj_new_closure(Pool *p, Obj *params, Obj *body);
-Obj *obj_new_if(Pool *p, Obj *then, Obj *else_);
-void obj_fprintf(FILE *restrict stream, const Obj *obj);
-
-/* obj_list.c */
-
-ObjList *obj_list_new(void);
-int obj_list_append(ObjList *obj_list, Obj *obj);
+// List *list_new(void);
+// int list_append(List *Node_list, Node *Node);
 
 /* eval.c */
 
-Obj *apply(Obj *void_obj, ClsrContext *ctx);
-Obj *closure(Obj *obj, ClsrContext *ctx);
-Obj *eq(Obj *obj, ClsrContext *ctx);
-Obj *if_(Obj *obj, ClsrContext *ctx);
-Obj *is(Obj *obj, ClsrContext *ctx);
-Obj *lookup(Obj *void_obj, ClsrContext *ctx);
-Obj *push(Obj *obj, ClsrContext *ctx);
-Obj *return_(Obj *void_obj, ClsrContext *ctx);
-Obj *set(Obj *void_obj, ClsrContext *ctx);
-Obj *eval(Obj *obj, ClsrContext *ctx);
+// Node *apply(Node *void_Node, Context *ctx);
+// Node *closure(Node *Node, Context *ctx);
+// Node *eq(Node *Node, Context *ctx);
+// Node *if_(Node *Node, Context *ctx);
+// Node *is(Node *Node, Context *ctx);
+// Node *lookup(Node *void_Node, Context *ctx);
+// Node *push(Node *Node, Context *ctx);
+// Node *quote(Node *Node, Context *void_ctx);
+// Node *return_(Node *void_Node, Context *ctx);
+// Node *set(Node *void_Node, Context *ctx);
+// Node *eval(Node *Node, Context *ctx);
+// Node *eval_list(Node *Node, Context *ctx);
+// Node *eval_program(Node *program, Context *ctx);
 
 /* math.c */
 
-Obj *add(Obj *void_obj, ClsrContext *ctx);
-Obj *sub(Obj *void_obj, ClsrContext *ctx);
-Obj *mul(Obj *void_obj, ClsrContext *ctx);
-Obj *div_(Obj *void_obj, ClsrContext *ctx);
+// Node *add(Node *void_Node, Context *ctx);
+// Node *sub(Node *void_Node, Context *ctx);
+// Node *mul(Node *void_Node, Context *ctx);
+// Node *div_(Node *void_Node, Context *ctx);
 
 #endif

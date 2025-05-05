@@ -9,14 +9,14 @@
 #include "sym_save.h"
 
 extern FILE *yyin;
-extern int yyparse(ClsrContext *ctx);
+extern int yyparse(Context *ctx);
 extern void yylex_destroy(void);
 
-extern void clsr_init(ClsrContext *ctx);
-extern void clsr_destroy(ClsrContext *ctx);
+extern void clsr_init(Context *ctx);
+extern void clsr_destroy(Context *ctx);
 
 static Stack stack = {};
-static ClsrContext ctx = {};
+static Context ctx = {};
 
 static void setup(void) {
   CTX_STACK(&ctx) = &stack;

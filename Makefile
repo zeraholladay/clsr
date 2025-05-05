@@ -20,7 +20,7 @@ EXEC := $(BIN)/clsr
 CC ?= gcc
 
 ifeq ($(DEBUG), 1)
-	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O0 -g -DYYDEBUG=0 -DCLSR_DEBUG
+	CFLAGS := -Iinclude -I$(GEN) -Wall -Wextra -O0 -g -DYYDEBUG=1 -DCLSR_DEBUG
 	FLEX_FLAGS := -d
 	BISON_FLAGS := -d -v --debug
 else

@@ -1,6 +1,6 @@
 %{
 #include "parser.h"
-#include "clsr.h"
+#include "core_def.h"
 %}
 
 %includes
@@ -17,21 +17,22 @@ struct _prim_op_gperf {
 };
 
 %%
+ADD,     {TOK_ADD,     add     }
 APPLY,   {TOK_APPLY,   apply   }
-CLOSURE, {TOK_CLOSURE, 0       }
+CLOSURE, {TOK_CLOSURE, closure }
+DIV,     {TOK_DIV,     div_    }
 EQ,      {TOK_EQ,      eq      }
+FALSE,   {TOK_FALSE,   0       }
 IF,      {TOK_IF,      0       }
 IS,      {TOK_IS,      is      }
 LOOKUP,  {TOK_LOOKUP,  lookup  }
+MUL,     {TOK_MUL,     mul     }
 PUSH,    {TOK_PUSH,    push    }
+QUOTE,   {TOK_QUOTE,   quote   }
 RETURN,  {TOK_RETURN,  return_ }
 SET,     {TOK_SET,     set     }
-TRUE,    {TOK_TRUE,    0       }
-FALSE,   {TOK_FALSE,   0       }
-ADD,     {TOK_ADD,     add     }
 SUB,     {TOK_SUB,     sub     }
-MUL,     {TOK_MUL,     mul     }
-DIV,     {TOK_DIV,     div_    }
+TRUE,    {TOK_TRUE,    0       }
 %%
 
 const PrimOp * prim_op_lookup(register const char *str, register unsigned int len) {

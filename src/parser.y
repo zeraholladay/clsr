@@ -61,7 +61,7 @@ program
 
 expressions
     : /* empty */ {
-        $$ = cons_list(CTX_POOL(ctx), NULL, NULL);
+        $$ = NULL; //cons_list(CTX_POOL(ctx), NULL, NULL);
     }
     | expressions expression {
         $$ = cons_list(CTX_POOL(ctx), $2, $1);
@@ -80,17 +80,21 @@ expression
 
 list
     : '(' ')' { 
-        $$ = cons_list(CTX_POOL(ctx), NULL, NULL);
+        $$ = NULL; //cons_list(CTX_POOL(ctx), NULL, NULL);
      }
-    | '(' expression_list ')' { $$ = $2; }
+    | '(' expression_list ')' {
+        // Node *empty_list = cons_list(CTX_POOL(ctx), NULL, NULL);
+        $$ = cons_list(CTX_POOL(ctx), $2, NULL); 
+    }
     ;
 
 expression_list
     : expression {
-        $$ = cons_list(CTX_POOL(ctx), $1, $$);
+        // Node *empty_list = cons_list(CTX_POOL(ctx), NULL, NULL);
+        $$ = cons_list(CTX_POOL(ctx), $1, NULL);
     }
     | expression_list expression {
-        $$ = cons_list(CTX_POOL(ctx), $2, $1);
+        $$ = cons_list(CTX_POOL(ctx), $1, $2);
     }
     ;
 

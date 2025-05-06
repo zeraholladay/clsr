@@ -39,8 +39,7 @@ static inline int is_closure_fn(const Node *node) {
 }
 
 static inline int is_empty_list(const Node *node) {
-  return is_list(node) && node->as.list.car == NULL &&
-         node->as.list.cdr == NULL;
+  return !node || (is_list(node) && !node->as.list.car && !node->as.list.cdr);
 }
 static inline Node *empty_list(Pool *p) { return cons_list(p, NULL, NULL); }
 
@@ -119,6 +118,9 @@ Node *apply(Node *node, Node *args, Context *ctx) {
   //   Node *body = fn.as.closure.body;
   //   return eval(body, &new_ctx);
   // }
+
+  node_fprintf(stderr, node), fprintf(stderr, "< node\n");
+  node_fprintf(stderr, args), fprintf(stderr, "< args\n");
 
   if (is_primitive_fn(node)) {
     const PrimOp *prim_op = get_prim_op(node);
@@ -254,7 +256,7 @@ Node *quote(Node *node, Context *ctx) {
 
 Node *rest(Node *node, Context *ctx) {
   (void)ctx;
-  return get_car(node);
+  return get_cdr(node);
 }
 
 // Node *return_(Node *void_Node, Context *ctx) {
@@ -284,10 +286,6 @@ Node *set(Node *node, Context *ctx) {
 }
 
 Node *eval(Node *expr, Context *ctx) {
-  if (!expr) {
-    return NULL;
-  }
-
   if (is_symbol(expr)) {
     return lookup(expr, ctx);
   }
@@ -331,8 +329,12 @@ Node *eval_list(Node *list, Context *ctx) {
 Node *eval_program(Node *program, Context *ctx) {
   Node *result = NULL;
 
-  for (Node *expr = first(program, ctx); expr; expr = rest(expr, ctx)) {
-    result = eval(expr, ctx);
+  node_fprintf(stderr, program), fprintf(stderr, "< program\n");
+
+  for (Node *expr = first(program, ctx); expr; expr = first(program, ctx)) {
+    node_fprintf(stderr, expr), fprintf(stderr, "< expr\n");
+    // result = eval(expr, ctx);
+    program = rest(program, ctx);
   }
 
   return result;

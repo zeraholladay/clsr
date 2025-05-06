@@ -102,6 +102,8 @@ Node *cons_list(Pool *p, Node *car, Node *cdr);
 Node *cons_symbol(Pool *p, const char *sym);
 
 /* prim_op.gperf */
+#define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
+
 const PrimOp *prim_op_lookup(register const char *str,
                              register unsigned int len);
 

@@ -24,9 +24,9 @@ CONS,    { TOK_CONS,    0,       cons   },
 EVAL,    { TOK_EVAL,    eval,    0      },
 FIRST,   { TOK_FIRST,   first,   0      },
 LOOKUP,  { TOK_LOOKUP,  lookup,  0      },
-QUOTE,   { TOK_QUOTE,   quote,   0      },
+QUOTE,   { TOK_QUOTE,   0,       0      },
 REST,    { TOK_REST,    rest,    0      },
-SET,     { TOK_SET,     set,     0      }
+SET,     { TOK_SET,     0,       set    }
 %%
 
 const PrimOp * prim_op_lookup(register const char *str, register unsigned int len) {

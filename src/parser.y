@@ -61,7 +61,7 @@ program
 
 expressions
     : /* empty */ {
-        $$ = NULL; //cons_list(CTX_POOL(ctx), NULL, NULL);
+        $$ = cons_list(CTX_POOL(ctx), NULL, NULL);
     }
     | expressions expression {
         $$ = cons_list(CTX_POOL(ctx), $2, $1);
@@ -74,28 +74,30 @@ expression
     | list
     | QUOTE expression {
         Node *quote = cons_c_fn(CTX_POOL(ctx), PRIM_OP(QUOTE));
-        $$ = cons_list(CTX_POOL(ctx), quote, $2);
+        Node *fn_args = cons_list(CTX_POOL(ctx), $2,
+                                  cons_list(CTX_POOL(ctx), NULL, NULL));
+        $$ = cons_list(CTX_POOL(ctx), quote, fn_args);
     }
     ;
 
 list
-    : '(' ')' { 
-        $$ = NULL; //cons_list(CTX_POOL(ctx), NULL, NULL);
-     }
+    : '(' ')' {
+        $$ = cons_list(CTX_POOL(ctx), NULL, NULL);
+    }
     | '(' expression_list ')' {
-        // Node *empty_list = cons_list(CTX_POOL(ctx), NULL, NULL);
-        $$ = cons_list(CTX_POOL(ctx), $2, NULL); 
+        $$ = $2;
     }
     ;
 
 expression_list
     : expression {
-        // Node *empty_list = cons_list(CTX_POOL(ctx), NULL, NULL);
-        $$ = cons_list(CTX_POOL(ctx), $1, NULL);
+        Node *empty = cons_list(CTX_POOL(ctx), NULL, NULL);
+        $$ = cons_list(CTX_POOL(ctx), $1, empty);
     }
-    | expression_list expression {
+    | expression expression_list {
         $$ = cons_list(CTX_POOL(ctx), $1, $2);
     }
+
     ;
 
 symbol

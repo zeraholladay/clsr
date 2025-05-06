@@ -1,3 +1,4 @@
+#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -28,6 +29,8 @@ extern FILE *yyin;
 extern int yyparse(Context *ctx);
 extern void yylex_destroy(void);
 
+jmp_buf eval_error_jmp;
+
 void clsr_init(Context *ctx) {
   static int sym_save_bool = 0;
 
@@ -45,6 +48,16 @@ void clsr_destroy(Context *ctx) {
   // STACK_FREE(CTX_STACK(ctx));
   free(CTX_ENV(ctx)), CTX_ENV(ctx) = NULL;
   pool_destroy(&CTX_POOL(ctx));
+}
+
+static void clsr_eval_program(Context *ctx) {
+  if (setjmp(eval_error_jmp) == 0) {
+    Node *program = CTX_PARSE_ROOT(ctx);
+    Node *eval_result = eval_program(program, ctx);
+    node_fprintf(stdout, eval_result), printf("\n");
+  } else {
+    printf("=>error\n"); // TODO
+  }
 }
 
 int clsr_repl(void) {
@@ -73,19 +86,12 @@ int clsr_repl(void) {
     yylex_destroy();
     fclose(yyin);
 
-    if (parse_status == 0) {
-      Node *eval_status = eval_program(CTX_PARSE_ROOT(&ctx), &ctx);
-
-      if (eval_status) {
-        node_fprintf(stdout, eval_status), fprintf(stdout, "\n");
-      } else {
-        printf("=>error\n"); // TODO
-      }
-
-    } else {
+    if (parse_status) {
       fprintf(stderr, "Parse failed\n");
       continue; // TODO: syntax error
     }
+
+    clsr_eval_program(&ctx);
   }
   return 0;
 }

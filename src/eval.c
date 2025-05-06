@@ -1,8 +1,18 @@
 #include <assert.h>
+#include <setjmp.h>
+#include <stdio.h>
 
 #include "core_def.h"
 #include "debug.h"
 #include "eval.h"
+
+extern jmp_buf eval_error_jmp;
+
+static void *raise(const char *msg) {
+  fprintf(stderr, "Eval error: %s\n", msg);
+  longjmp(eval_error_jmp, 1);
+  return NULL;
+}
 
 static inline int is_literal(const Node *node) {
   return node && node->kind == KIND_LITERAL;
@@ -91,11 +101,12 @@ static inline Env *get_closure_env(Node *node) {
   return is_closure_fn(node) ? node->as.function.as.closure.env : NULL;
 }
 
-Node *apply(Node *node, Node *args, Context *ctx) {
+Node *apply(Node *fn_node, Node *fn_args, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
   // node must be a function either a closure or prim
-  // args must be a list of nodes
+  // fn_args must be a list of nodes
   // params must be a list of symbols
-  // count of args and params must be the same
+  // count of fn_args and params must be the same
 
   // if (is_closure_fn(node)) {
   //   Env *env = get_closure_env(node);
@@ -106,7 +117,7 @@ Node *apply(Node *node, Node *args, Context *ctx) {
   //   for (Node *param = get_closure_params(node);
   //        params; params =
   //     const char *symbol = params->as.literal.as.symbol;
-  //     Node *arg = first(args, ctx);
+  //     Node *arg = first(fn_args, ctx);
 
   //     env_set(new_env, symbol, arg);
 
@@ -119,25 +130,22 @@ Node *apply(Node *node, Node *args, Context *ctx) {
   //   return eval(body, &new_ctx);
   // }
 
-  node_fprintf(stderr, node), fprintf(stderr, "< node\n");
-  node_fprintf(stderr, args), fprintf(stderr, "< args\n");
+  if (is_primitive_fn(fn_node)) {
+    const PrimOp *prim_op = get_prim_op(fn_node);
 
-  if (is_primitive_fn(node)) {
-    const PrimOp *prim_op = get_prim_op(node);
+    if (prim_op->unary_f_ptr)
+      return prim_op->unary_f_ptr(first(fn_args, ctx), ctx);
 
-    if (prim_op->unary_f_ptr) {
-      Node *cdr = first(args, ctx);
-      return prim_op->unary_f_ptr(cdr, ctx);
-    } else if (prim_op->binary_f_ptr) {
-      Node *car = first(args, ctx);
-      Node *cdr = rest(args, ctx);
+    if (prim_op->binary_f_ptr) {
+      Node *car = first(fn_args, ctx);
+      Node *cdr = rest(fn_args, ctx);
       return prim_op->binary_f_ptr(car, cdr, ctx);
-    } else {
-      return NULL;
     }
+
+    return raise("Unknown primitive in apply");
   }
 
-  return NULL;
+  return raise("Unknown node type in apply");
 }
 
 // Node *closure(Node *Node, Context *ctx) {
@@ -153,131 +161,58 @@ Node *apply(Node *node, Node *args, Context *ctx) {
 // }
 
 Node *cons(Node *car, Node *cdr, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
   Node *node = cons_list(CTX_POOL(ctx), car, cdr);
   return node;
 }
 
-Node *first(Node *node, Context *ctx) {
+Node *first(Node *args, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
   (void)ctx;
-  return get_car(node);
+  if (!is_list(args)) {
+    return raise("First only takes a list.");
+  }
+  return get_car(args);
 }
 
-// Node *eq(Node *Node, Context *ctx) {
-//   Node *Node1 = CTX_POP(ctx);
-//   Node *Node2 = CTX_POP(ctx);
-
-//   // Literal ints are special
-//   if (Node_IS_LITERAL_INT(Node1) && Node_IS_LITERAL_INT(Node2)) {
-//     Node *result = Node_AS(Node1, literal).integer == Node_AS(Node2,
-//     literal).integer
-//                       ? Node_true
-//                       : false;
-//     CTX_PUSH(ctx, result);
-//     return Node_true;
-//   }
-
-//   // Symbols, keyword literals, lists, calls, closures, ifs, etc.
-//   // if we get lists, a comparison would be cool.
-//   CTX_PUSH(ctx, Node2);
-//   CTX_PUSH(ctx, Node1);
-//   return is(Node, ctx);
-// }
-
-// Node *if_(Node *Node, Context *ctx) {
-//   if (!Node_IS_IF(Node)) {
-//     assert(0 && "Node is not an if.");
-//     return false; // TODO: error handling
-//   }
-
-//   Node *cond = CTX_POP(ctx);
-
-//   if (!cond) {
-//     return false; // TODO: error handling
-//   }
-
-//   NodeIf Node_if = Node_AS(Node, if_);
-
-//   Node *branch = (cond == Node_true) ? Node_if.then : Node_if.else_;
-
-//   return eval(branch, ctx);
-// }
-
-// Node *is(Node *void_Node, Context *ctx) {
-//   (void)void_Node;
-
-//   Node *Node1 = CTX_POP(ctx);
-//   Node *Node2 = CTX_POP(ctx);
-
-//   Node *result = NULL;
-
-//   // symbols are globally unique
-//   if (Node_IS_LITERAL_SYM(Node1) && Node_IS_LITERAL_SYM(Node1)) {
-//     const char *sym1 = Node_AS(Node1, literal).symbol;
-//     const char *sym2 = Node_AS(Node2, literal).symbol;
-//     result = (uintptr_t)sym1 == (uintptr_t)sym2 ? Node_true : false;
-//   } else
-//     result = (uintptr_t)Node1 == (uintptr_t)Node2 ? Node_true : false;
-
-//   CTX_PUSH(ctx, result);
-
-//   return Node_true;
-// }
-
 Node *lookup(Node *node, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
   if (!is_symbol(node)) {
-    return NULL; // TODO: error handling
+    return raise("Lookup parameter to lookup must be a symbol.");
   }
 
   void *rval;
 
   if (env_lookup(CTX_ENV(ctx), get_symbol(node), &rval)) {
-    return NULL;
+    return raise("Could not resolve symbol.");
   }
 
   return rval;
 }
 
-// Node *push(Node *Node, Context *ctx) {
-//   NodeCall Node_call = Node_AS(Node, call);
-//   jList *list = Node_AS(Node_call.args, list);
-
-//   for (unsigned int i = list->count; i > 0; --i) {
-//     assert(Node_ISKIND(list->nodes[i - 1], Node_Literal));
-//     CTX_PUSH(ctx, list->nodes[i - 1]);
-//   }
-
-//   return Node_true;
-// }
-
-Node *quote(Node *node, Context *ctx) {
+Node *quote(Node *args, Context *ctx) {
+  /* only exists because it's a symbol. */
+  (void)args;
   (void)ctx;
-  return is_list(node) ? node : NULL;
+  return raise("Quote does not exist.");
+  return NULL;
 }
 
-Node *rest(Node *node, Context *ctx) {
+Node *rest(Node *args, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
   (void)ctx;
-  return get_cdr(node);
+  if (!is_list(args)) {
+    return raise("Rest only takes a list.");
+  }
+  Node *cdr = get_cdr(args);
+  return is_list(cdr) ? cdr : cons(cdr, NULL, ctx);
 }
 
-// Node *return_(Node *void_Node, Context *ctx) {
-//   (void)void_Node;
-
-//   Node *Node_rval = CTX_POP(ctx);
-//   EXIT_FRAME(CTX_STACK(ctx));
-//   CTX_PUSH(ctx, Node_rval);
-
-//   return Node_true;
-// }
-
-Node *set(Node *node, Context *ctx) {
-  Node *car = first(node, ctx);
-  Node *cdr = rest(node, ctx);
-
-  node_fprintf(stdout, node), fprintf(stdout, " <= set\n");
+Node *set(Node *car, Node *cdr, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
 
   if (!is_symbol(car)) {
-    assert(0 && "Node is not a literal symbol.");
-    return NULL; // TODO: error handling
+    return raise("Set arameter to set must be a symbol.");
   }
 
   env_set(CTX_ENV(ctx), get_symbol(car), cdr); // TODO: error handling
@@ -286,38 +221,35 @@ Node *set(Node *node, Context *ctx) {
 }
 
 Node *eval(Node *expr, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
   if (is_symbol(expr)) {
     return lookup(expr, ctx);
   }
 
-  if (is_literal(expr)) { // othere literals
-    return expr;
-  }
-
-  if (is_function(expr)) {
+  if (is_literal(expr) || is_function(expr)) {
     return expr;
   }
 
   if (is_list(expr)) {
     if (is_empty_list(expr)) {
-      return expr; // NIL or '()
+      return expr;
     }
 
-    Node *car = first(expr, ctx);
-    Node *cdr = rest(expr, ctx);
+    Node *fn_node = eval(first(expr, ctx), ctx);
 
-    Node *fn = eval(car, ctx);
-    Node *evaluated_args = eval_list(cdr, ctx);
-
-    return apply(fn, evaluated_args, ctx);
+    if (PRIM_OP(QUOTE) != get_prim_op(fn_node)) {
+      Node *fn_args = eval_list(rest(expr, ctx), ctx);
+      return apply(fn_node, fn_args, ctx);
+    } else
+      return first(rest(expr, ctx), ctx);
   }
 
-  assert(0 && "unknown to eval");
-  return NULL;
+  return raise("Type unknown to eval.");
 }
 
 Node *eval_list(Node *list, Context *ctx) {
-  if (!list || is_empty_list(list))
+  DEBUG(DEBUG_LOCATION);
+  if (is_empty_list(list))
     return empty_list(CTX_POOL(ctx));
 
   Node *car = eval(first(list, ctx), ctx);
@@ -329,11 +261,9 @@ Node *eval_list(Node *list, Context *ctx) {
 Node *eval_program(Node *program, Context *ctx) {
   Node *result = NULL;
 
-  node_fprintf(stderr, program), fprintf(stderr, "< program\n");
-
-  for (Node *expr = first(program, ctx); expr; expr = first(program, ctx)) {
-    node_fprintf(stderr, expr), fprintf(stderr, "< expr\n");
-    // result = eval(expr, ctx);
+  for (Node *expr = first(program, ctx); !is_empty_list(expr);
+       expr = first(program, ctx)) {
+    result = eval(expr, ctx);
     program = rest(program, ctx);
   }
 

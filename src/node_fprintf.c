@@ -30,9 +30,13 @@ void node_fprintf(FILE *stream, const Node *node) {
     fprintf(stream, "(");
     const Node *cur = node;
     while (cur && cur->kind == KIND_LIST) {
-      node_fprintf(stream, cur->as.list.car);
-      if (cur->as.list.cdr && cur->as.list.cdr->kind == KIND_LIST) {
-        fprintf(stream, " ");
+      if (cur->as.list.car == NULL && cur->as.list.cdr == NULL) {
+        // fprintf(stream, "NIL");
+      } else {
+        node_fprintf(stream, cur->as.list.car);
+        if (cur->as.list.cdr && cur->as.list.cdr->kind == KIND_LIST) {
+          fprintf(stream, " ");
+        }
       }
       cur = cur->as.list.cdr;
     }

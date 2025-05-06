@@ -34,9 +34,8 @@ typedef struct {
 typedef struct Node Node;
 
 typedef struct {
-  size_t count;
-  size_t capacity;
-  Node **items;
+  Node *car;
+  Node *cdr;
 } List;
 
 typedef enum { FN_PRIMITIVE, FN_CLOSURE } FnKind;
@@ -59,7 +58,7 @@ typedef struct {
 struct Node {
   Kind kind;
   union {
-    List *list;
+    List list;
     Literal literal;
     Function function;
   } as;
@@ -92,45 +91,12 @@ typedef struct Context {
   ParserContext parser_ctx;
 } Context;
 
-static inline int is_literal(const Node *node) {
-  return node && node->kind == KIND_LITERAL;
-}
-
-static inline int is_list(const Node *node) {
-  return node && node->kind == KIND_LIST;
-}
-
-static inline int is_function(const Node *node) {
-  return node && node->kind == KIND_FUNCTION;
-}
-
-// Literal kind checks
-static inline int is_integer(const Node *node) {
-  return is_literal(node) && node->as.literal.kind == LITERAL_INTEGER;
-}
-
-static inline int is_keyword(const Node *node) {
-  return is_literal(node) && node->as.literal.kind == LITERAL_KEYWORD;
-}
-
-static inline int is_symbol(const Node *node) {
-  return is_literal(node) && node->as.literal.kind == LITERAL_SYMBOL;
-}
-
-// Function kind checks
-static inline int is_primitive_fn(const Node *node) {
-  return is_function(node) && node->as.function.kind == FN_PRIMITIVE;
-}
-
-static inline int is_closure_fn(const Node *node) {
-  return is_function(node) && node->as.function.kind == FN_CLOSURE;
-}
-
 /* core_def.c */
-Node *new_integer(Pool *p, int i);
-Node *new_symbol(Pool *p, const char *sym);
-Node *new_prim_func(Pool *p, const PrimFunc fn_ptr);
-Node *new_closure(Pool *p, Node *params, Node *body);
+Node *cons_c_fn(Pool *p, const PrimFunc fn_ptr);
+Node *cons_closure(Pool *p, Node *params, Node *body);
+Node *cons_integer(Pool *p, int i);
+Node *cons_list(Pool *p, Node *car, Node *cdr);
+Node *cons_symbol(Pool *p, const char *sym);
 
 /* prim_op.gperf */
 const PrimOp *prim_op_lookup(register const char *str,

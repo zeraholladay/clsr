@@ -3,7 +3,6 @@
 #include <stdio.h>
 
 #include "core_def.h"
-#include "core_list.h"
 #include "parser.h"
 
 #define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
@@ -64,10 +63,10 @@ program
 
 expressions
     : /* empty */ {
-        $$ = list_cons(CTX_POOL(ctx), NULL, NULL);
+        $$ = cons_list(CTX_POOL(ctx), NULL, NULL);
     }
     | expressions expression {
-        $$ = list_append($1, $2);
+        $$ = cons_list(CTX_POOL(ctx), $1, $2);
     }
     ;
 
@@ -76,36 +75,33 @@ expression
     | symbol                    
     | list
     | QUOTE expression {
-        $$ = list_cons(CTX_POOL(ctx), NULL, NULL);
-        Node *quote = new_prim_func(CTX_POOL(ctx), PRIM_OP(QUOTE)->fn_ptr);
-        $$ = list_append($$, quote);
-        $$ = list_append($$, $2);
+        Node *quote = cons_c_fn(CTX_POOL(ctx), PRIM_OP(QUOTE)->fn_ptr);
+        $$ = cons_list(CTX_POOL(ctx), quote, $2);
     }
     ;
 
 list
     : '(' ')' { 
-        $$ = list_cons(CTX_POOL(ctx), NULL, NULL);
+        $$ = cons_list(CTX_POOL(ctx), NULL, NULL);
      }
-    | '(' expression_list ')'    { $$ = $2; }
+    | '(' expression_list ')' { $$ = $2; }
     ;
 
 expression_list
     : expression {
-        $$ = list_cons(CTX_POOL(ctx), NULL, NULL);
-        $$ = list_append($$, $1);
+        $$ = cons_list(CTX_POOL(ctx), $$, $1);
     }
     | expression_list expression {
-        $$ = list_append($1, $2);
+        $$ = cons_list(CTX_POOL(ctx), $1, $2);
     }
     ;
 
 symbol
     : primitive {
-        $$ = new_prim_func(CTX_POOL(ctx), $1->fn_ptr);
+        $$ = cons_c_fn(CTX_POOL(ctx), $1->fn_ptr);
     }
     | SYM_LITERAL {
-        $$ = new_symbol(CTX_POOL(ctx), $1);
+        $$ = cons_symbol(CTX_POOL(ctx), $1);
     }
     ;
 
@@ -127,7 +123,7 @@ primitive
 
 number
     : INT_LITERAL {
-        $$ = new_integer(CTX_POOL(ctx), $1);
+        $$ = cons_integer(CTX_POOL(ctx), $1);
     }
     ;
 

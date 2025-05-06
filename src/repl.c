@@ -77,7 +77,7 @@ int clsr_repl(void) {
     if (parse_status == 0) {
       Node *eval_status = eval_program(CTX_PARSE_ROOT(&ctx), &ctx);
 
-      if (eval_status != const_false) {
+      if (eval_status) {
         // obj_fprintf(stdout, CTX_PEEK(&ctx)), printf("\n");
         ;
       } else {

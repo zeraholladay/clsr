@@ -43,9 +43,7 @@ void reset_parse_context(Context *ctx);
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
 
-%token <prim> APPLY EQ IS LOOKUP PUSH RETURN SET
-%token <prim> CLOSURE IF
-%token <prim> ADD SUB MUL DIV TRUE FALSE
+%token <prim> ADD APPLY CLOSURE CONS DIV EQ EVAL FIRST IF IS LOOKUP MUL PUSH REST RETURN SET SUB
 
 %%
 
@@ -66,7 +64,7 @@ expressions
         $$ = cons_list(CTX_POOL(ctx), NULL, NULL);
     }
     | expressions expression {
-        $$ = cons_list(CTX_POOL(ctx), $1, $2);
+        $$ = cons_list(CTX_POOL(ctx), $2, $1);
     }
     ;
 
@@ -75,7 +73,7 @@ expression
     | symbol                    
     | list
     | QUOTE expression {
-        Node *quote = cons_c_fn(CTX_POOL(ctx), PRIM_OP(QUOTE)->fn_ptr);
+        Node *quote = cons_c_fn(CTX_POOL(ctx), PRIM_OP(QUOTE));
         $$ = cons_list(CTX_POOL(ctx), quote, $2);
     }
     ;
@@ -89,16 +87,16 @@ list
 
 expression_list
     : expression {
-        $$ = cons_list(CTX_POOL(ctx), $$, $1);
+        $$ = cons_list(CTX_POOL(ctx), $1, $$);
     }
     | expression_list expression {
-        $$ = cons_list(CTX_POOL(ctx), $1, $2);
+        $$ = cons_list(CTX_POOL(ctx), $2, $1);
     }
     ;
 
 symbol
     : primitive {
-        $$ = cons_c_fn(CTX_POOL(ctx), $1->fn_ptr);
+        $$ = cons_c_fn(CTX_POOL(ctx), $1);
     }
     | SYM_LITERAL {
         $$ = cons_symbol(CTX_POOL(ctx), $1);
@@ -108,14 +106,18 @@ symbol
 primitive
     : ADD
     | APPLY
+    | CONS
     | CLOSURE
     | DIV
     | EQ
+    | EVAL
+    | FIRST
     | IF
     | IS
     | LOOKUP
     | MUL
     | PUSH
+    | REST
     | RETURN
     | SET
     | SUB

@@ -1,28 +1,11 @@
-#include <assert.h>
-
 #include "core_def.h"
 
-// static Node _const_false = {.kind = KIND_LITERAL,
-//                             .as = {.literal = {
-//                                        .kind = LITERAL_SYMBOL,
-//                                        .as.symbol = "False",
-//                                    }}};
-
-// static Node _const_true = {.kind = KIND_LITERAL,
-//                            .as = {.literal = {
-//                                       .kind = LITERAL_SYMBOL,
-//                                       .as.symbol = "True",
-//                                   }}};
-
-// Node *const const_false = &_const_false;
-// Node *const const_true = &_const_true;
-
-Node *cons_c_fn(Pool *p, const PrimFunc fn_ptr) {
+Node *cons_c_fn(Pool *p, const PrimOp *prim_op) {
   Node *node = pool_alloc(p);
   node->kind = KIND_FUNCTION;
   Function *func = &node->as.function;
   func->kind = FN_PRIMITIVE;
-  func->as.primitive.fn_ptr = fn_ptr;
+  func->as.primitive.prim_op = prim_op;
   return node;
 }
 

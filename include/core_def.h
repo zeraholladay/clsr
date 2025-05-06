@@ -1,5 +1,5 @@
-#ifndef CLSR_H
-#define CLSR_H
+#ifndef CORE_DEF_H
+#define CORE_DEF_H
 
 #include <stddef.h>
 
@@ -12,11 +12,14 @@
 struct Node;
 struct Context;
 
-typedef struct Node *(*PrimFunc)(struct Node *Node, struct Context *ctx);
+typedef struct Node *(*PrimUnaryFunc)(struct Node *n, struct Context *ctx);
+typedef struct Node *(*PrimBinaryFunc)(struct Node *n1, struct Node *n2,
+                                       struct Context *ctx);
 
 typedef struct PrimOp {
   const int tok;
-  const PrimFunc fn_ptr;
+  const PrimUnaryFunc unary_f_ptr;
+  const PrimBinaryFunc binary_f_ptr;
 } PrimOp;
 
 typedef enum { KIND_LITERAL, KIND_LIST, KIND_FUNCTION } Kind;
@@ -44,7 +47,7 @@ typedef struct {
   FnKind kind;
   union {
     struct {
-      PrimFunc fn_ptr;
+      const PrimOp *prim_op;
     } primitive;
 
     struct {
@@ -92,7 +95,7 @@ typedef struct Context {
 } Context;
 
 /* core_def.c */
-Node *cons_c_fn(Pool *p, const PrimFunc fn_ptr);
+Node *cons_c_fn(Pool *p, const PrimOp *prim_op);
 Node *cons_closure(Pool *p, Node *params, Node *body);
 Node *cons_integer(Pool *p, int i);
 Node *cons_list(Pool *p, Node *car, Node *cdr);
@@ -101,5 +104,10 @@ Node *cons_symbol(Pool *p, const char *sym);
 /* prim_op.gperf */
 const PrimOp *prim_op_lookup(register const char *str,
                              register unsigned int len);
+
+/* tagging along for now. */
+#include <stdio.h>
+
+void node_fprintf(FILE *stream, const Node *node);
 
 #endif

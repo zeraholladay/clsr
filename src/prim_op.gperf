@@ -9,7 +9,7 @@
 %readonly-tables
 %struct-type
 %ignore-case
-%define initializer-suffix ,{0,0}
+%define initializer-suffix ,{0,0,0}
 %define slot-name name
 
 struct _prim_op_gperf {
@@ -18,22 +18,15 @@ struct _prim_op_gperf {
 };
 
 %%
-ADD,     {TOK_ADD,     0     }
-APPLY,   {TOK_APPLY,   0   }
-CLOSURE, {TOK_CLOSURE, 0 }
-DIV,     {TOK_DIV,     0    }
-EQ,      {TOK_EQ,      0      }
-FALSE,   {TOK_FALSE,   0       }
-IF,      {TOK_IF,      0       }
-IS,      {TOK_IS,      0      }
-LOOKUP,  {TOK_LOOKUP,  0  }
-MUL,     {TOK_MUL,     0     }
-PUSH,    {TOK_PUSH,    0    }
-QUOTE,   {TOK_QUOTE,   quote   }
-RETURN,  {TOK_RETURN,  0 }
-SET,     {TOK_SET,     set     }
-SUB,     {TOK_SUB,     0     }
-TRUE,    {TOK_TRUE,    0       }
+APPLY,   { TOK_APPLY,   0,       apply  },
+CLOSURE, { TOK_CLOSURE, 0,       0      },
+CONS,    { TOK_CONS,    0,       cons   },
+EVAL,    { TOK_EVAL,    eval,    0      },
+FIRST,   { TOK_FIRST,   first,   0      },
+LOOKUP,  { TOK_LOOKUP,  lookup,  0      },
+QUOTE,   { TOK_QUOTE,   quote,   0      },
+REST,    { TOK_REST,    rest,    0      },
+SET,     { TOK_SET,     set,     0      }
 %%
 
 const PrimOp * prim_op_lookup(register const char *str, register unsigned int len) {

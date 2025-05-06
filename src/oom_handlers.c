@@ -15,3 +15,4 @@ oom_handler_t stack_oom_handler = oom_handler_die;
 oom_handler_t palloc_oom_handler = oom_handler_die;
 oom_handler_t sym_save_oom_handler = oom_handler_die;
 oom_handler_t node_oom_list_handler = oom_handler_die;
+oom_handler_t env_oom_handler = oom_handler_die;

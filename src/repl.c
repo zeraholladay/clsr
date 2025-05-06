@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
 #include "core_def.h"
 #include "eval.h"
 #include "parser.h"
@@ -78,8 +77,7 @@ int clsr_repl(void) {
       Node *eval_status = eval_program(CTX_PARSE_ROOT(&ctx), &ctx);
 
       if (eval_status) {
-        // obj_fprintf(stdout, CTX_PEEK(&ctx)), printf("\n");
-        ;
+        node_fprintf(stdout, eval_status), fprintf(stdout, "\n");
       } else {
         printf("=>error\n"); // TODO
       }

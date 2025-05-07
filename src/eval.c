@@ -14,9 +14,14 @@ static void *raise(const char *msg) {
   return NULL;
 }
 
+// Forms:
+// 1. Eval PrimOp: fn_node = primitive, arglist = ((arg1) (arg2) ... (argN))
+// 2. Closure: 
 // arglist = ((arg1) (arg2) .. (argN))
 Node *apply(Node *fn_node, Node *arglist, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
+
+  node_fprintf(stderr, arglist), fprintf(stderr, "<-- arglist\n");
 
   if (is_closure_fn(fn_node)) {
     Env *env = get_closure_env(fn_node);

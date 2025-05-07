@@ -19,7 +19,7 @@ struct _prim_op_gperf {
 
 %%
 APPLY,   { TOK_APPLY,   0,       apply  },
-CLOSURE, { TOK_CLOSURE, 0,       0      },
+CLOSURE, { TOK_CLOSURE, 0,       closure},
 CONS,    { TOK_CONS,    0,       cons   },
 EVAL,    { TOK_EVAL,    eval,    0      },
 FIRST,   { TOK_FIRST,   first,   0      },

@@ -4,6 +4,7 @@
 #include "core_def.h"
 
 Node *apply(Node *node, Node *args, Context *ctx);
+Node *closure(Node *params, Node *body, Context *ctx);
 Node *cons(Node *car, Node *cdr, Context *ctx);
 Node *first(Node *node, Context *ctx);
 Node *lookup(Node *node, Context *ctx);

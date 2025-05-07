@@ -1,4 +1,5 @@
 #include <check.h>
+#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +18,8 @@ extern void clsr_destroy(Context *ctx);
 
 static Stack stack = {};
 static Context ctx = {};
+
+jmp_buf eval_error_jmp;
 
 static void setup(void) {
   CTX_STACK(&ctx) = &stack;
@@ -56,37 +59,45 @@ END_TEST
 
 START_TEST(test_quote) {
   Node *eval_result = NULL;
+  Node *car = NULL;
+  Node *cdr = NULL;
 
   eval_result = run_eval_program("'()");
   ck_assert(is_empty_list(eval_result));
+
+  eval_result = run_eval_program("'(foo)");
+  ck_assert(!is_empty_list(eval_result));
+  car = get_car(eval_result);
+  cdr = get_cdr(eval_result);
+  ck_assert(is_empty_list(cdr));
+
+  eval_result = run_eval_program("'(foo bar)");
+  ck_assert(!is_empty_list(eval_result));
+  car = get_car(eval_result);
+  cdr = get_cdr(eval_result);
+  ck_assert(!is_empty_list(cdr));
+  ck_assert_str_eq(get_symbol(get_car(cdr)), "bar");
 }
 END_TEST
 
 START_TEST(test_cons) {
   Node *eval_result = NULL;
+  Node *car = NULL;
+  Node *cdr = NULL;
 
   eval_result = run_eval_program("(cons 'foo 'bar)");
   ck_assert(!is_empty_list(eval_result));
-  Node *car = get_car(eval_result);
-  Node *cdr = get_cdr(eval_result);
+  car = get_car(eval_result);
+  cdr = get_cdr(eval_result);
   ck_assert_str_eq(get_symbol(car), "foo");
   ck_assert_str_eq(get_symbol(cdr), "bar");
-}
-END_TEST
 
-START_TEST(test_first) {
-  // Node *eval_result = NULL;
-
-  // eval_result = run_eval_program("'()");
-  // ck_assert_int_eq(is_empty_list(eval_result), 1);
-}
-END_TEST
-
-START_TEST(test_rest) {
-  // Node *eval_result = NULL;
-
-  // eval_result = run_eval_program("'()");
-  // ck_assert_int_eq(is_empty_list(eval_result), 1);
+  eval_result = run_eval_program("(cons 'foo '(bar))");
+  ck_assert(!is_empty_list(eval_result));
+  car = get_car(eval_result);
+  cdr = get_cdr(eval_result);
+  ck_assert(!is_empty_list(cdr));
+  ck_assert_str_eq(get_symbol(get_car(cdr)), "bar");
 }
 END_TEST
 
@@ -100,6 +111,47 @@ START_TEST(test_set_and_lookup) {
 }
 END_TEST
 
+START_TEST(test_first) {
+  Node *eval_result = NULL;
+  Node *car = NULL;
+  Node *cdr = NULL;
+
+  eval_result = run_eval_program("(first '())");
+  ck_assert(is_empty_list(eval_result));
+
+  eval_result = run_eval_program("(first '(foo bar))");
+  ck_assert(is_symbol(eval_result));
+  ck_assert_str_eq(get_symbol(eval_result), "foo");
+
+  if (setjmp(eval_error_jmp) == 0) {
+    eval_result = run_eval_program("(first)");
+    ck_assert(0);
+  } else {
+    ck_assert(1);
+  }
+}
+END_TEST
+
+START_TEST(test_rest) {
+  Node *eval_result = NULL;
+
+  eval_result = run_eval_program("(rest '())");
+  ck_assert(is_empty_list(eval_result));
+
+  eval_result = run_eval_program("(rest '(foo bar))");
+  ck_assert(is_list(eval_result));
+  ck_assert(is_symbol(get_car(eval_result)));
+  ck_assert_str_eq(get_symbol(get_car(eval_result)), "bar");
+
+  if (setjmp(eval_error_jmp) == 0) {
+    eval_result = run_eval_program("(rest)");
+    ck_assert(0);
+  } else {
+    ck_assert(1);
+  }
+}
+END_TEST
+
 Suite *eval_suite(void) {
   Suite *s = suite_create("Eval");
 
@@ -110,6 +162,8 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_quote);
   tcase_add_test(tc_core, test_cons);
   tcase_add_test(tc_core, test_set_and_lookup);
+  tcase_add_test(tc_core, test_first);
+  tcase_add_test(tc_core, test_rest);
   //(apply (closure '() '()) '())
 
   suite_add_tcase(s, tc_core);

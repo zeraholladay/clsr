@@ -14,8 +14,8 @@ static void *raise(const char *msg) {
   return NULL;
 }
 
-// TODO: CLEANUP
-Node *apply(Node *fn_node, Node *fn_list, Context *ctx) {
+// arglist = ((arg1) (arg2) .. (argN))
+Node *apply(Node *fn_node, Node *arglist, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
 
   if (is_closure_fn(fn_node)) {
@@ -23,15 +23,15 @@ Node *apply(Node *fn_node, Node *fn_list, Context *ctx) {
     Env *new_env = env_new(env); // TODO: error handling
 
     Node *params = get_closure_params(fn_node);
-    fn_list = first(fn_list, ctx);
+    arglist = first(arglist, ctx);
 
-    while (!is_empty_list(fn_list) && !is_empty_list(params)) {
+    while (!is_empty_list(arglist) && !is_empty_list(params)) {
       const char *symbol = get_symbol(first(params, ctx));
-      Node *value = first(fn_list, ctx);
+      Node *value = first(arglist, ctx);
 
       env_set(new_env, symbol, value); // TODO: error handling
 
-      fn_list = rest(fn_list, ctx);
+      arglist = rest(arglist, ctx);
       params = rest(params, ctx);
     }
     // XXX check lists are both empty
@@ -48,11 +48,11 @@ Node *apply(Node *fn_node, Node *fn_list, Context *ctx) {
     const PrimOp *prim_op = get_prim_op(fn_node);
 
     if (prim_op->unary_f_ptr) {
-      return prim_op->unary_f_ptr(first(fn_list, ctx), ctx);
+      return prim_op->unary_f_ptr(get_car(arglist), ctx);
     }
 
     if (prim_op->binary_f_ptr) {
-      return prim_op->binary_f_ptr(first(fn_list, ctx), rest(fn_list, ctx),
+      return prim_op->binary_f_ptr(get_car(arglist), get_car(get_cdr(arglist)),
                                    ctx);
     }
 
@@ -121,7 +121,7 @@ Node *set(Node *car, Node *cdr, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
 
   if (!is_symbol(car)) {
-    return raise("Set arameter to set must be a symbol.");
+    return raise("Set parameter to set must be a symbol.");
   }
 
   cdr = (is_list(cdr)) ? first(cdr, ctx) : cdr;
@@ -152,8 +152,8 @@ Node *eval(Node *expr, Context *ctx) {
       return first(rest(expr, ctx), ctx);
     }
 
-    Node *fn_list = eval_list(rest(expr, ctx), ctx);
-    return apply(fn_node, fn_list, ctx); // take first of fn_list ?
+    Node *arglist = eval_list(rest(expr, ctx), ctx);
+    return apply(fn_node, arglist, ctx);
   }
 
   return raise("Type unknown to eval.");

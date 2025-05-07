@@ -23,7 +23,7 @@ int main(void) {
   srunner_add_suite(sr, stack_suite());
   srunner_add_suite(sr, env_suite());
   // srunner_add_suite(sr, parser_suite());
-  // srunner_add_suite(sr, eval_suite());
+  srunner_add_suite(sr, eval_suite());
   srunner_add_suite(sr, rb_tree_suite());
 
   srunner_run_all(sr, CK_NORMAL);

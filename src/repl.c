@@ -75,7 +75,7 @@ int clsr_repl(void) {
     int len = rl_readline(full_input, sizeof(full_input));
 
     if (len < 0) {
-      break; // TODO: Something
+      break; // TODO: Something on error
     }
 
     yyin = fmemopen((void *)full_input, len, "r");

@@ -105,6 +105,12 @@ Node *length(Node *list, Context *ctx) {
   return cons_integer(CTX_POOL(ctx), _length(list));
 }
 
+Node *list(Node *car, Node *cdr, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
+  Node *empty = empty_list(CTX_POOL(ctx));
+  return cons(car, cons(cdr, empty, ctx), ctx);
+}
+
 Node *lookup(Node *node, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
   if (!is_symbol(node)) {
@@ -126,16 +132,24 @@ Node *pair(Node *list1, Node *list2, Context *ctx) {
     return raise("Pair: list1 and list2 must be a list.");
   }
 
-  Node *head, *tail = NULL;
+  Node *head = NULL, *tail;
+
+  if (is_empty_list(list1) && is_empty_list(list2))
+    return cons(NULL, NULL, ctx);
 
   while (!is_empty_list(list1) || !is_empty_list(list2)) {
-    Node *new = cons(get_car(list1), get_car(list2), ctx);
+    Node *new_pair = list(get_car(list1), get_car(list2), ctx);  // new = (x, (y, (nil,nil)))
 
     if (!head) {
-      head = tail = cons(new, empty_list(CTX_POOL(ctx)), ctx);
+      head = cons(new_pair, empty_list(CTX_POOL(ctx)), ctx);
+      tail = get_car(head);  // 
     } else {
-      // append to new to tail
-      tail = cons(new, tail, ctx);
+      // append to new to tail -> tail = (new, (nil, nil))
+      Node *old_tail = tail;
+      tail = new_pair;
+
+      node_fprintf(stdout, tail), fprintf(stdout, "<-- tail\n\n\n");
+
     }
     list1 = get_cdr(list1);
     list2 = get_cdr(list2);

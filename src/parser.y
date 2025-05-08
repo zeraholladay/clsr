@@ -43,7 +43,7 @@ void reset_parse_context(Context *ctx);
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
 
-%token <prim> ADD APPLY CLOSURE CONS DIV EQ EVAL FIRST IF IS LEN LOOKUP MUL PUSH REST RETURN SET SUB
+%token <prim> ADD APPLY CLOSURE CONS DIV EQ EVAL FIRST IF IS LEN LOOKUP MUL PAIR PUSH REST RETURN SET SUB
 
 %%
 
@@ -124,6 +124,7 @@ primitive
     | LEN
     | MUL
     | PUSH
+    | PAIR
     | REST
     | RETURN
     | SET

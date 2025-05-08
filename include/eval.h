@@ -96,6 +96,7 @@ Node *cons(Node *car, Node *cdr, Context *ctx);
 Node *first(Node *node, Context *ctx);
 Node *length(Node *list, Context *ctx);
 Node *lookup(Node *node, Context *ctx);
+Node *pair(Node *list1, Node *list2, Context *ctx);
 Node *quote(Node *node, Context *void_ctx);
 Node *rest(Node *node, Context *ctx);
 Node *set(Node *car, Node *cdr, Context *ctx);

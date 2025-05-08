@@ -14,6 +14,15 @@ static void *raise(const char *msg) {
   return NULL;
 }
 
+size_t _length(Node *list) {
+  size_t i = 0;
+
+  for (Node *cdr = get_cdr(list); cdr; cdr = get_cdr(cdr)) {
+    ++i;
+  }
+  return i;
+}
+
 // (apply fn ...) -> fn_node=X, arglist=(a1 a2 ... aN)
 // Forms:
 // 1. Closure: fn_node={params=(p1, p2, ... pN), body, env}, arglist=(a1 a2 ...
@@ -93,13 +102,7 @@ Node *length(Node *list, Context *ctx) {
   if (!is_list(list)) {
     return raise("len only takes a list.");
   }
-
-  size_t i = 0;
-
-  for (Node *cdr = get_cdr(list); cdr; cdr = get_cdr(cdr)) {
-    ++i;
-  }
-  return cons_integer(CTX_POOL(ctx), i);
+  return cons_integer(CTX_POOL(ctx), _length(list));
 }
 
 Node *lookup(Node *node, Context *ctx) {
@@ -115,6 +118,29 @@ Node *lookup(Node *node, Context *ctx) {
   }
 
   return rval;
+}
+
+Node *pair(Node *list1, Node *list2, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
+  if (!is_list(list1) || !is_list(list2)) {
+    return raise("Pair: list1 and list2 must be a list.");
+  }
+
+  Node *head, *tail = NULL;
+
+  while (!is_empty_list(list1) || !is_empty_list(list2)) {
+    Node *new = cons(get_car(list1), get_car(list2), ctx);
+
+    if (!head) {
+      head = tail = cons(new, empty_list(CTX_POOL(ctx)), ctx);
+    } else {
+      // append to new to tail
+      tail = cons(new, tail, ctx);
+    }
+    list1 = get_cdr(list1);
+    list2 = get_cdr(list2);
+  }
+  return head;
 }
 
 Node *quote(Node *list, Context *ctx) {

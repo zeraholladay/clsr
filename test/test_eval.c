@@ -43,6 +43,8 @@ static Node *run_eval_program(const char *input) {
   return eval_result;
 }
 
+// literals
+
 START_TEST(test_literal_expressions) {
   Node *eval_result = NULL;
 
@@ -57,6 +59,8 @@ START_TEST(test_literal_expressions) {
 }
 END_TEST
 
+// quote
+
 START_TEST(test_quote) {
   Node *eval_result = NULL;
   Node *car = NULL;
@@ -69,6 +73,7 @@ START_TEST(test_quote) {
   ck_assert(!is_empty_list(eval_result));
   car = get_car(eval_result);
   cdr = get_cdr(eval_result);
+  ck_assert_str_eq(get_symbol(car), "foo");
   ck_assert(is_empty_list(cdr));
 
   eval_result = run_eval_program("'(foo bar)");
@@ -76,9 +81,12 @@ START_TEST(test_quote) {
   car = get_car(eval_result);
   cdr = get_cdr(eval_result);
   ck_assert(!is_empty_list(cdr));
+  ck_assert_str_eq(get_symbol(car), "foo");
   ck_assert_str_eq(get_symbol(get_car(cdr)), "bar");
 }
 END_TEST
+
+// built-ins
 
 START_TEST(test_cons) {
   Node *eval_result = NULL;
@@ -113,8 +121,8 @@ END_TEST
 
 START_TEST(test_first) {
   Node *eval_result = NULL;
-  Node *car = NULL;
-  Node *cdr = NULL;
+  // Node *car = NULL;
+  // Node *cdr = NULL;
 
   eval_result = run_eval_program("(first '())");
   ck_assert(is_empty_list(eval_result));
@@ -152,6 +160,20 @@ START_TEST(test_rest) {
 }
 END_TEST
 
+START_TEST(test_len) {
+  Node *eval_result = NULL;
+
+  eval_result = run_eval_program("(len '())");
+  ck_assert_int_eq(get_integer(eval_result), 0);
+
+  eval_result = run_eval_program("(len '(a))");
+  ck_assert_int_eq(get_integer(eval_result), 1);
+
+  eval_result = run_eval_program("(len '(a b))");
+  ck_assert_int_eq(get_integer(eval_result), 2);
+}
+END_TEST
+
 Suite *eval_suite(void) {
   Suite *s = suite_create("Eval");
 
@@ -164,6 +186,7 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_set_and_lookup);
   tcase_add_test(tc_core, test_first);
   tcase_add_test(tc_core, test_rest);
+  tcase_add_test(tc_core, test_len);
   //(apply (closure '() '()) '())
 
   suite_add_tcase(s, tc_core);

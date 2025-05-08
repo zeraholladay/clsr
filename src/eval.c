@@ -14,14 +14,13 @@ static void *raise(const char *msg) {
   return NULL;
 }
 
+// (apply fn ...) -> fn_node=X, arglist=(a1 a2 ... aN)
 // Forms:
-// 1. Eval PrimOp: fn_node = primitive, arglist = ((arg1) (arg2) ... (argN))
-// 2. Closure: 
-// arglist = ((arg1) (arg2) .. (argN))
+// 1. Closure: fn_node={params=(p1, p2, ... pN), body, env}, arglist=(a1 a2 ...
+// aN)
+// 2. Eval PrimOp: fn_node=PrimOp, arglist=(a1 a2 ... aN)
 Node *apply(Node *fn_node, Node *arglist, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
-
-  node_fprintf(stderr, arglist), fprintf(stderr, "<-- arglist\n");
 
   if (is_closure_fn(fn_node)) {
     Env *env = get_closure_env(fn_node);
@@ -87,6 +86,20 @@ Node *first(Node *list, Context *ctx) {
     return raise("First only takes a list.");
   }
   return get_car(list) ? get_car(list) : cons(NULL, NULL, ctx);
+}
+
+Node *length(Node *list, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
+  if (!is_list(list)) {
+    return raise("len only takes a list.");
+  }
+
+  size_t i = 0;
+
+  for (Node *cdr = get_cdr(list); cdr; cdr = get_cdr(cdr)) {
+    ++i;
+  }
+  return cons_integer(CTX_POOL(ctx), i);
 }
 
 Node *lookup(Node *node, Context *ctx) {

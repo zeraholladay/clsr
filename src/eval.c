@@ -132,29 +132,13 @@ Node *pair(Node *list1, Node *list2, Context *ctx) {
     return raise("Pair: list1 and list2 must be a list.");
   }
 
-  Node *head = NULL, *tail;
-
-  if (is_empty_list(list1) && is_empty_list(list2))
+  if (is_empty_list(list1) || is_empty_list(list2))
     return cons(NULL, NULL, ctx);
 
-  while (!is_empty_list(list1) || !is_empty_list(list2)) {
-    Node *new_pair = list(get_car(list1), get_car(list2), ctx);  // new = (x, (y, (nil,nil)))
+  Node *first_pair = list(first(list1, ctx), first(list2, ctx), ctx);
+  Node *rest_pairs = pair(rest(list1, ctx), rest(list2, ctx), ctx);
 
-    if (!head) {
-      head = cons(new_pair, empty_list(CTX_POOL(ctx)), ctx);
-      tail = get_car(head);  // 
-    } else {
-      // append to new to tail -> tail = (new, (nil, nil))
-      Node *old_tail = tail;
-      tail = new_pair;
-
-      node_fprintf(stdout, tail), fprintf(stdout, "<-- tail\n\n\n");
-
-    }
-    list1 = get_cdr(list1);
-    list2 = get_cdr(list2);
-  }
-  return head;
+  return cons(first_pair, rest_pairs, ctx);
 }
 
 Node *quote(Node *list, Context *ctx) {

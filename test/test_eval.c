@@ -174,6 +174,23 @@ START_TEST(test_len) {
 }
 END_TEST
 
+START_TEST(test_pair) {
+  Node *eval_result = NULL;
+
+  eval_result = run_eval_program("(len (pair '() '()))");
+  ck_assert_int_eq(get_integer(eval_result), 0);
+
+  eval_result = run_eval_program("(len (pair '(a) '(1)))");
+  ck_assert_int_eq(get_integer(eval_result), 1);
+
+  eval_result = run_eval_program("(len (pair '(a b) '(1 2)))");
+  ck_assert_int_eq(get_integer(eval_result), 2);
+
+  eval_result = run_eval_program("(len (pair '(a) '(1 2)))");
+  ck_assert_int_eq(get_integer(eval_result), 1);
+}
+END_TEST
+
 Suite *eval_suite(void) {
   Suite *s = suite_create("Eval");
 
@@ -187,6 +204,7 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_first);
   tcase_add_test(tc_core, test_rest);
   tcase_add_test(tc_core, test_len);
+  tcase_add_test(tc_core, test_pair);
   //(apply (closure '() '()) '())
 
   suite_add_tcase(s, tc_core);

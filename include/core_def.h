@@ -8,6 +8,10 @@
 #include "rb_tree.h"
 #include "stack.h"
 
+#define MAX_BUF 1024
+
+#define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
+
 #define CTX_POOL(ctx) ((ctx)->node_pool)
 #define CTX_ENV(ctx) ((ctx)->eval_ctx.env)
 #define CTX_STACK(ctx) ((ctx)->eval_ctx.stack)
@@ -21,7 +25,6 @@
 // Forward declarations
 struct Node;
 struct Context;
-struct KindObject;
 
 // PrimOp
 typedef struct Node *(*PrimUnaryFunc)(struct Node *node, struct Context *ctx);
@@ -29,26 +32,27 @@ typedef struct Node *(*PrimBinaryFunc)(struct Node *node1, struct Node *node2,
                                        struct Context *ctx);
 
 typedef struct PrimOp {
+  const char *name;
   const int tok;
   const PrimUnaryFunc unary_f_ptr;
   const PrimBinaryFunc binary_f_ptr;
 } PrimOp;
 
 // Node kind "object"
-typedef const char *(*ReprFn)(struct Node *node);
+typedef int (*ReprFn)(struct Node *self, char *buf, size_t offset);
 
-typedef struct KindObject {
+typedef struct Kind {
   const char *kind_name;
   ReprFn repr_fn;
-} KindObject;
+} Kind;
 
 // Nodes
-typedef enum { KIND_LITERAL, KIND_LIST, KIND_FUNCTION } Kind;
+typedef enum { KIND_LITERAL, KIND_LIST, KIND_FUNCTION } KindEnum;
 
-typedef enum { LITERAL_INTEGER, LITERAL_SYMBOL } LiteralKind;
+typedef enum { LITERAL_INTEGER, LITERAL_SYMBOL } LiteralKindEnum;
 
 typedef struct {
-  LiteralKind kind;
+  LiteralKindEnum kind;
   union {
     int integer;
     const char *symbol;
@@ -62,10 +66,10 @@ typedef struct {
   Node *cdr;
 } List;
 
-typedef enum { FN_PRIMITIVE, FN_CLOSURE } FnKind;
+typedef enum { FN_PRIMITIVE, FN_CLOSURE } FnKindEnum;
 
 typedef struct {
-  FnKind kind;
+  FnKindEnum kind;
   union {
     struct {
       const PrimOp *prim_op;
@@ -79,7 +83,7 @@ typedef struct {
 } Function;
 
 struct Node {
-  Kind kind;
+  KindEnum kind;
   union {
     List list;
     Literal literal;
@@ -105,13 +109,11 @@ typedef struct Context {
 } Context;
 
 /* prim_op.gperf */
-#define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
-
 const PrimOp *prim_op_lookup(register const char *str,
                              register unsigned int len);
 
 // coredef.c
-const KindObject *kind(Node *node);
+const Kind *get_kind(Node *self);
 Node *cons_primop(Pool *p, const PrimOp *prim_op);
 Node *cons_closure(Pool *p, Node *params, Node *body, Env *env);
 Node *cons_integer(Pool *p, int i);

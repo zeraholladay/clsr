@@ -28,7 +28,7 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
                     if (p) {
                         yylval.prim = p;
                         return p->tok;
-                    } 
+                    }
                     yylval.sym = sym_save(&CTX_SYMTAB(ctx), yytext, yyleng);
                     return TOK_SYM_LITERAL;
                     }

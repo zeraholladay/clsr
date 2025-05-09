@@ -1,87 +1,110 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "core_def.h"
 
-// NULL
-static const char *null_repr(Node *node) {
-  (void)node;
-  return "NULL"; }
+#define KIND(name, repr) {.kind_name = name, .repr_fn = repr}
 
-static const KindObject null_kind_object = {
-    "NULL",
-    null_repr,
-};
+// reprs
+int null_repr(Node *self, char *buf, size_t offset) {
+  (void)self;
+  return snprintf(buf + offset, MAX_BUF - offset, "NULL");
+}
 
-// Literal
-static const char *literal_integer_repr(Node *node) { return "NULL"; }
+int literal_integer_repr(Node *self, char *buf, size_t offset) {
+  return snprintf(buf + offset, MAX_BUF - offset, "%d", get_integer(self));
+}
 
-static const char *literal_symbol_repr(Node *node) { return get_symbol(node); }
+int literal_symbol_repr(Node *self, char *buf, size_t offset) {
+  return snprintf(buf + offset, MAX_BUF - offset, "%s", get_symbol(self));
+}
 
-static const KindObject literal_kind_objects[] = {[LITERAL_INTEGER] =
-                                                      {
-                                                          "literal.integer",
-                                                          literal_integer_repr,
-                                                      },
-                                                  [LITERAL_SYMBOL] = {
-                                                      "literal.symbol",
-                                                      literal_symbol_repr,
-                                                  }};
+int list_repr(Node *self, char *buf, size_t offset) {
+  int result;
+  Node *cur = self;
 
-// List
-static const char *list_repr(Node *node) { return get_symbol(node); }
+  result = snprintf(buf + offset, MAX_BUF - offset, "(");
+  if (result < 0 || (size_t)result >= MAX_BUF) {
+    return result;
+  }
+  offset += (size_t)result;
 
-static const KindObject list_kind_objects[] = {
-    [0] =
-        {
-            "list",
-            list_repr,
-        },
-};
-
-// Functions
-static const char *function_prim_repr(Node *node) { return ""; }
-
-static const char *function_closure_repr(Node *node) { return ""; }
-
-static const KindObject function_kind_objects[] = {[FN_PRIMITIVE] =
-                                                       {
-                                                           "function.primitive",
-                                                           function_prim_repr,
-                                                       },
-                                                   [FN_CLOSURE] = {
-                                                       "function.closure",
-                                                       function_closure_repr,
-                                                   }};
-
-static const KindObject *kind_objects[] = {
-    [KIND_LITERAL] = literal_kind_objects,
-    [KIND_LIST] = list_kind_objects,
-    [KIND_FUNCTION] = function_kind_objects,
-};
-
-// kind
-const KindObject *kind(Node *node) {
-  if (!node) {
-    return &null_kind_object;
+  while (is_list(cur)) {
+    result = get_kind(cur)->repr_fn(self, buf, offset);
+    if (result < 0 || (size_t)result >= MAX_BUF) {
+      return result;
+    }
+    offset += (size_t)result;
   }
 
-  const KindObject *kind_ptr = kind_objects[node->kind];
+  if (cur) {
+    fprintf(stream, " . ");
+    node_fprintf(stream, cur);
+  }
 
-  if (is_literal(node)) {
-    Literal *literal = get_literal(node);
+  fprintf(stream, ")");
+
+  return offset;
+}
+
+int fn_prim_repr(Node *self, char *buf, size_t offset) {
+  const PrimOp *prim_op = get_prim_op(self);
+  return snprintf(buf + offset, MAX_BUF - offset, "%s", prim_op->name);
+}
+
+int fn_closure_repr(Node *self, char *buf, size_t offset) {
+  return snprintf(buf + offset, MAX_BUF - offset, "%s", get_symbol(self));
+}
+
+// kind singletons
+static Kind null_kind_singleton = KIND("NULL", null_repr);
+
+static Kind literal_kind_singleton[] = {
+    [LITERAL_INTEGER] = KIND("literal.integer", literal_integer_repr),
+    [LITERAL_SYMBOL] = KIND("literal.symbol", literal_symbol_repr),
+};
+
+static Kind list_kind_singleton[] = {
+    [0] = KIND("list", list_repr),
+};
+
+static Kind fn_kind_singleton[] = {
+    [FN_PRIMITIVE] = KIND("function.primitive", fn_prim_repr),
+    [FN_CLOSURE] = KIND("function.closure", fn_closure_repr),
+};
+
+static Kind *kind_singleton[] = {
+    [KIND_LITERAL] = literal_kind_singleton,
+    [KIND_LIST] = list_kind_singleton,
+    [KIND_FUNCTION] = fn_kind_singleton,
+};
+
+// get_kind
+const Kind *get_kind(Node *self) {
+  if (!self) {
+    return &null_kind_singleton;
+  }
+
+  Kind *kind_ptr = kind_singleton[self->kind];
+
+  if (is_literal(self)) {
+    const Literal *literal = get_literal(self);
     return &kind_ptr[literal->kind];
   }
 
-  if (is_function(node)) {
-    Function *fn = get_function(node);
+  if (is_function(self)) {
+    const Function *fn = get_function(self);
     return &kind_ptr[fn->kind];
   }
 
-  if (is_list(node)) {
+  if (is_list(self)) {
     return &kind_ptr[0];
   }
 
   return NULL; // TODO: fix me
 }
 
+// constructors
 Node *cons_primop(Pool *p, const PrimOp *prim_op) {
   Node *node = pool_alloc(p);
   node->kind = KIND_FUNCTION;

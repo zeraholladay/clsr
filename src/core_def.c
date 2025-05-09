@@ -1,59 +1,50 @@
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "core_def.h"
+#include "safe_snprintf.h"
 
 #define KIND(name, repr) {.kind_name = name, .repr_fn = repr}
 
 // reprs
 int null_repr(Node *self, char *buf, size_t offset) {
   (void)self;
-  return snprintf(buf + offset, MAX_BUF - offset, "NULL");
+  return safe_snprintf(buf, offset, "NULL");
 }
 
 int literal_integer_repr(Node *self, char *buf, size_t offset) {
-  return snprintf(buf + offset, MAX_BUF - offset, "%d", get_integer(self));
+  return safe_snprintf(buf, offset, "%d", get_integer(self));
 }
 
 int literal_symbol_repr(Node *self, char *buf, size_t offset) {
-  return snprintf(buf + offset, MAX_BUF - offset, "%s", get_symbol(self));
+  return safe_snprintf(buf, offset, "%s", get_symbol(self));
 }
 
 int list_repr(Node *self, char *buf, size_t offset) {
-  int result;
   Node *cur = self;
 
-  result = snprintf(buf + offset, MAX_BUF - offset, "(");
-  if (result < 0 || (size_t)result >= MAX_BUF) {
-    return result;
-  }
-  offset += (size_t)result;
+  offset += safe_snprintf(buf, offset, "(");
 
   while (is_list(cur)) {
-    result = get_kind(cur)->repr_fn(self, buf, offset);
-    if (result < 0 || (size_t)result >= MAX_BUF) {
-      return result;
-    }
-    offset += (size_t)result;
+    offset += get_kind(cur)->repr_fn(self, buf, offset);
   }
 
   if (cur) {
-    fprintf(stream, " . ");
-    node_fprintf(stream, cur);
+    offset += safe_snprintf(buf, offset, " . ");
+    offset += get_kind(cur)->repr_fn(self, buf, offset);
   }
 
-  fprintf(stream, ")");
+  offset += safe_snprintf(buf, offset, " )");
 
   return offset;
 }
 
 int fn_prim_repr(Node *self, char *buf, size_t offset) {
   const PrimOp *prim_op = get_prim_op(self);
-  return snprintf(buf + offset, MAX_BUF - offset, "%s", prim_op->name);
+  return safe_snprintf(buf, offset, "%s", prim_op->name);
 }
 
 int fn_closure_repr(Node *self, char *buf, size_t offset) {
-  return snprintf(buf + offset, MAX_BUF - offset, "%s", get_symbol(self));
+  return safe_snprintf(buf, offset, "closure");
 }
 
 // kind singletons

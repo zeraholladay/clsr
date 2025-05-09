@@ -109,8 +109,8 @@ typedef struct Context {
 } Context;
 
 /* prim_op.gperf */
-const PrimOp *prim_op_lookup(register const char *str,
-                             register unsigned int len);
+const struct PrimOp *prim_op_lookup(register const char *str,
+                                    register size_t len);
 
 // coredef.c
 const Kind *get_kind(Node *self);

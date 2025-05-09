@@ -4,13 +4,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "oom_handlers.h"
-
 #ifndef SAFE_SNPRINTF_BUF_SIZE
 #define SAFE_SNPRINTF_BUF_SIZE 1024
 #endif
 
-int safe_snprintf(char *buf, size_t offset, const char *fmt, ...) {
+static int safe_snprintf(char *buf, size_t offset, const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
   int n = vsnprintf(buf + offset, SAFE_SNPRINTF_BUF_SIZE - offset, fmt, args);

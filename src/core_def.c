@@ -22,18 +22,20 @@ int literal_symbol_repr(Node *self, char *buf, size_t offset) {
 int list_repr(Node *self, char *buf, size_t offset) {
   Node *cur = self;
 
-  offset += safe_snprintf(buf, offset, "(");
+  offset = safe_snprintf(buf, offset, "(");
 
   while (is_list(cur)) {
-    offset += get_kind(cur)->repr_fn(self, buf, offset);
+    offset = get_kind(get_car(cur))->repr_fn(get_car(cur), buf, offset);
+    offset = safe_snprintf(buf, offset, " ");
+    cur = get_cdr(cur);
   }
 
   if (cur) {
-    offset += safe_snprintf(buf, offset, " . ");
-    offset += get_kind(cur)->repr_fn(self, buf, offset);
+    offset = safe_snprintf(buf, offset, " . ");
+    offset = get_kind(cur)->repr_fn(self, buf, offset);
   }
 
-  offset += safe_snprintf(buf, offset, " )");
+  offset = safe_snprintf(buf, offset, " )");
 
   return offset;
 }
@@ -44,6 +46,7 @@ int fn_prim_repr(Node *self, char *buf, size_t offset) {
 }
 
 int fn_closure_repr(Node *self, char *buf, size_t offset) {
+  (void)self; // for now
   return safe_snprintf(buf, offset, "closure");
 }
 

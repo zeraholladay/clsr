@@ -40,11 +40,6 @@ static Node *_apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
   return eval(get_closure_body(fn_node), &new_ctx);
 }
 
-// (apply fn ...) -> fn_node=X, arglist=(a1 a2 ... aN)
-// Forms:
-// 1. Closure: fn_node={params=(p1, p2, ... pN), body, env}, arglist=(a1 a2 ...
-// aN)
-// 2. Eval PrimOp: fn_node=PrimOp, arglist=(a1 a2 ... aN)
 Node *apply(Node *fn_node, Node *arglist, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
 

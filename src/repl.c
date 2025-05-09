@@ -39,13 +39,11 @@ void clsr_init(Context *ctx) {
 
   CTX_POOL(ctx) = pool_init(OBJ_POOL_CAPACITY, sizeof(Node));
   CTX_ENV(ctx) = env_new(NULL);
-  // STACK_INIT(CTX_STACK(ctx));
   reset_parse_context(ctx);
 }
 
 void clsr_destroy(Context *ctx) {
   reset_parse_context(ctx);
-  // STACK_FREE(CTX_STACK(ctx));
   free(CTX_ENV(ctx)), CTX_ENV(ctx) = NULL;
   pool_destroy(&CTX_POOL(ctx));
 }

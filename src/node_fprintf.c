@@ -17,9 +17,9 @@ void node_fprintf(FILE *stream, const Node *node) {
     case LITERAL_SYMBOL:
       fprintf(stream, "Sym(%s)", node->as.literal.as.symbol);
       break;
-    case LITERAL_KEYWORD:
-      fprintf(stream, "Keywrd(%s)", node->as.literal.as.symbol);
-      break;
+    // case LITERAL_KEYWORD:
+    //   fprintf(stream, "Keywrd(%s)", node->as.literal.as.symbol);
+    //   break;
     default:
       fprintf(stream, "UnknownLiteral");
       break;

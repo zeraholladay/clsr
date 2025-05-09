@@ -74,7 +74,7 @@ expression
     | symbol                    
     | list
     | QUOTE expression {
-        Node *quote = cons_c_fn(CTX_POOL(ctx), PRIM_OP(QUOTE));
+        Node *quote = cons_primop(CTX_POOL(ctx), PRIM_OP(QUOTE));
         Node *fn_args = cons($2, empty_list(ctx), ctx);
         $$ = cons(quote, fn_args, ctx);
     }
@@ -101,7 +101,7 @@ expression_list
 
 symbol
     : primitive {
-        $$ = cons_c_fn(CTX_POOL(ctx), $1);
+        $$ = cons_primop(CTX_POOL(ctx), $1);
     }
     | SYM_LITERAL {
         $$ = cons_symbol(CTX_POOL(ctx), $1);

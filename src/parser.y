@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "core_def.h"
+#include "eval.h"
 #include "parser.h"
 
 #define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
@@ -61,10 +62,10 @@ program
 
 expressions
     : /* empty */ {
-        $$ = cons_list(CTX_POOL(ctx), NULL, NULL);
+        $$ = empty_list(ctx);
     }
-    | expressions expression {
-        $$ = cons_list(CTX_POOL(ctx), $2, $1);
+    | expression expressions {
+        $$ = cons($1, $2, ctx);
     }
     ;
 
@@ -74,15 +75,14 @@ expression
     | list
     | QUOTE expression {
         Node *quote = cons_c_fn(CTX_POOL(ctx), PRIM_OP(QUOTE));
-        Node *fn_args = cons_list(CTX_POOL(ctx), $2,
-                                  cons_list(CTX_POOL(ctx), NULL, NULL));
-        $$ = cons_list(CTX_POOL(ctx), quote, fn_args);
+        Node *fn_args = cons($2, empty_list(ctx), ctx);
+        $$ = cons(quote, fn_args, ctx);
     }
     ;
 
 list
     : '(' ')' {
-        $$ = cons_list(CTX_POOL(ctx), NULL, NULL);
+        $$ = empty_list(ctx);
     }
     | '(' expression_list ')' {
         $$ = $2;
@@ -91,11 +91,10 @@ list
 
 expression_list
     : expression {
-        Node *empty = cons_list(CTX_POOL(ctx), NULL, NULL);
-        $$ = cons_list(CTX_POOL(ctx), $1, empty);
+        $$ = cons($1, empty_list(ctx), ctx);
     }
     | expression expression_list {
-        $$ = cons_list(CTX_POOL(ctx), $1, $2);
+        $$ = cons($1, $2, ctx);
     }
 
     ;

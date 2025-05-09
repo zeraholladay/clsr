@@ -177,17 +177,40 @@ END_TEST
 START_TEST(test_pair) {
   Node *eval_result = NULL;
 
-  eval_result = run_eval_program("(len (pair '() '()))");
+  eval_result = run_eval_program("(pair '() '())");
   ck_assert_int_eq(get_integer(eval_result), 0);
 
-  eval_result = run_eval_program("(len (pair '(a) '(1)))");
+  eval_result = run_eval_program("(len '(a))");
   ck_assert_int_eq(get_integer(eval_result), 1);
 
-  eval_result = run_eval_program("(len (pair '(a b) '(1 2)))");
+  eval_result = run_eval_program("(len '(a b))");
   ck_assert_int_eq(get_integer(eval_result), 2);
+}
+END_TEST
 
-  eval_result = run_eval_program("(len (pair '(a) '(1 2)))");
-  ck_assert_int_eq(get_integer(eval_result), 1);
+START_TEST(test_closure) {
+  Node *eval_result = NULL;
+
+  // define
+  eval_result = run_eval_program("(closure '() '())");
+  ck_assert(is_closure_fn(eval_result));
+
+  // run
+  eval_result = run_eval_program("((closure '() '()))");
+  ck_assert(is_empty_list(eval_result));
+
+  // run body with a=42
+  eval_result = run_eval_program("((closure '(a) 'a) 42)");
+  ck_assert(is_integer(eval_result) && get_integer(eval_result) == 42);
+
+  // define 'foo and run
+  eval_result =
+      run_eval_program("(set 'foo (closure '() '(cons 'a 'b))) (foo)");
+  ck_assert(is_list(eval_result));
+
+  eval_result = run_eval_program(
+      "(set 'foo (closure '(a b) '(cons a b))) (foo 'bar 'biz)");
+  ck_assert(is_list(eval_result));
 }
 END_TEST
 
@@ -205,7 +228,7 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_rest);
   tcase_add_test(tc_core, test_len);
   tcase_add_test(tc_core, test_pair);
-  //(apply (closure '() '()) '())
+  tcase_add_test(tc_core, test_closure);
 
   suite_add_tcase(s, tc_core);
   return s;

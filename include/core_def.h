@@ -96,7 +96,7 @@ typedef struct Context {
 
 /* core_def.c */
 Node *cons_c_fn(Pool *p, const PrimOp *prim_op);
-Node *cons_closure(Pool *p, Node *params, Node *body);
+Node *cons_closure(Pool *p, Node *params, Node *body, Env *env);
 Node *cons_integer(Pool *p, int i);
 Node *cons_list(Pool *p, Node *car, Node *cdr);
 Node *cons_symbol(Pool *p, const char *sym);

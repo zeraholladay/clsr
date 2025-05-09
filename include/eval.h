@@ -40,7 +40,10 @@ static inline int is_closure_fn(const Node *node) {
 static inline int is_empty_list(const Node *node) {
   return !node || (is_list(node) && !node->as.list.car && !node->as.list.cdr);
 }
-static inline Node *empty_list(Pool *p) { return cons_list(p, NULL, NULL); }
+
+static inline Node *empty_list(Context *ctx) {
+  return cons_list(CTX_POOL(ctx), NULL, NULL);
+}
 
 // Literal accessors
 // static inline Literal *get_literal(Node *node) {

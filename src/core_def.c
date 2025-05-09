@@ -9,14 +9,14 @@ Node *cons_c_fn(Pool *p, const PrimOp *prim_op) {
   return node;
 }
 
-Node *cons_closure(Pool *p, Node *params, Node *body) {
+Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
   Node *node = pool_alloc(p);
   node->kind = KIND_FUNCTION;
   Function *func = &node->as.function;
   func->kind = FN_CLOSURE;
   func->as.closure.params = params;
   func->as.closure.body = body;
-  func->as.closure.env = NULL;
+  func->as.closure.env = env;
   return node;
 }
 

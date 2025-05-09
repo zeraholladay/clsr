@@ -14,13 +14,30 @@ static void *raise(const char *msg) {
   return NULL;
 }
 
-size_t _length(Node *list) {
-  size_t i = 0;
+static size_t _length(Node *list);
 
-  for (Node *cdr = get_cdr(list); cdr; cdr = get_cdr(cdr)) {
-    ++i;
+static Node *_apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
+
+  Env *new_env = env_new(get_closure_env(fn_node)); // TODO: error handling
+  Node *params = get_closure_params(fn_node);
+
+  if (_length(params) != _length(arglist))
+    raise("Params must have same length.");
+
+  for (Node *pairs = pair(params, arglist, ctx); !is_empty_list(pairs);
+       pairs = rest(pairs, ctx)) {
+    Node *pair = first(pairs, ctx);
+    // TODO: verify if symbol
+    const char *symbol = get_symbol(first(pair, ctx));
+    env_set(new_env, symbol,
+            first(rest(pair, ctx), ctx)); // TODO: error handling
   }
-  return i;
+
+  Context new_ctx = *ctx;
+  CTX_ENV(&new_ctx) = new_env;
+
+  return eval(get_closure_body(fn_node), &new_ctx);
 }
 
 // (apply fn ...) -> fn_node=X, arglist=(a1 a2 ... aN)
@@ -32,29 +49,7 @@ Node *apply(Node *fn_node, Node *arglist, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
 
   if (is_closure_fn(fn_node)) {
-    Env *env = get_closure_env(fn_node);
-    Env *new_env = env_new(env); // TODO: error handling
-
-    Node *params = get_closure_params(fn_node);
-    arglist = first(arglist, ctx);
-
-    while (!is_empty_list(arglist) && !is_empty_list(params)) {
-      const char *symbol = get_symbol(first(params, ctx));
-      Node *value = first(arglist, ctx);
-
-      env_set(new_env, symbol, value); // TODO: error handling
-
-      arglist = rest(arglist, ctx);
-      params = rest(params, ctx);
-    }
-    // XXX check lists are both empty
-
-    Context new_ctx = *ctx;
-    CTX_ENV(&new_ctx) = new_env;
-
-    Node *body = first(get_closure_body(fn_node), ctx);
-
-    return eval(body, &new_ctx);
+    return _apply_closure(fn_node, arglist, ctx);
   }
 
   if (is_primitive_fn(fn_node)) {
@@ -76,10 +71,10 @@ Node *apply(Node *fn_node, Node *arglist, Context *ctx) {
 }
 
 Node *closure(Node *params, Node *body, Context *ctx) {
-  if (!is_list(params) || !is_list(body)) {
+  if (!is_list(params)) {
     return raise("Closure: params and body must be a list.");
   }
-  return cons_closure(CTX_POOL(ctx), params, body);
+  return cons_closure(CTX_POOL(ctx), params, body, CTX_ENV(ctx));
 }
 
 Node *cons(Node *car, Node *cdr, Context *ctx) {
@@ -97,6 +92,13 @@ Node *first(Node *list, Context *ctx) {
   return get_car(list) ? get_car(list) : cons(NULL, NULL, ctx);
 }
 
+static size_t _length(Node *list) {
+  size_t i = 0;
+  for (Node *cdr = get_cdr(list); cdr; cdr = get_cdr(cdr))
+    ++i;
+  return i;
+}
+
 Node *length(Node *list, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
   if (!is_list(list)) {
@@ -107,7 +109,7 @@ Node *length(Node *list, Context *ctx) {
 
 Node *list(Node *car, Node *cdr, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
-  Node *empty = empty_list(CTX_POOL(ctx));
+  Node *empty = empty_list(ctx);
   return cons(car, cons(cdr, empty, ctx), ctx);
 }
 
@@ -204,7 +206,7 @@ Node *eval(Node *expr, Context *ctx) {
 Node *eval_list(Node *list, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
   if (is_empty_list(list))
-    return empty_list(CTX_POOL(ctx));
+    return empty_list(ctx);
 
   Node *car = eval(first(list, ctx), ctx);
   Node *cdr = eval_list(rest(list, ctx), ctx);
@@ -217,6 +219,7 @@ Node *eval_program(Node *program, Context *ctx) {
 
   for (Node *expr = first(program, ctx); !is_empty_list(expr);
        expr = first(program, ctx)) {
+
     result = eval(expr, ctx);
     program = rest(program, ctx);
   }

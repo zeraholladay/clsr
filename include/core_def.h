@@ -1,6 +1,7 @@
 #ifndef CORE_DEF_H
 #define CORE_DEF_H
 
+#include <limits.h>
 #include <stddef.h>
 
 #include "env.h"
@@ -8,9 +9,14 @@
 #include "rb_tree.h"
 #include "stack.h"
 
-#ifndef STR_FMT_BUF_SIZE
-#define STR_FMT_BUF_SIZE 1024
+#ifndef CLSR_INTEGER_TYPE
+#define CLSR_INTEGER_TYPE long long
+#define CLSR_INTEGER_TYPE_FMT "%lld"
 #endif
+
+#define LOG10_2 0.30103
+#define CLSR_INTEGER_TYPE_STR_MAX_SIZE                                         \
+  ((size_t)(sizeof(CLSR_INTEGER_TYPE) * CHAR_BIT * LOG10_2 + 3))
 
 #define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
 
@@ -41,7 +47,7 @@ typedef struct PrimOp {
 } PrimOp;
 
 // Node kind "object"
-typedef int (*ReprFn)(struct Node *self, char *buf, size_t offset);
+typedef char *(*ReprFn)(struct Node *self);
 
 typedef struct Kind {
   const char *kind_name;
@@ -50,13 +56,13 @@ typedef struct Kind {
 
 // Nodes
 typedef enum { KIND_LITERAL, KIND_LIST, KIND_FUNCTION } KindEnum;
-
 typedef enum { LITERAL_INTEGER, LITERAL_SYMBOL } LiteralKindEnum;
+typedef enum { FN_PRIMITIVE, FN_CLOSURE } FnKindEnum;
 
 typedef struct {
   LiteralKindEnum kind;
   union {
-    int integer;
+    CLSR_INTEGER_TYPE integer;
     const char *symbol;
   } as;
 } Literal;
@@ -67,8 +73,6 @@ typedef struct {
   Node *car;
   Node *cdr;
 } List;
-
-typedef enum { FN_PRIMITIVE, FN_CLOSURE } FnKindEnum;
 
 typedef struct {
   FnKindEnum kind;
@@ -166,7 +170,7 @@ static inline Literal *get_literal(Node *node) {
   return is_literal(node) ? &node->as.literal : NULL;
 }
 
-static inline int get_integer(Node *node) {
+static inline CLSR_INTEGER_TYPE get_integer(Node *node) {
   return is_integer(node) ? node->as.literal.as.integer : 0;
 }
 

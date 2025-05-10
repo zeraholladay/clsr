@@ -1,69 +1,85 @@
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "core_def.h"
+#include "heap_list.h"
+#include "safe_str.h"
 
 #define KIND(name, repr) {.kind_name = name, .repr_fn = repr}
 
-static int fmt_append(char *buf, size_t offset, const char *fmt, ...) {
-  int n = 0;
-  va_list args;
-  va_start(args, fmt);
-  n = vsnprintf(buf + offset, STR_FMT_BUF_SIZE - offset, fmt, args);
-  va_end(args);
-  return (n < 0 || (size_t)n >= STR_FMT_BUF_SIZE) ? offset : (offset + n);
-}
-
 // reprs
-int null_repr(Node *self, char *buf, size_t offset) {
+char *null_repr(Node *self) {
   (void)self;
-  return fmt_append(buf, offset, "NULL");
+  return STR_LITERAL_DUP("NULL");
 }
 
-int literal_integer_repr(Node *self, char *buf, size_t offset) {
-  return fmt_append(buf, offset, "%d", get_integer(self));
+char *literal_integer_repr(Node *self) {
+  char str[CLSR_INTEGER_TYPE_STR_MAX_SIZE];
+  size_t n = sizeof(str);
+
+  int result = snprintf(str, n, CLSR_INTEGER_TYPE_FMT, get_integer(self));
+
+  if (result < 0 || (size_t)result >= n)
+    return NULL;
+
+  return safe_strndup(str, n);
 }
 
-int literal_symbol_repr(Node *self, char *buf, size_t offset) {
-  return fmt_append(buf, offset, "%s", get_symbol(self));
+char *literal_symbol_repr(Node *self) {
+  const char *str = get_symbol(self);
+  return safe_strndup(str, strlen(str));
 }
 
-int list_repr(Node *self, char *buf, size_t offset) {
-  Node *cur = NULL;
+char *list_repr(Node *self) {
+  HeapList *hl = NULL;
+  size_t total = 0;
+  Node *cur;
 
-  offset = fmt_append(buf, offset, "(");
+  hl = hl_alloc();
+
+  if (!hl)
+    return NULL;
+
+  total += hl_append_strdup(hl, "(");
 
   for (cur = self; is_list(cur); cur = get_cdr(cur)) {
     Node *car = get_car(cur), *cdr = get_cdr(cur);
     if (car) {
-      offset = get_kind(car)->repr_fn(car, buf, offset);
-      if (is_list(get_car(cdr))) {
-        offset = fmt_append(buf, offset, " ");
-      }
+      total += hl_append_strdup(hl, get_kind(car)->repr_fn(car));
+
+      if (is_list(get_car(cdr)))
+        total += hl_append_strdup(hl, " ");
     }
   }
+
   if (cur) {
-    offset = fmt_append(buf, offset, ".");
-    offset = get_kind(cur)->repr_fn(cur, buf, offset);
+    total += hl_append_strdup(hl, ".");
+    total += hl_append_strdup(hl, get_kind(cur)->repr_fn(cur));
   }
-  offset = fmt_append(buf, offset, ")");
 
-  return offset;
+  total += hl_append_strdup(hl, ")");
+
+  // merge down into a single list
+
+  char *repr_str = calloc(total + 1, sizeof*(repr_str));
+
+  for (size_t i = 0; i < hl->count; ++i) {
+    for (char *src = hl->items[i]; *repr_str = *src; ++src, ++repr_str);
+  }
+
+  return repr_str;
 }
 
-int fn_prim_repr(Node *self, char *buf, size_t offset) {
+char *fn_prim_repr(Node *self) {
   const PrimOp *prim_op = get_prim_op(self);
-  return fmt_append(buf, offset, "%s", prim_op->name);
+  return safe_strndup(prim_op->name, strlen(prim_op->name));
 }
 
-int fn_closure_repr(Node *self, char *buf, size_t offset) {
+char *fn_closure_repr(Node *self) {
   Node *params = get_closure_params(self);
   Node *body = get_closure_body(self);
-  offset = fmt_append(buf, offset, "(closure ");
-  offset = get_kind(params)->repr_fn(params, buf, offset);
-  offset = get_kind(body)->repr_fn(body, buf, offset);
-  return offset;
+  return NULL;
 }
 
 // kind singletons

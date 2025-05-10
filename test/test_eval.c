@@ -32,7 +32,7 @@ static Node *run_eval_program(const char *input) {
   yyin = fmemopen((void *)input, strlen(input), "r");
 
   int parse_status = yyparse(&ctx);
-  ck_assert_int_eq(parse_status, 0);
+  ck_assert(parse_status, 0);
 
   Node *program = CTX_PARSE_ROOT(&ctx);
   Node *eval_result = eval_program(program, &ctx);
@@ -49,10 +49,10 @@ START_TEST(test_literal_expressions) {
   Node *eval_result = NULL;
 
   eval_result = run_eval_program("42");
-  ck_assert_int_eq(get_integer(eval_result), 42);
+  ck_assert(get_integer(eval_result) == 42);
 
   eval_result = run_eval_program("-42");
-  ck_assert_int_eq(get_integer(eval_result), -42);
+  ck_assert(get_integer(eval_result) == -42);
 
   eval_result = run_eval_program("'foo");
   ck_assert_str_eq(get_symbol(eval_result), "foo");
@@ -113,9 +113,9 @@ START_TEST(test_set_and_lookup) {
   Node *eval_result = NULL;
 
   eval_result = run_eval_program("(set 'foo 42)");
-  ck_assert_int_eq(get_integer(eval_result), 42);
+  ck_assert(get_integer(eval_result) == 42);
   eval_result = run_eval_program("foo");
-  ck_assert_int_eq(get_integer(eval_result), 42);
+  ck_assert(get_integer(eval_result) == 42);
 }
 END_TEST
 
@@ -164,13 +164,13 @@ START_TEST(test_len) {
   Node *eval_result = NULL;
 
   eval_result = run_eval_program("(len '())");
-  ck_assert_int_eq(get_integer(eval_result), 0);
+  ck_assert(get_integer(eval_result) == 0);
 
   eval_result = run_eval_program("(len '(a))");
-  ck_assert_int_eq(get_integer(eval_result), 1);
+  ck_assert(get_integer(eval_result) == 1);
 
   eval_result = run_eval_program("(len '(a b))");
-  ck_assert_int_eq(get_integer(eval_result), 2);
+  ck_assert(get_integer(eval_result) == 2);
 }
 END_TEST
 
@@ -178,13 +178,13 @@ START_TEST(test_pair) {
   Node *eval_result = NULL;
 
   eval_result = run_eval_program("(pair '() '())");
-  ck_assert_int_eq(get_integer(eval_result), 0);
+  ck_assert(get_integer(eval_result) == 0);
 
   eval_result = run_eval_program("(len '(a))");
-  ck_assert_int_eq(get_integer(eval_result), 1);
+  ck_assert(get_integer(eval_result) == 1);
 
   eval_result = run_eval_program("(len '(a b))");
-  ck_assert_int_eq(get_integer(eval_result), 2);
+  ck_assert(get_integer(eval_result) == 2);
 }
 END_TEST
 

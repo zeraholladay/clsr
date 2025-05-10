@@ -22,45 +22,43 @@ Env *env_new(Env *parent) {
   return env;
 }
 
-int env_lookup(Env *env, const char *sym, void **addr) {
+rb_node *env_lookup(Env *env, const char *sym) {
   size_t len = safe_strnlen(sym, ENV_STR_MAX);
 
   for (Env *cur_env = env; cur_env; cur_env = cur_env->parent) {
-    rb_node *node = rb_lookup(cur_env->root, sym, len);
+    rb_node *n = rb_lookup(cur_env->root, sym, len);
 
-    if (node) {
-      *addr = RB_VAL(node);
-      return 0;
-    }
+    if (n)
+      return n;
   }
 
-  return -1; // fail
+  return NULL;
 }
 
 int env_set(Env *env, const char *sym, void *addr) {
   size_t len = safe_strnlen(sym, ENV_STR_MAX);
 
   for (Env *cur_env = env; cur_env; cur_env = cur_env->parent) {
-    rb_node *node = rb_lookup(cur_env->root, sym, len);
+    rb_node *n = rb_lookup(cur_env->root, sym, len);
 
-    if (node) {
-      RB_VAL(node) = addr;
+    if (n) {
+      RB_VAL(n) = addr;
       return 0;
     }
   }
 
-  rb_node *node = rb_alloc(); // FIXME
+  rb_node *n = rb_alloc(); // FIXME
 
-  if (!node) {
+  if (!n) {
     env_oom_handler(NULL, OOM_LOCATION);
     return -1;
   }
 
-  RB_KEY(node) = sym;
-  RB_KEY_LEN(node) = len;
-  RB_VAL(node) = addr;
+  RB_KEY(n) = sym;
+  RB_KEY_LEN(n) = len;
+  RB_VAL(n) = addr;
 
-  rb_insert(&env->root, node);
+  rb_insert(&env->root, n);
 
   return 0;
 }

@@ -114,13 +114,13 @@ Node *lookup(Node *node, Context *ctx) {
     return raise("Lookup parameter to lookup must be a symbol.");
   }
 
-  void *rval;
+  rb_node *n = env_lookup(CTX_ENV(ctx), get_symbol(node));
 
-  if (env_lookup(CTX_ENV(ctx), get_symbol(node), &rval)) {
+  if (!n) {
     return raise("Could not resolve symbol.");
   }
 
-  return rval;
+  return RB_VAL(n);
 }
 
 Node *pair(Node *list1, Node *list2, Context *ctx) {

@@ -1,53 +1,69 @@
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "core_def.h"
-#include "safe_snprintf.h"
 
 #define KIND(name, repr) {.kind_name = name, .repr_fn = repr}
+
+static int fmt_append(char *buf, size_t offset, const char *fmt, ...) {
+  int n = 0;
+  va_list args;
+  va_start(args, fmt);
+  n = vsnprintf(buf + offset, STR_FMT_BUF_SIZE - offset, fmt, args);
+  va_end(args);
+  return (n < 0 || (size_t)n >= STR_FMT_BUF_SIZE) ? offset : (offset + n);
+}
 
 // reprs
 int null_repr(Node *self, char *buf, size_t offset) {
   (void)self;
-  return safe_snprintf(buf, offset, "NULL");
+  return fmt_append(buf, offset, "NULL");
 }
 
 int literal_integer_repr(Node *self, char *buf, size_t offset) {
-  return safe_snprintf(buf, offset, "%d", get_integer(self));
+  return fmt_append(buf, offset, "%d", get_integer(self));
 }
 
 int literal_symbol_repr(Node *self, char *buf, size_t offset) {
-  return safe_snprintf(buf, offset, "%s", get_symbol(self));
+  return fmt_append(buf, offset, "%s", get_symbol(self));
 }
 
 int list_repr(Node *self, char *buf, size_t offset) {
-  Node *cur = self;
+  Node *cur = NULL;
 
-  offset = safe_snprintf(buf, offset, "(");
+  offset = fmt_append(buf, offset, "(");
 
-  while (is_list(cur)) {
-    offset = get_kind(get_car(cur))->repr_fn(get_car(cur), buf, offset);
-    offset = safe_snprintf(buf, offset, " ");
-    cur = get_cdr(cur);
+  for (cur = self; is_list(cur); cur = get_cdr(cur)) {
+    Node *car = get_car(cur), *cdr = get_cdr(cur);
+    if (car) {
+      offset = get_kind(car)->repr_fn(car, buf, offset);
+      if (is_list(get_car(cdr))) {
+        offset = fmt_append(buf, offset, " ");
+      }
+    }
   }
-
   if (cur) {
-    offset = safe_snprintf(buf, offset, " . ");
-    offset = get_kind(cur)->repr_fn(self, buf, offset);
+    offset = fmt_append(buf, offset, ".");
+    offset = get_kind(cur)->repr_fn(cur, buf, offset);
   }
-
-  offset = safe_snprintf(buf, offset, " )");
+  offset = fmt_append(buf, offset, ")");
 
   return offset;
 }
 
 int fn_prim_repr(Node *self, char *buf, size_t offset) {
   const PrimOp *prim_op = get_prim_op(self);
-  return safe_snprintf(buf, offset, "%s", prim_op->name);
+  return fmt_append(buf, offset, "%s", prim_op->name);
 }
 
 int fn_closure_repr(Node *self, char *buf, size_t offset) {
-  (void)self; // for now
-  return safe_snprintf(buf, offset, "closure");
+  Node *params = get_closure_params(self);
+  Node *body = get_closure_body(self);
+  offset = fmt_append(buf, offset, "(closure ");
+  offset = get_kind(params)->repr_fn(params, buf, offset);
+  offset = get_kind(body)->repr_fn(body, buf, offset);
+  return offset;
 }
 
 // kind singletons

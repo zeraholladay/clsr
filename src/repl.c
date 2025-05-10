@@ -6,7 +6,6 @@
 #include "eval.h"
 #include "parser.h"
 #include "readline.h"
-#include "safe_snprintf.h"
 #include "sym_save.h"
 
 #ifndef OBJ_POOL_CAPACITY
@@ -55,7 +54,7 @@ static void clsr_eval_program(Context *ctx) {
     Node *eval_result = eval_program(CTX_PARSE_ROOT(ctx), ctx);
     const Kind *kind_obj = get_kind(eval_result);
 
-    char *buf = calloc(SAFE_SNPRINTF_BUF_SIZE, sizeof(char));
+    char *buf = calloc(STR_FMT_BUF_SIZE, sizeof(char));
     kind_obj->repr_fn(eval_result, buf, 0);
     printf("%s\n", buf);
     // node_fprintf(stdout, eval_result), printf("\n");

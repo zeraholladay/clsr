@@ -8,7 +8,9 @@
 #include "rb_tree.h"
 #include "stack.h"
 
-#define MAX_BUF 1024
+#ifndef STR_FMT_BUF_SIZE
+#define STR_FMT_BUF_SIZE 1024
+#endif
 
 #define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
 

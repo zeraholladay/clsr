@@ -54,9 +54,12 @@ static void clsr_eval_program(Context *ctx) {
     Node *eval_result = eval_program(CTX_PARSE_ROOT(ctx), ctx);
     const Kind *kind_obj = get_kind(eval_result);
 
-    kind_obj->repr_fn(eval_result);
-    // printf("%s\n", buf);
-    // node_fprintf(stdout, eval_result), printf("\n");
+    char *str = kind_obj->repr_fn(eval_result);
+    if (str) {
+      printf("%s\n", str);
+      free(str);
+    } else
+      printf("XXXX"); // TODO
   } else {
     printf("=>error\n"); // TODO
   }

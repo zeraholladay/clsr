@@ -45,10 +45,11 @@ char *list_repr(Node *self) {
 
   for (cur = self; is_list(cur); cur = get_cdr(cur)) {
     Node *car = get_car(cur), *cdr = get_cdr(cur);
+
     if (car) {
       total += hl_append_strdup(hl, get_kind(car)->repr_fn(car));
 
-      if (is_list(get_car(cdr)))
+      if (get_car(cdr))
         total += hl_append_strdup(hl, " ");
     }
   }
@@ -60,13 +61,21 @@ char *list_repr(Node *self) {
 
   total += hl_append_strdup(hl, ")");
 
-  // merge down into a single list
+  // merge down into a single str
 
-  char *repr_str = calloc(total + 1, sizeof*(repr_str));
+  char *repr_str = calloc(total + 1, sizeof *(repr_str));
+  char *dst = repr_str;
+
+  if (!repr_str)
+    return NULL;
 
   for (size_t i = 0; i < hl->count; ++i) {
-    for (char *src = hl->items[i]; *repr_str = *src; ++src, ++repr_str);
+    for (char *src = hl->items[i]; (*dst = *src); ++src, ++dst)
+      ;
+    free(hl->items[i]);
   }
+
+  hl_free(hl);
 
   return repr_str;
 }
@@ -77,9 +86,29 @@ char *fn_prim_repr(Node *self) {
 }
 
 char *fn_closure_repr(Node *self) {
-  Node *params = get_closure_params(self);
-  Node *body = get_closure_body(self);
-  return NULL;
+  const char *fmt = "closure params=%s body=%s";
+
+  char *params_str =
+      get_kind(get_closure_params(self))->repr_fn(get_closure_params(self));
+  char *body_str =
+      get_kind(get_closure_body(self))->repr_fn(get_closure_body(self));
+
+  size_t total = strlen(fmt) + SAFE_STRLEN(params_str) + SAFE_STRLEN(body_str);
+
+  char *repr_str = calloc(total, sizeof *repr_str);
+  if (!repr_str)
+    return NULL;
+
+  int result = snprintf(repr_str, total, fmt, params_str, body_str);
+  if (result < 0 || (size_t)result >= total) {
+    free(repr_str);
+    return NULL;
+  }
+
+  free(params_str);
+  free(body_str);
+
+  return repr_str;
 }
 
 // kind singletons

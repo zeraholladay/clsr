@@ -32,7 +32,7 @@ static Node *run_eval_program(const char *input) {
   yyin = fmemopen((void *)input, strlen(input), "r");
 
   int parse_status = yyparse(&ctx);
-  ck_assert(parse_status, 0);
+  ck_assert_int_eq(parse_status, 0);
 
   Node *program = CTX_PARSE_ROOT(&ctx);
   Node *eval_result = eval_program(program, &ctx);

@@ -52,13 +52,9 @@ static void clsr_eval_program(Context *ctx) {
   if (setjmp(eval_error_jmp) == 0) {
 
     Node *eval_result = eval_program(CTX_PARSE_ROOT(ctx), ctx);
-    const Kind *kind_obj = get_kind(eval_result);
-
-    char *str = kind_obj->repr_fn(eval_result);
-    if (str) {
-      printf("%s\n", str);
-      free(str);
-    }
+    Node *node = _str(eval_result, ctx);
+    printf("%s\n", get_string(node));
+    free(node->as.string); // FIXME
   }
 }
 

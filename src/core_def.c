@@ -6,15 +6,31 @@
 #include "heap_list.h"
 #include "safe_str.h"
 
-#define KIND(name, repr) {.kind_name = name, .repr_fn = repr}
+#define KIND(name, str, eq) {.type_name = name, .str_fn = str, .eq_fn = eq}
 
-// reprs
-char *null_repr(Node *self) {
-  (void)self;
+// Type eq
+static inline int type_eq(Node *self, Node *other) {
+  return type(self) == type(other);
+}
+
+// NULL type
+static int null_eq(Node *self, Node *other) {
+  (void) self;
+  (void) other;
+  return self == other;
+}
+
+static char *null_str(Node *self) {
+  (void) self;
   return STR_LITERAL_DUP("NULL");
 }
 
-char *literal_integer_repr(Node *self) {
+// Integer type
+static int integer_eq(Node *self, Node *other) {
+  return type_eq(self, other) && get_integer(self) == get_integer(other);
+}
+
+static char *integer_str(Node *self) {
   char str[CLSR_INTEGER_TYPE_STR_MAX_SIZE];
   size_t n = sizeof(str);
 
@@ -26,12 +42,24 @@ char *literal_integer_repr(Node *self) {
   return safe_strndup(str, n);
 }
 
-char *literal_symbol_repr(Node *self) {
+// Symbol type
+static int symbol_eq(Node *self, Node *other) {
+  return type_eq(self, other) && get_symbol(self) == get_symbol(other);
+}
+
+static char *symbol_str(Node *self) {
   const char *str = get_symbol(self);
   return safe_strndup(str, strlen(str));
 }
 
-char *list_repr(Node *self) {
+// List type
+static int list_eq(Node *self, Node *other) {
+  return type_eq(self, other) &&
+         ((is_empty_list(self) && is_empty_list(other)) ||
+          get_list(self) == get_list(other));
+}
+
+static char *list_str(Node *self) {
   HeapList *hl = NULL;
   size_t total = 0;
   Node *cur;
@@ -47,7 +75,7 @@ char *list_repr(Node *self) {
     Node *car = get_car(cur), *cdr = get_cdr(cur);
 
     if (car) {
-      total += hl_append_strdup(hl, get_kind(car)->repr_fn(car));
+      total += hl_append_strdup(hl, type(car)->str_fn(car));
 
       if (get_car(cdr))
         total += hl_append_strdup(hl, " ");
@@ -56,7 +84,7 @@ char *list_repr(Node *self) {
 
   if (cur) {
     total += hl_append_strdup(hl, ".");
-    total += hl_append_strdup(hl, get_kind(cur)->repr_fn(cur));
+    total += hl_append_strdup(hl, type(cur)->str_fn(cur));
   }
 
   total += hl_append_strdup(hl, ")");
@@ -80,18 +108,27 @@ char *list_repr(Node *self) {
   return repr_str;
 }
 
-char *fn_prim_repr(Node *self) {
+// Prim Ops type
+static int prim_op_eq(Node *self, Node *other) {
+  return type_eq(self, other) && get_prim_op(self) == get_prim_op(other);
+}
+
+static char *prim_op_str(Node *self) {
   const PrimOp *prim_op = get_prim_op(self);
   return safe_strndup(prim_op->name, strlen(prim_op->name));
 }
 
-char *fn_closure_repr(Node *self) {
+// Closure type
+static int closure_eq(Node *self, Node *other) {
+  return type_eq(self, other) && get_closure(self) == get_closure(other);
+}
+
+static char *closure_str(Node *self) {
   const char *fmt = "closure params=%s body=%s";
 
   char *params_str =
-      get_kind(get_closure_params(self))->repr_fn(get_closure_params(self));
-  char *body_str =
-      get_kind(get_closure_body(self))->repr_fn(get_closure_body(self));
+      type(get_closure_params(self))->str_fn(get_closure_params(self));
+  char *body_str = type(get_closure_body(self))->str_fn(get_closure_body(self));
 
   size_t total =
       strlen(fmt) + NULLABLE_STRLEN(params_str) + NULLABLE_STRLEN(body_str);
@@ -112,69 +149,89 @@ char *fn_closure_repr(Node *self) {
   return repr_str;
 }
 
-// kind singletons
-static Kind null_kind_singleton = KIND("NULL", null_repr);
+// String type
+static int string_eq(Node *self, Node *other) {
+  return type_eq(self, other) &&
+         (0 == strcmp(get_string(self),
+                      get_string(other))); // FIX ME: strings should have len
+}
 
-static Kind literal_kind_singleton[] = {
-    [LITERAL_INTEGER] = KIND("literal.integer", literal_integer_repr),
-    [LITERAL_SYMBOL] = KIND("literal.symbol", literal_symbol_repr),
+static char *string_str(Node *self) { return get_string(self); }
+
+// Singletons
+static Type null_singleton[] = {
+  [0] = KIND("NULL", null_str, null_eq),
 };
 
-static Kind list_kind_singleton[] = {
-    [0] = KIND("list", list_repr),
+static Type literal_singleton[] = {
+    [LITERAL_INTEGER] = KIND("Integer", integer_str, integer_eq),
+    [LITERAL_SYMBOL] = KIND("Symbol", symbol_str, symbol_eq),
 };
 
-static Kind fn_kind_singleton[] = {
-    [FN_PRIMITIVE] = KIND("function.primitive", fn_prim_repr),
-    [FN_CLOSURE] = KIND("function.closure", fn_closure_repr),
+static Type list_singleton[] = {
+    [0] = KIND("List", list_str, list_eq),
 };
 
-static Kind *kind_singleton[] = {
-    [KIND_LITERAL] = literal_kind_singleton,
-    [KIND_LIST] = list_kind_singleton,
-    [KIND_FUNCTION] = fn_kind_singleton,
+static Type str_singleton[] = {
+    [0] = KIND("String", string_str, string_eq),
 };
 
-// get_kind
-const Kind *get_kind(Node *self) {
+static Type fn_singleton[] = {
+    [FN_PRIMITIVE] = KIND("Primitive", prim_op_str, prim_op_eq),
+    [FN_CLOSURE] = KIND("Closure", closure_str, closure_eq),
+};
+
+static Type *type_singleton[] = {
+    [KIND_NULL] = null_singleton,
+    [KIND_LITERAL] = literal_singleton,
+    [KIND_LIST] = list_singleton,
+    [KIND_FUNCTION] = fn_singleton,
+    [KIND_STRING] = str_singleton,
+};
+
+// type()
+const Type *type(Node *self) {
   if (!self) {
-    return &null_kind_singleton;
+    return &type_singleton[KIND_NULL][0];
   }
 
-  Kind *kind_ptr = kind_singleton[self->kind];
+  Type *type_ptr = type_ptr = type_singleton[self->type];
 
   if (is_literal(self)) {
     const Literal *literal = get_literal(self);
-    return &kind_ptr[literal->kind];
+    return &type_ptr[literal->type];
   }
 
   if (is_function(self)) {
     const Function *fn = get_function(self);
-    return &kind_ptr[fn->kind];
+    return &type_ptr[fn->type];
   }
 
   if (is_list(self)) {
-    return &kind_ptr[0];
+    return &type_ptr[0];
+  }
+
+  if (is_string(self)) {
+    return &type_ptr[0];
   }
 
   return NULL; // TODO: fix me
 }
 
-// constructors
 Node *cons_primop(Pool *p, const PrimOp *prim_op) {
   Node *node = pool_alloc(p);
-  node->kind = KIND_FUNCTION;
+  node->type = KIND_FUNCTION;
   Function *func = &node->as.function;
-  func->kind = FN_PRIMITIVE;
+  func->type = FN_PRIMITIVE;
   func->as.primitive.prim_op = prim_op;
   return node;
 }
 
 Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
   Node *node = pool_alloc(p);
-  node->kind = KIND_FUNCTION;
+  node->type = KIND_FUNCTION;
   Function *func = &node->as.function;
-  func->kind = FN_CLOSURE;
+  func->type = FN_CLOSURE;
   func->as.closure.params = params;
   func->as.closure.body = body;
   func->as.closure.env = env;
@@ -183,27 +240,34 @@ Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
 
 Node *cons_integer(Pool *p, CLSR_INTEGER_TYPE i) {
   Node *node = pool_alloc(p);
-  node->kind = KIND_LITERAL;
+  node->type = KIND_LITERAL;
   Literal *literal = &node->as.literal;
-  literal->kind = LITERAL_INTEGER;
+  literal->type = LITERAL_INTEGER;
   literal->as.integer = i;
   return node;
 }
 
 Node *cons_list(Pool *p, Node *car, Node *cdr) {
   Node *node = pool_alloc(p);
-  node->kind = KIND_LIST;
+  node->type = KIND_LIST;
   List *list = &node->as.list;
   list->car = car;
   list->cdr = cdr;
   return node;
 }
 
+Node *cons_string(Pool *p, String *str) {
+  Node *node = pool_alloc(p);
+  node->type = KIND_STRING;
+  node->as.string = str;
+  return node;
+}
+
 Node *cons_symbol(Pool *p, const char *sym) {
   Node *node = pool_alloc(p);
-  node->kind = KIND_LITERAL;
+  node->type = KIND_LITERAL;
   Literal *literal = &node->as.literal;
-  literal->kind = LITERAL_SYMBOL;
+  literal->type = LITERAL_SYMBOL;
   literal->as.symbol = sym;
   return node;
 }

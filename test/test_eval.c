@@ -54,6 +54,12 @@ START_TEST(test_literal_expressions) {
   eval_result = run_eval_program("-42");
   ck_assert(get_integer(eval_result) == -42);
 
+  // eval_result = run_eval_program("T");
+  // ck_assert_str_eq(get_symbol(eval_result), "T");
+
+  eval_result = run_eval_program("NIL");
+  ck_assert_str_eq(get_symbol(eval_result), "NIL");
+
   eval_result = run_eval_program("'foo");
   ck_assert_str_eq(get_symbol(eval_result), "foo");
 }
@@ -65,6 +71,10 @@ START_TEST(test_quote) {
   Node *eval_result = NULL;
   Node *car = NULL;
   Node *cdr = NULL;
+
+  // NULL program
+  eval_result = run_eval_program("()");
+  ck_assert(!eval_result);
 
   eval_result = run_eval_program("'()");
   ck_assert(is_empty_list(eval_result));
@@ -114,15 +124,23 @@ START_TEST(test_set_and_lookup) {
 
   eval_result = run_eval_program("(set 'foo 42)");
   ck_assert(get_integer(eval_result) == 42);
+
   eval_result = run_eval_program("foo");
   ck_assert(get_integer(eval_result) == 42);
+
+  eval_result = run_eval_program("(set 'bar 'foo)");
+  ck_assert(is_symbol(eval_result));
+
+  eval_result = run_eval_program("(set 'bar '(1 2 3))");
+  ck_assert(is_list(eval_result));
+
+  eval_result = run_eval_program("(set 'bar (closure '() '()))");
+  ck_assert(is_closure_fn(eval_result));
 }
 END_TEST
 
 START_TEST(test_first) {
   Node *eval_result = NULL;
-  // Node *car = NULL;
-  // Node *cdr = NULL;
 
   eval_result = run_eval_program("(first '())");
   ck_assert(is_empty_list(eval_result));
@@ -211,6 +229,87 @@ START_TEST(test_closure) {
   eval_result = run_eval_program(
       "(set 'foo (closure '(a b) '(cons a b))) (foo 'bar 'biz)");
   ck_assert(is_list(eval_result));
+  ck_assert_str_eq(get_symbol(get_car(eval_result)), "bar");
+}
+END_TEST
+
+START_TEST(test_eq) {
+  Node *eval_result = NULL;
+  char *test_program;
+
+  // True statements
+  eval_result = run_eval_program("(eq T T)");
+  ck_assert_str_eq(get_symbol(eval_result), "T");
+
+  eval_result = run_eval_program("(eq NIL NIL)");
+  ck_assert_str_eq(get_symbol(eval_result), "T");
+
+  eval_result = run_eval_program("(eq 0 0)");
+  ck_assert_str_eq(get_symbol(eval_result), "T");
+
+  eval_result = run_eval_program("(eq 42 42)");
+  ck_assert_str_eq(get_symbol(eval_result), "T");
+
+  eval_result = run_eval_program("(eq '() '())");
+  ck_assert_str_eq(get_symbol(eval_result), "T");
+
+  eval_result = run_eval_program("(eq 'foo 'foo)");
+  ck_assert_str_eq(get_symbol(eval_result), "T");
+
+  test_program = "(set 'foo (closure '() '()))"
+    "(set 'bar foo)"
+    "(eq foo bar)";
+  eval_result = run_eval_program(test_program);
+  ck_assert_str_eq(get_symbol(eval_result), "T");
+
+  test_program = "(set 'foo '(1 2 3 4))"
+    "(set 'bar foo)"
+    "(eq foo bar)";
+  eval_result = run_eval_program(test_program);
+  ck_assert_str_eq(get_symbol(eval_result), "T");
+
+  eval_result = run_eval_program("(eq (str 'foo) (str 'foo))");
+  ck_assert_str_eq(get_symbol(eval_result), "T");
+
+  eval_result = run_eval_program("(eq rest rest)");
+  ck_assert_str_eq(get_symbol(eval_result), "T");
+
+  // False statements
+  eval_result = run_eval_program("(eq T NIL)");
+  ck_assert_str_eq(get_symbol(eval_result), "NIL");
+
+  eval_result = run_eval_program("(eq NIL T)");
+  ck_assert_str_eq(get_symbol(eval_result), "NIL");
+
+  eval_result = run_eval_program("(eq 0 1)");
+  ck_assert_str_eq(get_symbol(eval_result), "NIL");
+
+  eval_result = run_eval_program("(eq -42 42)");
+  ck_assert_str_eq(get_symbol(eval_result), "NIL");
+
+  eval_result = run_eval_program("(eq '() '(1))");
+  ck_assert_str_eq(get_symbol(eval_result), "NIL");
+
+  eval_result = run_eval_program("(eq 'foo 'bar)");
+  ck_assert_str_eq(get_symbol(eval_result), "NIL");
+
+  test_program = "(set 'foo (closure '() '()))"
+    "(set 'bar (closure '() '()))"
+    "(eq foo bar)";
+  eval_result = run_eval_program(test_program);
+  ck_assert_str_eq(get_symbol(eval_result), "NIL");
+
+  test_program = "(set 'foo '(1 2 3 4))"
+    "(set 'bar '(1 2 3 4))"
+    "(eq foo bar)";
+  eval_result = run_eval_program(test_program);
+  ck_assert_str_eq(get_symbol(eval_result), "NIL");
+
+  eval_result = run_eval_program("(eq (str 'foo) (str 'bar))");
+  ck_assert_str_eq(get_symbol(eval_result), "NIL");
+
+  eval_result = run_eval_program("(eq first rest)");
+  ck_assert_str_eq(get_symbol(eval_result), "NIL");
 }
 END_TEST
 
@@ -229,6 +328,7 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_len);
   tcase_add_test(tc_core, test_pair);
   tcase_add_test(tc_core, test_closure);
+  tcase_add_test(tc_core, test_eq);
 
   suite_add_tcase(s, tc_core);
   return s;

@@ -15,14 +15,18 @@
 struct PrimOp;
 
 %%
+T,       PRIM_OP_NULL,      {NULL},
+NIL,     PRIM_OP_NULL,      {NULL},
 APPLY,   PRIM_OP_BINARY_FN, .binary_fn_ptr = apply,
 CLOSURE, PRIM_OP_BINARY_FN, .binary_fn_ptr = closure,
 CONS,    PRIM_OP_BINARY_FN, .binary_fn_ptr = cons,
+EQ,      PRIM_OP_BINARY_FN, .binary_fn_ptr = eq,
 EVAL,    PRIM_OP_UNARY_FN,  .unary_fn_ptr  = eval,
 FIRST,   PRIM_OP_UNARY_FN,  .unary_fn_ptr  = first,
 LEN,     PRIM_OP_UNARY_FN,  .unary_fn_ptr  = length,
 LOOKUP,  PRIM_OP_UNARY_FN,  .unary_fn_ptr  = lookup,
 PAIR,    PRIM_OP_BINARY_FN, .binary_fn_ptr = pair,
+PRINT,   PRIM_OP_UNARY_FN,  .unary_fn_ptr  = print,
 QUOTE,   PRIM_OP_NULL,      {NULL},
 REPR,    PRIM_OP_UNARY_FN,  .unary_fn_ptr  = repr,
 REST,    PRIM_OP_UNARY_FN,  .unary_fn_ptr  = rest,

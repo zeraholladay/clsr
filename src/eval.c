@@ -12,7 +12,7 @@ static size_t _length(Node *list);
 
 static void raise(ErrorCode err_code, const char *msg) {
   const char *err_code_msg = error_messages[err_code];
-  fprintf(stderr, "*** eval error: %s\n  %s\n", err_code_msg, msg);
+  fprintf(stderr, "*** eval error: %s: %s\n", err_code_msg, msg);
   longjmp(eval_error_jmp, 1);
 }
 
@@ -33,25 +33,15 @@ static Node *apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
   }
 
   // setup context
-  Env *new_env = env_new(get_closure_env(fn_node)); // TODO: error handling
+  Context new_ctx = *ctx;
+  CTX_ENV(&new_ctx) = env_new(get_closure_env(fn_node));
 
   for (Node *pairs = pair(get_closure_params(fn_node), arglist, ctx);
        !is_empty_list(pairs); pairs = rest(pairs, ctx)) {
 
     Node *pair = first(pairs, ctx);
-
-    if (!is_symbol(first(pair, ctx))) {
-      raise(ERR_INVALID_ARG, __func__); // FIXME
-      return NULL;
-    }
-
-    const char *symbol = get_symbol(first(pair, ctx));
-    env_set(new_env, symbol,
-            first(rest(pair, ctx), ctx)); // TODO: error handling
+    set(first(pair, &new_ctx), first(rest(pair, &new_ctx), ctx), &new_ctx);
   }
-
-  Context new_ctx = *ctx;
-  CTX_ENV(&new_ctx) = new_env;
 
   // eval
   return eval(get_closure_body(fn_node), &new_ctx);
@@ -60,7 +50,7 @@ static Node *apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
 static Node *apply_prim_op(Node *fn_node, Node *arglist, Context *ctx) {
   const PrimOp *prim_op = get_prim_op(fn_node);
 
-  switch (prim_op->kind) {
+  switch (prim_op->type) {
   case PRIM_OP_NULL:
     raise(ERR_INTERNAL, DEBUG_LOCATION);
     return NULL;
@@ -115,6 +105,12 @@ Node *cons(Node *car, Node *cdr, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
   Node *node = cons_list(CTX_POOL(ctx), car, cdr);
   return node;
+}
+
+Node *eq(Node *node1, Node *node2, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
+  return (type(node1)->eq_fn(node1, node2)) ? cons_symbol(CTX_POOL(ctx), "T")
+                                            : cons_symbol(CTX_POOL(ctx), "NIL");
 }
 
 Node *first(Node *list, Context *ctx) {
@@ -182,6 +178,15 @@ Node *pair(Node *list1, Node *list2, Context *ctx) {
   return cons(first_pair, rest_pairs, ctx);
 }
 
+Node *print(Node *node, Context *ctx) {
+  (void) ctx;
+  DEBUG(DEBUG_LOCATION);
+  char *str = type(node)->str_fn(node);
+  printf("%s\n", str);
+  free(str);
+  return cons_symbol(CTX_POOL(ctx), "T");
+}
+
 Node *repr(Node *node, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
   (void)node;
@@ -207,19 +212,14 @@ Node *set(Node *car, Node *cdr, Context *ctx) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
-
-  cdr = (is_list(cdr)) ? first(cdr, ctx) : cdr;
-
+  // cdr = (is_list(cdr)) ? first(cdr, ctx) : cdr;
   env_set(CTX_ENV(ctx), get_symbol(car), cdr); // TODO: error handling
-
   return cdr;
 }
 
 Node *_str(Node *node, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
-  (void)node;
-  (void)ctx;
-  return NULL;
+  return cons_string(CTX_POOL(ctx), type(node)->str_fn(node));
 }
 
 Node *eval(Node *expr, Context *ctx) {
@@ -228,7 +228,7 @@ Node *eval(Node *expr, Context *ctx) {
     return lookup(expr, ctx);
   }
 
-  if (is_literal(expr) || is_function(expr)) {
+  if (is_literal(expr) || is_function(expr) || is_string(expr)) {
     return expr;
   }
 

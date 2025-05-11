@@ -25,6 +25,8 @@ LEN,     TOK_LEN,     length,  0      ,
 LOOKUP,  TOK_LOOKUP,  lookup,  0      ,
 PAIR,    TOK_PAIR,    0,       pair   ,
 QUOTE,   TOK_QUOTE,   0,       0      ,
+REPR,    TOK_REPR,    repr,    0      ,
 REST,    TOK_REST,    rest,    0      ,
-SET,     TOK_SET,     0,       set    
+SET,     TOK_SET,     0,       set    ,
+STR,     TOK_STR,     _str,    0      ,
 %%

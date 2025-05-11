@@ -93,7 +93,8 @@ char *fn_closure_repr(Node *self) {
   char *body_str =
       get_kind(get_closure_body(self))->repr_fn(get_closure_body(self));
 
-  size_t total = strlen(fmt) + SAFE_STRLEN(params_str) + SAFE_STRLEN(body_str);
+  size_t total =
+      strlen(fmt) + NULLABLE_STRLEN(params_str) + NULLABLE_STRLEN(body_str);
 
   char *repr_str = calloc(total, sizeof *repr_str);
   if (!repr_str)
@@ -180,7 +181,7 @@ Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
   return node;
 }
 
-Node *cons_integer(Pool *p, int i) {
+Node *cons_integer(Pool *p, CLSR_INTEGER_TYPE i) {
   Node *node = pool_alloc(p);
   node->kind = KIND_LITERAL;
   Literal *literal = &node->as.literal;

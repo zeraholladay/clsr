@@ -70,7 +70,7 @@ int hl_append(HeapList *hl, void *item) {
 }
 
 size_t hl_append_strdup(HeapList *hl, char *str) {
-  size_t len = SAFE_STRLEN(str);
+  size_t len = NULLABLE_STRLEN(str);
   char *dup = safe_strndup(str, len);
 
   if (!dup) {

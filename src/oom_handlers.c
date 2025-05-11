@@ -5,7 +5,6 @@
 
 static void oom_handler_die(void *void_ptr, const char *msg) {
   (void)void_ptr;
-  return;
   perror(msg);
   exit(1);
   abort();

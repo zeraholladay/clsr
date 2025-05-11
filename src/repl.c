@@ -58,8 +58,7 @@ static void clsr_eval_program(Context *ctx) {
     if (str) {
       printf("%s\n", str);
       free(str);
-    } else
-      printf("XXXX"); // TODO
+    }
   } else {
     printf("=>error\n"); // TODO
   }

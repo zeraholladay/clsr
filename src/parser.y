@@ -31,7 +31,7 @@ void reset_parse_context(Context *ctx);
 %parse-param {Context *ctx}
 
 %union {
-    int num;
+    CLSR_INTEGER_TYPE num;
     const char *sym;
     const struct PrimOp *prim;
     struct Node *node;
@@ -44,7 +44,7 @@ void reset_parse_context(Context *ctx);
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
 
-%token <prim> ADD APPLY CLOSURE CONS DIV EQ EVAL FIRST IF IS LEN LOOKUP MUL PAIR PUSH REST RETURN SET SUB
+%token <prim> ADD APPLY CLOSURE CONS DIV EQ EVAL FIRST IF IS LEN LOOKUP MUL PAIR PUSH REST REPR RETURN SET STR SUB
 
 %%
 
@@ -124,9 +124,11 @@ primitive
     | MUL
     | PUSH
     | PAIR
+    | REPR
     | REST
     | RETURN
     | SET
+    | STR
     | SUB
     ;
 

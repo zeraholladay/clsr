@@ -28,7 +28,10 @@ static Node *_apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
   for (Node *pairs = pair(params, arglist, ctx); !is_empty_list(pairs);
        pairs = rest(pairs, ctx)) {
     Node *pair = first(pairs, ctx);
-    // TODO: verify if symbol
+
+    if (!is_symbol(first(pair, ctx)))
+      raise("Not a symbol.");
+
     const char *symbol = get_symbol(first(pair, ctx));
     env_set(new_env, symbol,
             first(rest(pair, ctx), ctx)); // TODO: error handling
@@ -146,6 +149,13 @@ Node *quote(Node *list, Context *ctx) {
   return NULL;
 }
 
+Node *repr(Node *node, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
+  (void)node;
+  (void)ctx;
+  return NULL;
+}
+
 Node *rest(Node *list, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
   (void)ctx;
@@ -168,6 +178,13 @@ Node *set(Node *car, Node *cdr, Context *ctx) {
   env_set(CTX_ENV(ctx), get_symbol(car), cdr); // TODO: error handling
 
   return cdr;
+}
+
+Node *_str(Node *node, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
+  (void)node;
+  (void)ctx;
+  return NULL;
 }
 
 Node *eval(Node *expr, Context *ctx) {

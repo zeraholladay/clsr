@@ -122,7 +122,7 @@ const struct PrimOp *prim_op_lookup(register const char *str,
 const Kind *get_kind(Node *self);
 Node *cons_primop(Pool *p, const PrimOp *prim_op);
 Node *cons_closure(Pool *p, Node *params, Node *body, Env *env);
-Node *cons_integer(Pool *p, int i);
+Node *cons_integer(Pool *p, CLSR_INTEGER_TYPE i);
 Node *cons_list(Pool *p, Node *car, Node *cdr);
 Node *cons_symbol(Pool *p, const char *sym);
 
@@ -211,10 +211,5 @@ static inline Node *get_closure_body(Node *node) {
 static inline Env *get_closure_env(Node *node) {
   return is_closure_fn(node) ? node->as.function.as.closure.env : NULL;
 }
-
-/* tagging along for now. */
-#include <stdio.h>
-
-void node_fprintf(FILE *stream, const Node *node);
 
 #endif

@@ -2,8 +2,11 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "clsr.h"
+#include "core_def.h"
+#include "eval.h"
 #include "parser.h"
+
+#define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
 
 #define yyerror(ctx, s)      \
   do {                       \
@@ -11,132 +14,133 @@
     YYABORT;                 \
   } while (0)
 
-int yylex(ClsrContext *ctx);
-void yyerror_handler(ClsrContext *ctx, const char *s);
+int yylex(Context *ctx);
+void yyerror_handler(Context *ctx, const char *s);
 
 extern int yylineno;
 %}
 
 %code requires {
-#include "clsr.h"
+#include "core_def.h"
 
-void reset_parse_context(ClsrContext *ctx);
+void reset_parse_context(Context *ctx);
 }
-
-%lex-param   {ClsrContext *ctx}
-%parse-param {ClsrContext *ctx}
-
-%union {
-    int num;
-    const char *sym;
-    const struct PrimOp *prim;
-    struct Obj *obj;
-}
-
-%type <prim> nullary
-%type <prim> nary
-%type <obj> input expression expressions args arg literal_keyword
-
 %define api.token.prefix {TOK_}
 
-%token ERROR
+%lex-param   {Context *ctx}
+%parse-param {Context *ctx}
 
+%union {
+    CLSR_INTEGER_TYPE num;
+    const char *sym;
+    const struct PrimOp *prim;
+    struct Node *node;
+}
+
+%type <node> program expressions expression expression_list list number symbol 
+%type <prim> primitive
+
+%token QUOTE ERROR
 %token <num> INT_LITERAL
 %token <sym> SYM_LITERAL
 
-%token <prim> TRUE FALSE
-%token <prim> APPLY EQ IS LOOKUP PUSH RETURN SET
-%token <prim> CLOSURE IF
-%token <prim> ADD SUB MUL DIV
+%token <prim> ADD APPLY CLOSURE CONS DIV EQ EVAL FIRST IF IS LEN LOOKUP MUL PAIR PUSH REST REPR RETURN SET STR SUB
 
 %%
 
-input:
-    expressions {
+program
+    : expressions {
         CTX_PARSE_ROOT(ctx) = $1;
         YYACCEPT;
     }
     | expressions error {
+        CTX_PARSE_ROOT(ctx) = NULL;
         yyerror(ctx, "Parse error\n");
+        YYABORT;
     }
-;
+    ;
 
-expressions:
-    /* empty */ {
-        $$ = obj_new_empty_expr_list(CTX_POOL(ctx));
+expressions
+    : /* empty */ {
+        $$ = empty_list(ctx);
     }
-    | expressions expression {
-        $$ = obj_expr_list_append($1, $2);
+    | expression expressions {
+        $$ = cons($1, $2, ctx);
     }
-;
+    ;
 
-expression:
-    nullary {
-        $$ = obj_new_call(CTX_POOL(ctx), $1, NULL);
+expression
+    : number                    
+    | symbol                    
+    | list
+    | QUOTE expression {
+        Node *quote = cons_primop(CTX_POOL(ctx), PRIM_OP(QUOTE));
+        Node *fn_args = cons($2, empty_list(ctx), ctx);
+        $$ = cons(quote, fn_args, ctx);
     }
-    | nary '(' args ')' {
-        $$ = obj_new_call(CTX_POOL(ctx), $1, $3);
-      }
-    | CLOSURE '(' args ')' '(' expressions ')' {
-        $$ = obj_new_closure(CTX_POOL(ctx), $3, $6);
-    }
-    | IF '(' expressions ')' '(' expressions ')' {
-        $$ = obj_new_if(CTX_POOL(ctx), $3, $6);
-    }
-    | literal_keyword {
-        $$ = $1;
-    }
-;
+    ;
 
-nullary:
-    APPLY
-    | EQ
-    | IS
-    | LOOKUP
-    | RETURN
-    | SET
-    | ADD
-    | SUB
-    | MUL
-    | DIV
-;
-
-nary:
-      PUSH
-;
-
-literal_keyword:
-    TRUE {
-        $$ = obj_true;
+list
+    : '(' ')' {
+        $$ = empty_list(ctx);
     }
-    | FALSE {
-        $$ = obj_false;
+    | '(' expression_list ')' {
+        $$ = $2;
+    }
+    ;
+
+expression_list
+    : expression {
+        $$ = cons($1, empty_list(ctx), ctx);
+    }
+    | expression expression_list {
+        $$ = cons($1, $2, ctx);
     }
 
-args:
-    /* empty */ {
-        $$ = obj_new_empty_expr_list(CTX_POOL(ctx));
-      }
-    | args arg {
-        $$ = obj_expr_list_append($1, $2);
-    }
-;
+    ;
 
-arg:
-    INT_LITERAL {
-        $$ = obj_new_literal_int(CTX_POOL(ctx), $1);
+symbol
+    : primitive {
+        $$ = cons_primop(CTX_POOL(ctx), $1);
     }
     | SYM_LITERAL {
-        $$ = obj_new_literal_sym(CTX_POOL(ctx), $1);
+        $$ = cons_symbol(CTX_POOL(ctx), $1);
     }
-    | literal_keyword {
-        $$ = $1;
+    ;
+
+primitive
+    : ADD
+    | APPLY
+    | CONS
+    | CLOSURE
+    | DIV
+    | EQ
+    | EVAL
+    | FIRST
+    | IF
+    | IS
+    | LOOKUP
+    | LEN
+    | MUL
+    | PUSH
+    | PAIR
+    | REPR
+    | REST
+    | RETURN
+    | SET
+    | STR
+    | SUB
+    ;
+
+number
+    : INT_LITERAL {
+        $$ = cons_integer(CTX_POOL(ctx), $1);
     }
-;
+    ;
 
 %%
 
-void reset_parse_context(ClsrContext *ctx) {
+void reset_parse_context(Context *ctx) {
     assert(ctx);
     assert(CTX_POOL(ctx));
 
@@ -145,7 +149,7 @@ void reset_parse_context(ClsrContext *ctx) {
     CTX_PARSE_MARK(ctx) = CTX_POOL(ctx)->free_list;
 }
 
-void yyerror_handler(ClsrContext *ctx, const char *s) {
+void yyerror_handler(Context *ctx, const char *s) {
     fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
     pool_reset_from_mark(CTX_POOL(ctx), CTX_PARSE_MARK(ctx));
     reset_parse_context(ctx);

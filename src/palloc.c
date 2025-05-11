@@ -5,7 +5,7 @@
 #include "palloc.h"
 
 #define STRIDE(size)                                                           \
-  ((size) + alignof(max_align_t) - 1) & ~(alignof(max_align_t) - 1)
+  (((size) + alignof(max_align_t) - 1) & ~(alignof(max_align_t) - 1))
 
 #define INDEX(base, index, stride)                                             \
   ((Wrapper *)((char *)(base) + ((index) * (stride))))
@@ -82,7 +82,7 @@ void pool_reset_all(Pool *p) {
 
   Wrapper *cur;
 
-  for (unsigned int i = 0; i < count - 1; ++i) {
+  for (size_t i = 0; i < count - 1; ++i) {
     cur = INDEX(p->pool, i, stride);
     cur->next_free = INDEX(p->pool, i + 1, stride);
   }

@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define STR_LITERAL_DUP(lit) safe_strndup(lit, sizeof(lit))
+#define NULLABLE_STRLEN(str) ((str) ? strlen(str) : 0)
+
 inline static size_t safe_strnlen(const char *s, size_t maxlen) {
   size_t i;
   for (i = 0; i < maxlen && s[i]; i++)

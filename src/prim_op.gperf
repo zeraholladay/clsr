@@ -1,6 +1,7 @@
 %{
+#include "core_def.h"
+#include "eval.h"
 #include "parser.h"
-#include "clsr.h"
 %}
 
 %includes
@@ -8,37 +9,24 @@
 %readonly-tables
 %struct-type
 %ignore-case
-%define initializer-suffix ,{0,0}
+%define lookup-function-name prim_op_lookup
+%define initializer-suffix ,0,0,0
 %define slot-name name
 
-struct _prim_op_gperf {
-    const char *name;
-    PrimOp op;
-};
+struct PrimOp;
 
 %%
-APPLY,   {TOK_APPLY,   apply   }
-CLOSURE, {TOK_CLOSURE, 0       }
-EQ,      {TOK_EQ,      eq      }
-IF,      {TOK_IF,      0       }
-IS,      {TOK_IS,      is      }
-LOOKUP,  {TOK_LOOKUP,  lookup  }
-PUSH,    {TOK_PUSH,    push    }
-RETURN,  {TOK_RETURN,  return_ }
-SET,     {TOK_SET,     set     }
-TRUE,    {TOK_TRUE,    0       }
-FALSE,   {TOK_FALSE,   0       }
-ADD,     {TOK_ADD,     add     }
-SUB,     {TOK_SUB,     sub     }
-MUL,     {TOK_MUL,     mul     }
-DIV,     {TOK_DIV,     div_    }
+APPLY,   TOK_APPLY,   0,       apply  ,
+CLOSURE, TOK_CLOSURE, 0,       closure,
+CONS,    TOK_CONS,    0,       cons   ,
+EVAL,    TOK_EVAL,    eval,    0      ,
+FIRST,   TOK_FIRST,   first,   0      ,
+LEN,     TOK_LEN,     length,  0      ,
+LOOKUP,  TOK_LOOKUP,  lookup,  0      ,
+PAIR,    TOK_PAIR,    0,       pair   ,
+QUOTE,   TOK_QUOTE,   0,       0      ,
+REPR,    TOK_REPR,    repr,    0      ,
+REST,    TOK_REST,    rest,    0      ,
+SET,     TOK_SET,     0,       set    ,
+STR,     TOK_STR,     _str,    0      ,
 %%
-
-const PrimOp * prim_op_lookup(register const char *str, register unsigned int len) {
-    const struct _prim_op_gperf *_op = in_word_set(str, len);
-    if (_op) {
-        return &_op->op;
-    } else {
-        return 0;
-    }
-}

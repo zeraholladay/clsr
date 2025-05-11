@@ -1,22 +1,25 @@
 #include <check.h>
+#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "clsr.h"
+#include "core_def.h"
+#include "eval.h"
 #include "parser.h"
 #include "repl.h"
-#include "sym_save.h"
 
 extern FILE *yyin;
-extern int yyparse(ClsrContext *ctx);
+extern int yyparse(Context *ctx);
 extern void yylex_destroy(void);
 
-extern void clsr_init(ClsrContext *ctx);
-extern void clsr_destroy(ClsrContext *ctx);
+extern void clsr_init(Context *ctx);
+extern void clsr_destroy(Context *ctx);
 
 static Stack stack = {};
-static ClsrContext ctx = {};
+static Context ctx = {};
+
+jmp_buf eval_error_jmp;
 
 static void setup(void) {
   CTX_STACK(&ctx) = &stack;
@@ -25,515 +28,189 @@ static void setup(void) {
 
 static void teardown(void) { clsr_destroy(&ctx); }
 
-START_TEST(test_push) {
-  const char *input = "push ()";
+static Node *run_eval_program(const char *input) {
   yyin = fmemopen((void *)input, strlen(input), "r");
 
   int parse_status = yyparse(&ctx);
-
   ck_assert_int_eq(parse_status, 0);
 
-  Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-
-  ck_assert_ptr_eq(eval_status, obj_true);
-
-  ck_assert_ptr_eq(POP(&stack), NULL);
+  Node *program = CTX_PARSE_ROOT(&ctx);
+  Node *eval_result = eval_program(program, &ctx);
 
   yylex_destroy();
   fclose(yyin);
+
+  return eval_result;
+}
+
+// literals
+
+START_TEST(test_literal_expressions) {
+  Node *eval_result = NULL;
+
+  eval_result = run_eval_program("42");
+  ck_assert(get_integer(eval_result) == 42);
+
+  eval_result = run_eval_program("-42");
+  ck_assert(get_integer(eval_result) == -42);
+
+  eval_result = run_eval_program("'foo");
+  ck_assert_str_eq(get_symbol(eval_result), "foo");
 }
 END_TEST
 
-START_TEST(test_push_args) {
-  const char *input = "push (-1 bar 42 foo)";
-  yyin = fmemopen((void *)input, strlen(input), "r");
+// quote
 
-  int parse_status = yyparse(&ctx);
+START_TEST(test_quote) {
+  Node *eval_result = NULL;
+  Node *car = NULL;
+  Node *cdr = NULL;
 
-  ck_assert_int_eq(parse_status, 0);
+  eval_result = run_eval_program("'()");
+  ck_assert(is_empty_list(eval_result));
 
-  uintptr_t sp = CTX_STACK(&ctx)->sp;
+  eval_result = run_eval_program("'(foo)");
+  ck_assert(!is_empty_list(eval_result));
+  car = get_car(eval_result);
+  cdr = get_cdr(eval_result);
+  ck_assert_str_eq(get_symbol(car), "foo");
+  ck_assert(is_empty_list(cdr));
 
-  Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-
-  ck_assert_ptr_eq(eval_status, obj_true);
-  ck_assert_int_eq(sp + 4, CTX_STACK(&ctx)->sp);
-
-  Obj *neg_int = POP(&stack);
-  Obj *sym_bar = POP(&stack);
-  Obj *pos_int = POP(&stack);
-  Obj *sym_foo = POP(&stack);
-
-  ck_assert(OBJ_ISKIND(neg_int, Obj_Literal));
-  ck_assert(OBJ_ISKIND(sym_bar, Obj_Literal));
-  ck_assert(OBJ_ISKIND(pos_int, Obj_Literal));
-  ck_assert(OBJ_ISKIND(sym_foo, Obj_Literal));
-
-  ObjLiteral neg_int_literal = OBJ_AS(neg_int, literal);
-  ObjLiteral sym_bar_literal = OBJ_AS(sym_bar, literal);
-  ObjLiteral pos_int_literal = OBJ_AS(pos_int, literal);
-  ObjLiteral sym_foo_literal = OBJ_AS(sym_foo, literal);
-
-  ck_assert(neg_int_literal.kind == Literal_Int);
-  ck_assert(sym_bar_literal.kind == Literal_Sym);
-  ck_assert(pos_int_literal.kind == Literal_Int);
-  ck_assert(sym_foo_literal.kind == Literal_Sym);
-
-  ck_assert_int_eq(neg_int_literal.integer, -1);
-  ck_assert_str_eq(sym_bar_literal.symbol, "bar");
-  ck_assert_int_eq(pos_int_literal.integer, 42);
-  ck_assert_str_eq(sym_foo_literal.symbol, "foo");
-
-  ck_assert_ptr_eq(
-      (const void *)sym_bar_literal.symbol,
-      (const void *)sym_save(&CTX_SYMTAB(&ctx), "bar", strlen("bar")));
-  ck_assert_ptr_eq(
-      (const void *)sym_foo_literal.symbol,
-      (const void *)sym_save(&CTX_SYMTAB(&ctx), "foo", strlen("foo")));
-
-  yylex_destroy();
-  fclose(yyin);
+  eval_result = run_eval_program("'(foo bar)");
+  ck_assert(!is_empty_list(eval_result));
+  car = get_car(eval_result);
+  cdr = get_cdr(eval_result);
+  ck_assert(!is_empty_list(cdr));
+  ck_assert_str_eq(get_symbol(car), "foo");
+  ck_assert_str_eq(get_symbol(get_car(cdr)), "bar");
 }
 END_TEST
 
-START_TEST(test_set) {
-  const char *expressions[] = {
-      "push (foo 42) set",
-      NULL,
-  };
+// built-ins
 
-  for (unsigned i = 0; expressions[i]; ++i) {
-    const char *input = expressions[i];
+START_TEST(test_cons) {
+  Node *eval_result = NULL;
+  Node *car = NULL;
+  Node *cdr = NULL;
 
-    yyin = fmemopen((void *)input, strlen(input), "r");
+  eval_result = run_eval_program("(cons 'foo 'bar)");
+  ck_assert(!is_empty_list(eval_result));
+  car = get_car(eval_result);
+  cdr = get_cdr(eval_result);
+  ck_assert_str_eq(get_symbol(car), "foo");
+  ck_assert_str_eq(get_symbol(cdr), "bar");
 
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
+  eval_result = run_eval_program("(cons 'foo '(bar))");
+  ck_assert(!is_empty_list(eval_result));
+  car = get_car(eval_result);
+  cdr = get_cdr(eval_result);
+  ck_assert(!is_empty_list(cdr));
+  ck_assert_str_eq(get_symbol(get_car(cdr)), "bar");
+}
+END_TEST
 
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
+START_TEST(test_set_and_lookup) {
+  Node *eval_result = NULL;
 
-    yylex_destroy();
-    fclose(yyin);
+  eval_result = run_eval_program("(set 'foo 42)");
+  ck_assert(get_integer(eval_result) == 42);
+  eval_result = run_eval_program("foo");
+  ck_assert(get_integer(eval_result) == 42);
+}
+END_TEST
+
+START_TEST(test_first) {
+  Node *eval_result = NULL;
+  // Node *car = NULL;
+  // Node *cdr = NULL;
+
+  eval_result = run_eval_program("(first '())");
+  ck_assert(is_empty_list(eval_result));
+
+  eval_result = run_eval_program("(first '(foo bar))");
+  ck_assert(is_symbol(eval_result));
+  ck_assert_str_eq(get_symbol(eval_result), "foo");
+
+  if (setjmp(eval_error_jmp) == 0) {
+    eval_result = run_eval_program("(first)");
+    ck_assert(0);
+  } else {
+    ck_assert(1);
   }
-
-  // set is a pure consumer
-
-  Obj *obj;
-
-  int status = env_lookup(CTX_ENV(&ctx), "foo", (void **)&obj);
-  ck_assert_int_eq(status, 0);
-
-  ck_assert(OBJ_ISKIND(obj, Obj_Literal));
-
-  ObjLiteral obj_literal = OBJ_AS(obj, literal);
-
-  ck_assert(obj_literal.kind == Literal_Int);
-  ck_assert_int_eq(obj_literal.integer, 42);
 }
 END_TEST
 
-START_TEST(test_lookup) {
-  const char *expressions[] = {
-      "push (foo bar) set",
-      "push (foo) lookup",
-      NULL,
-  };
+START_TEST(test_rest) {
+  Node *eval_result = NULL;
 
-  for (unsigned i = 0; expressions[i]; ++i) {
-    const char *input = expressions[i];
+  eval_result = run_eval_program("(rest '())");
+  ck_assert(is_empty_list(eval_result));
 
-    yyin = fmemopen((void *)input, strlen(input), "r");
+  eval_result = run_eval_program("(rest '(foo bar))");
+  ck_assert(is_list(eval_result));
+  ck_assert(is_symbol(get_car(eval_result)));
+  ck_assert_str_eq(get_symbol(get_car(eval_result)), "bar");
 
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
-
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
-
-    yylex_destroy();
-    fclose(yyin);
+  if (setjmp(eval_error_jmp) == 0) {
+    eval_result = run_eval_program("(rest)");
+    ck_assert(0);
+  } else {
+    ck_assert(1);
   }
-
-  // symbol value is the same
-
-  Obj *obj = POP(&stack);
-
-  ck_assert(OBJ_ISKIND(obj, Obj_Literal));
-
-  ObjLiteral obj_literal = OBJ_AS(obj, literal);
-  ck_assert(obj_literal.kind == Literal_Sym);
-  ck_assert_str_eq(obj_literal.symbol, "bar");
-
-  // same address
-
-  Obj *ob_ptr;
-
-  int status = env_lookup(CTX_ENV(&ctx), "foo", (void **)&ob_ptr);
-
-  ck_assert_int_eq(status, 0);
-  ck_assert_ptr_eq(obj, ob_ptr);
 }
 END_TEST
 
-START_TEST(test_ret) {
-  void *val_in = (void *)0xDEADBEEF;
+START_TEST(test_len) {
+  Node *eval_result = NULL;
 
-  PUSH(&stack, val_in);
-  ENTER_FRAME(&stack);
+  eval_result = run_eval_program("(len '())");
+  ck_assert(get_integer(eval_result) == 0);
 
-  const char *expressions[] = {
-      "push (foobar) return",
-      NULL,
-  };
+  eval_result = run_eval_program("(len '(a))");
+  ck_assert(get_integer(eval_result) == 1);
 
-  for (unsigned i = 0; expressions[i]; ++i) {
-    const char *input = expressions[i];
+  eval_result = run_eval_program("(len '(a b))");
+  ck_assert(get_integer(eval_result) == 2);
+}
+END_TEST
 
-    yyin = fmemopen((void *)input, strlen(input), "r");
+START_TEST(test_pair) {
+  Node *eval_result = NULL;
 
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
+  eval_result = run_eval_program("(pair '() '())");
+  ck_assert(get_integer(eval_result) == 0);
 
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
+  eval_result = run_eval_program("(len '(a))");
+  ck_assert(get_integer(eval_result) == 1);
 
-    yylex_destroy();
-    fclose(yyin);
-  }
-
-  Obj *obj = POP(&stack);
-
-  ck_assert(OBJ_ISKIND(obj, Obj_Literal));
-
-  ObjLiteral obj_literal = OBJ_AS(obj, literal);
-  ck_assert(obj_literal.kind == Literal_Sym);
-  ck_assert_str_eq(obj_literal.symbol, "foobar");
-
-  ck_assert_ptr_eq((void *)POP(&stack), val_in);
+  eval_result = run_eval_program("(len '(a b))");
+  ck_assert(get_integer(eval_result) == 2);
 }
 END_TEST
 
 START_TEST(test_closure) {
-  const char *expressions[] = {
-      "closure ()()",
-
-      "closure (foo bar) ()",
-
-      "closure (foo bar) ("
-      "  push (42)"
-      "  return"
-      ")",
-
-      "push (foo42)",
-
-      "set",
-
-      "push (foo42)",
-
-      "lookup",
-
-      NULL,
-  };
-
-  for (unsigned i = 0; expressions[i]; ++i) {
-    const char *input = expressions[i];
-
-    yyin = fmemopen((void *)input, strlen(input), "r");
-
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
-
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
-
-    yylex_destroy();
-    fclose(yyin);
-  }
-
-  // Check the last one
-
-  Obj *obj = POP(&stack);
-
-  ck_assert(OBJ_ISKIND(obj, Obj_Closure));
-}
-END_TEST
-
-START_TEST(test_apply_with_anonymous_closure) {
-  const char *expressions[] = {
-      "push (42 1 3)",
-
-      "closure (i j k) ("
-      "  push (i)"
-      "  lookup"
-      "  return"
-      ") apply",
-
-      NULL,
-  };
-
-  for (unsigned i = 0; expressions[i]; ++i) {
-    const char *input = expressions[i];
-
-    yyin = fmemopen((void *)input, strlen(input), "r");
-
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
-
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
-
-    yylex_destroy();
-    fclose(yyin);
-  }
-
-  Obj *obj = POP(&stack);
-  ck_assert(OBJ_ISKIND(obj, Obj_Literal));
-
-  ObjLiteral int_literal = OBJ_AS(obj, literal);
-
-  ck_assert(int_literal.kind == Literal_Int);
-  ck_assert_int_eq(int_literal.integer, 42);
-}
-END_TEST
-
-START_TEST(test_apply_with_named_closure) {
-  const char *expressions[] = {
-      "closure (barvar) ("
-      "  push (barvar)"
-      "  lookup"
-      "  return"
-      ") push (foo42) set",
-
-      "push (foo42 42) lookup apply",
-
-      NULL,
-  };
-
-  for (unsigned i = 0; expressions[i]; ++i) {
-    const char *input = expressions[i];
-
-    yyin = fmemopen((void *)input, strlen(input), "r");
-
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
-
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
-
-    yylex_destroy();
-    fclose(yyin);
-  }
-
-  Obj *obj = POP(&stack);
-  ck_assert(OBJ_ISKIND(obj, Obj_Literal));
-
-  ObjLiteral int_literal = OBJ_AS(obj, literal);
-
-  ck_assert(int_literal.kind == Literal_Int);
-  ck_assert_int_eq(int_literal.integer, 42);
-}
-END_TEST
-
-START_TEST(test_if) {
-  const char *expressions[] = {
-      "push (true) if (push(42)) (push(-1))",
-
-      "push (false) if (push(-1)) (push(42))",
-
-      NULL,
-  };
-
-  for (unsigned i = 0; expressions[i]; ++i) {
-    const char *input = expressions[i];
-
-    yyin = fmemopen((void *)input, strlen(input), "r");
-
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
-
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
-
-    yylex_destroy();
-    fclose(yyin);
-
-    Obj *obj = POP(&stack);
-    ck_assert(OBJ_ISKIND(obj, Obj_Literal));
-
-    ObjLiteral int_literal = OBJ_AS(obj, literal);
-
-    ck_assert(int_literal.kind == Literal_Int);
-    ck_assert_int_eq(int_literal.integer, 42);
-  }
-}
-END_TEST
-
-START_TEST(test_is) {
-  const char *true_expressions[] = {
-      "true true is",
-      "false false is",
-      "push (a c b c) set set push(a) lookup push(b) lookup is",
-      NULL,
-  };
-  const char *false_expressions[] = {
-      "true false is",
-      "true false is",
-      "push (a c b d) set set push(a) lookup push(b) lookup is",
-      "push (a 42 b 42) set set push(a) lookup push(b) lookup is",
-      NULL,
-  };
-
-  for (unsigned i = 0; true_expressions[i]; ++i) {
-    const char *input = true_expressions[i];
-
-    yyin = fmemopen((void *)input, strlen(input), "r");
-
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
-
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
-
-    yylex_destroy();
-    fclose(yyin);
-
-    Obj *obj = POP(&stack);
-    ck_assert(OBJ_ISKIND(obj, Obj_Literal));
-    ck_assert_ptr_eq(obj, obj_true);
-
-    ObjLiteral *obj_bool = OBJ_AS_PTR(obj, literal);
-    ck_assert(obj_bool->kind == Literal_Keywrd);
-  }
-
-  for (unsigned i = 0; false_expressions[i]; ++i) {
-    const char *input = false_expressions[i];
-
-    yyin = fmemopen((void *)input, strlen(input), "r");
-
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
-
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
-
-    yylex_destroy();
-    fclose(yyin);
-
-    Obj *obj = POP(&stack);
-    ck_assert(OBJ_ISKIND(obj, Obj_Literal));
-    ck_assert_ptr_eq(obj, obj_false);
-
-    ObjLiteral *obj_bool = OBJ_AS_PTR(obj, literal);
-    ck_assert(obj_bool->kind == Literal_Keywrd);
-  }
-}
-END_TEST
-
-START_TEST(test_eq) {
-  const char *true_expressions[] = {
-      "true true eq",
-      "false false eq",
-      "push (a c b c) set set push(a) lookup push(b) lookup eq",
-      "push (a 42 b 42) set set push(a) lookup push(b) lookup eq",
-      NULL,
-  };
-  const char *false_expressions[] = {
-      "true false eq",
-      "true false eq",
-      "push (a c b d) set set push(a) lookup push(b) lookup eq",
-      NULL,
-  };
-
-  for (unsigned i = 0; true_expressions[i]; ++i) {
-    const char *input = true_expressions[i];
-
-    yyin = fmemopen((void *)input, strlen(input), "r");
-
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
-
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
-
-    yylex_destroy();
-    fclose(yyin);
-
-    Obj *obj = POP(&stack);
-    ck_assert(OBJ_ISKIND(obj, Obj_Literal));
-    ck_assert_ptr_eq(obj, obj_true);
-
-    ObjLiteral *obj_bool = OBJ_AS_PTR(obj, literal);
-    ck_assert(obj_bool->kind == Literal_Keywrd);
-  }
-
-  for (unsigned i = 0; false_expressions[i]; ++i) {
-    const char *input = false_expressions[i];
-
-    yyin = fmemopen((void *)input, strlen(input), "r");
-
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
-
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
-
-    yylex_destroy();
-    fclose(yyin);
-
-    Obj *obj = POP(&stack);
-    ck_assert(OBJ_ISKIND(obj, Obj_Literal));
-    ck_assert_ptr_eq(obj, obj_false);
-
-    ObjLiteral *obj_bool = OBJ_AS_PTR(obj, literal);
-    ck_assert(obj_bool->kind == Literal_Keywrd);
-  }
-}
-END_TEST
-
-START_TEST(test_math) {
-  const char *expressions[] = {
-      "push (0 0) add\n"
-      "push(0) eq",
-
-      "push (42 1) add\n"
-      "push(42) eq",
-
-      "push (0 1) sub\n"
-      "push(-1) eq",
-
-      "push (1 0) sub\n"
-      "push(1) eq",
-
-      "push (1 0) mul\n"
-      "push(0) eq",
-
-      "push (1 42) mul\n"
-      "push(42) eq",
-
-      "push (42 6) div\n"
-      "push(7) eq",
-
-      "push (42 1) div\n"
-      "push(1) eq",
-
-      NULL,
-  };
-
-  for (unsigned i = 0; expressions[i]; ++i) {
-    const char *input = expressions[i];
-
-    yyin = fmemopen((void *)input, strlen(input), "r");
-
-    int parse_status = yyparse(&ctx);
-    ck_assert_int_eq(parse_status, 0);
-
-    Obj *eval_status = eval(CTX_PARSE_ROOT(&ctx), &ctx);
-    ck_assert_ptr_eq(eval_status, obj_true);
-
-    yylex_destroy();
-    fclose(yyin);
-  }
+  Node *eval_result = NULL;
+
+  // define
+  eval_result = run_eval_program("(closure '() '())");
+  ck_assert(is_closure_fn(eval_result));
+
+  // run
+  eval_result = run_eval_program("((closure '() '()))");
+  ck_assert(is_empty_list(eval_result));
+
+  // run body with a=42
+  eval_result = run_eval_program("((closure '(a) 'a) 42)");
+  ck_assert(is_integer(eval_result) && get_integer(eval_result) == 42);
+
+  // define 'foo and run
+  eval_result =
+      run_eval_program("(set 'foo (closure '() '(cons 'a 'b))) (foo)");
+  ck_assert(is_list(eval_result));
+
+  eval_result = run_eval_program(
+      "(set 'foo (closure '(a b) '(cons a b))) (foo 'bar 'biz)");
+  ck_assert(is_list(eval_result));
 }
 END_TEST
 
@@ -543,18 +220,15 @@ Suite *eval_suite(void) {
   TCase *tc_core = tcase_create("Core");
   tcase_add_checked_fixture(tc_core, setup, teardown);
 
-  tcase_add_test(tc_core, test_push);
-  tcase_add_test(tc_core, test_push_args);
-  tcase_add_test(tc_core, test_set);
-  tcase_add_test(tc_core, test_lookup);
-  tcase_add_test(tc_core, test_ret);
+  tcase_add_test(tc_core, test_literal_expressions);
+  tcase_add_test(tc_core, test_quote);
+  tcase_add_test(tc_core, test_cons);
+  tcase_add_test(tc_core, test_set_and_lookup);
+  tcase_add_test(tc_core, test_first);
+  tcase_add_test(tc_core, test_rest);
+  tcase_add_test(tc_core, test_len);
+  tcase_add_test(tc_core, test_pair);
   tcase_add_test(tc_core, test_closure);
-  tcase_add_test(tc_core, test_apply_with_anonymous_closure);
-  tcase_add_test(tc_core, test_apply_with_named_closure);
-  tcase_add_test(tc_core, test_if);
-  tcase_add_test(tc_core, test_is);
-  tcase_add_test(tc_core, test_eq);
-  tcase_add_test(tc_core, test_math);
 
   suite_add_tcase(s, tc_core);
   return s;

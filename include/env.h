@@ -9,7 +9,7 @@ typedef struct Env {
 } Env;
 
 Env *env_new(Env *parent);
-int env_lookup(Env *env, const char *sym, void **addr);
+rb_node *env_lookup(Env *env, const char *sym);
 int env_set(Env *env, const char *sym, void *addr);
 
 #endif

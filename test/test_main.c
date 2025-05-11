@@ -9,6 +9,7 @@ extern int yydebug;
 
 extern Suite *parser_suite(void);
 extern Suite *stack_suite(void);
+extern Suite *palloc_suite(void);
 extern Suite *env_suite(void);
 extern Suite *eval_suite(void);
 extern Suite *rb_tree_suite(void);
@@ -22,7 +23,7 @@ int main(void) {
 
   srunner_add_suite(sr, stack_suite());
   srunner_add_suite(sr, env_suite());
-  srunner_add_suite(sr, parser_suite());
+  srunner_add_suite(sr, palloc_suite());
   srunner_add_suite(sr, eval_suite());
   srunner_add_suite(sr, rb_tree_suite());
 

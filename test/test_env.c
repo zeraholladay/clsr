@@ -16,25 +16,21 @@ START_TEST(test_env) {
   void *val_2 = (void *)0xDEADFACE;
   void *val_3 = (void *)0xDEADCAFE;
 
-  void *rval_1;
-  void *rval_2;
-  void *rval_3;
-
   env_set(env, key_1, val_1);
   env_set(env, key_2, val_2);
   env_set(env, key_3, val_3);
 
-  int status_1 = env_lookup(env, key_1, &rval_1);
-  int status_2 = env_lookup(env, key_2, &rval_2);
-  int status_3 = env_lookup(env, key_3, &rval_3);
+  rb_node *n1 = env_lookup(env, key_1);
+  rb_node *n2 = env_lookup(env, key_2);
+  rb_node *n3 = env_lookup(env, key_3);
 
-  ck_assert_int_eq(status_1, 0);
-  ck_assert_int_eq(status_2, 0);
-  ck_assert_int_eq(status_3, 0);
+  ck_assert(n1);
+  ck_assert(n2);
+  ck_assert(n3);
 
-  ck_assert_ptr_eq(rval_1, val_1);
-  ck_assert_ptr_eq(rval_2, val_2);
-  ck_assert_ptr_eq(rval_3, val_3);
+  ck_assert(RB_VAL(n1) == val_1);
+  ck_assert(RB_VAL(n2) == val_2);
+  ck_assert(RB_VAL(n3) == val_3);
 }
 END_TEST
 
@@ -50,9 +46,9 @@ START_TEST(test_env_frame) {
   void *val_2 = (void *)0xDEADFACE;
   void *val_3 = (void *)0xDEADCAFE;
 
-  void *rval_1;
-  void *rval_2;
-  void *rval_3;
+  rb_node *n1;
+  rb_node *n2;
+  rb_node *n3;
 
   // fall through from child to parent
 
@@ -60,30 +56,30 @@ START_TEST(test_env_frame) {
   env_set(env_parent, key_2, val_2);
   env_set(env_parent, key_3, val_3);
 
-  env_lookup(env_child, key_1, &rval_1);
-  env_lookup(env_child, key_2, &rval_2);
-  env_lookup(env_child, key_3, &rval_3);
+  n1 = env_lookup(env_child, key_1);
+  n2 = env_lookup(env_child, key_2);
+  n3 = env_lookup(env_child, key_3);
 
-  ck_assert_ptr_eq(rval_1, val_1);
-  ck_assert_ptr_eq(rval_2, val_2);
-  ck_assert_ptr_eq(rval_3, val_3);
+  ck_assert(RB_VAL(n1) == val_1);
+  ck_assert(RB_VAL(n2) == val_2);
+  ck_assert(RB_VAL(n3) == val_3);
 
   // child overrides
 
   const char *child_key1 = "FACEFADE";
   const char *child_key2 = "DEADFACE";
 
-  void *child_rval_1 = NULL;
-  void *child_rval_2 = NULL;
+  rb_node *child_n1 = NULL;
+  rb_node *child_n2 = NULL;
 
-  env_set(env_child, child_key1, child_rval_1);
-  env_set(env_child, child_key2, child_rval_2);
+  env_set(env_child, child_key1, child_n1);
+  env_set(env_child, child_key2, child_n2);
 
-  env_lookup(env_child, child_key1, &child_rval_1);
-  env_lookup(env_child, child_key2, &child_rval_2);
+  child_n1 = env_lookup(env_child, child_key1);
+  child_n2 = env_lookup(env_child, child_key2);
 
-  ck_assert_ptr_eq(child_rval_1, child_rval_1);
-  ck_assert_ptr_eq(child_rval_2, child_rval_2);
+  ck_assert(child_n1 == child_n1);
+  ck_assert(child_n2 == child_n2);
 }
 END_TEST
 
@@ -96,20 +92,16 @@ START_TEST(test_env_fail) {
   void *val_1 = (void *)0xDEADBEEF;
   void *val_2 = (void *)0xDEADFACE;
 
-  void *rval_1;
-  void *rval_2;
-  void *rval_3;
-
   env_set(env, key_1, val_1);
   env_set(env, key_2, val_2);
 
-  int status_1 = env_lookup(env, key_1, &rval_1);
-  int status_2 = env_lookup(env, key_2, &rval_2);
-  int status_3 = env_lookup(env, "BOGUS", &rval_3);
+  rb_node *n1 = env_lookup(env, key_1);
+  rb_node *n2 = env_lookup(env, key_2);
+  rb_node *n3 = env_lookup(env, "BOGUS");
 
-  ck_assert_int_eq(status_1, 0);
-  ck_assert_int_eq(status_2, 0);
-  ck_assert_int_eq(status_3, -1);
+  ck_assert(n1);
+  ck_assert(n2);
+  ck_assert(n3 == NULL);
 }
 END_TEST
 

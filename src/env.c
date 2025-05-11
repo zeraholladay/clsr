@@ -1,55 +1,64 @@
 #include <stdlib.h>
 
-#include "common.h"
 #include "env.h"
+#include "oom_handlers.h"
+#include "safe_str.h"
+
+#ifndef ENV_STR_MAX
+#define ENV_STR_MAX 256
+#endif
+
+extern oom_handler_t env_oom_handler;
 
 Env *env_new(Env *parent) {
-  struct Env *env = NULL;
+  struct Env *env = calloc(1, sizeof *(env));
 
-  if (ALLOC(env))
-    die(LOCATION);
+  if (!env) {
+    env_oom_handler(NULL, OOM_LOCATION);
+    return NULL;
+  }
 
   env->parent = parent;
   return env;
 }
 
-int env_lookup(Env *env, const char *sym, void **addr) {
-  size_t len = strlen(sym);
+rb_node *env_lookup(Env *env, const char *sym) {
+  size_t len = safe_strnlen(sym, ENV_STR_MAX);
 
   for (Env *cur_env = env; cur_env; cur_env = cur_env->parent) {
-    rb_node *node = rb_lookup(cur_env->root, sym, len);
+    rb_node *n = rb_lookup(cur_env->root, sym, len);
 
-    if (node) {
-      *addr = RB_VAL(node);
-      return 0;
-    }
+    if (n)
+      return n;
   }
 
-  return -1; // fail
+  return NULL;
 }
 
 int env_set(Env *env, const char *sym, void *addr) {
-  size_t len = strlen(sym);
+  size_t len = safe_strnlen(sym, ENV_STR_MAX);
 
   for (Env *cur_env = env; cur_env; cur_env = cur_env->parent) {
-    rb_node *node = rb_lookup(cur_env->root, sym, len);
+    rb_node *n = rb_lookup(cur_env->root, sym, len);
 
-    if (node) {
-      RB_VAL(node) = addr;
+    if (n) {
+      RB_VAL(n) = addr;
       return 0;
     }
   }
 
-  rb_node *node = rb_alloc(); // FIXME
+  rb_node *n = rb_alloc(); // FIXME
 
-  if (!node)
-    die(LOCATION);
+  if (!n) {
+    env_oom_handler(NULL, OOM_LOCATION);
+    return -1;
+  }
 
-  RB_KEY(node) = sym;
-  RB_KEY_LEN(node) = len;
-  RB_VAL(node) = addr;
+  RB_KEY(n) = sym;
+  RB_KEY_LEN(n) = len;
+  RB_VAL(n) = addr;
 
-  rb_insert(&env->root, node);
+  rb_insert(&env->root, n);
 
   return 0;
 }

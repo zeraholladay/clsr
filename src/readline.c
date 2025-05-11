@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
-
 #ifndef READLIN_HISTORY_MAX
 #define READLIN_HISTORY_MAX 100
 #endif

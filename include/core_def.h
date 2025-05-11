@@ -41,10 +41,11 @@ typedef struct Node Node;
 typedef struct Context Context;
 
 // PrimOp
+/* PRIM_OP_NULL for quote. */
+typedef enum { PRIM_OP_NULL, PRIM_OP_UNARY_FN, PRIM_OP_BINARY_FN } PrimOpEnum;
+
 typedef Node *(*PrimUnaryFunc)(Node *node, Context *ctx);
 typedef Node *(*PrimBinaryFunc)(Node *node1, Node *node2, Context *ctx);
-
-typedef enum { PRIM_OP_UNARY_FN, PRIM_OP_BINARY_FN } PrimOpEnum;
 
 typedef struct PrimOp {
   const char *name;

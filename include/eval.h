@@ -3,20 +3,31 @@
 
 #include "core_def.h"
 
-// #define EVAL_FMT "Eval error: %s\n"
-// #define X "Params must have same length."
-// #define X "Unknown primitive in apply."
-// #define X "Unknown node type in apply."
-// #define X "Closure: params and body must be a list."
-// #define X "First only takes a list."
-// #define X "len only takes a list."
-// #define X "Lookup parameter to lookup must be a symbol."
-// #define X "Could not resolve symbol."
-// #define X "Pair: list1 and list2 must be a list."
-// #define X "Quote does not exist."
-// #define X "Rest only takes a list."
-// #define X "Set parameter to set must be a symbol."
-// #define X "Type unknown to eval."
+typedef enum {
+  ERR_INTERNAL,           // Internal error (bug)
+  ERR_SYMBOL_NOT_FOUND,   // Symbol undefined
+  ERR_INVALID_ARG,        // Invalid type or value for argument
+  ERR_MISSING_ARG,        // Missing required argument
+  ERR_ARG_TYPE_MISMATCH,  // Argument has wrong type
+  ERR_ARG_OUT_OF_RANGE,   // Value out of range
+  ERR_UNEXPECTED_ARG,     // Extra or unexpected argument
+  ERR_INVALID_ARG_LENGTH, // Length of argument is invalid
+  ERR_NULL_ARG,           // Null argument where not allowed
+  ERR_ARG_NOT_ITERABLE,   // Argument expected to be iterable
+} ErrorCode;
+
+static const char *error_messages[] = {
+    [ERR_INTERNAL] = "Internal error occurred.",
+    [ERR_SYMBOL_NOT_FOUND] = "Could not resolve symbol.",
+    [ERR_INVALID_ARG] = "Invalid argument type or value.",
+    [ERR_MISSING_ARG] = "Missing required argument.",
+    [ERR_ARG_TYPE_MISMATCH] = "Argument type mismatch.",
+    [ERR_ARG_OUT_OF_RANGE] = "Argument value out of range.",
+    [ERR_UNEXPECTED_ARG] = "Unexpected argument provided.",
+    [ERR_INVALID_ARG_LENGTH] = "Invalid argument length.",
+    [ERR_NULL_ARG] = "Argument cannot be null.",
+    [ERR_ARG_NOT_ITERABLE] = "Argument is not iterable when expected.",
+};
 
 Node *apply(Node *node, Node *args, Context *ctx);
 Node *closure(Node *params, Node *body, Context *ctx);
@@ -25,7 +36,6 @@ Node *first(Node *node, Context *ctx);
 Node *length(Node *list, Context *ctx);
 Node *lookup(Node *node, Context *ctx);
 Node *pair(Node *list1, Node *list2, Context *ctx);
-Node *quote(Node *node, Context *void_ctx);
 Node *repr(Node *node, Context *ctx);
 Node *rest(Node *node, Context *ctx);
 Node *set(Node *car, Node *cdr, Context *ctx);

@@ -140,6 +140,7 @@ Pairs two lists:
 1. Conditionals
 1. Equality
 1. Error status and messages
+1. Exceptions
 1. Memory management (tracking)
 1. I/O subsystem
 1. ~~Refactor PrimOps to Enum~~

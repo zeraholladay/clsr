@@ -19,23 +19,23 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
 %%
 
 <INITIAL>{
-    "'"             { return TOK_QUOTE; }
+    "'"             { return QUOTE; }
     "("             { return '('; }
     ")"             { return ')'; }
-    {NUM}           { yylval.num = atoll(yytext); return TOK_INT_LITERAL; }
+    {NUM}           { yylval.integer = atoll(yytext); return INTEGER; }
     {ID}            {
-                    const PrimOp *p = prim_op_lookup(yytext, strlen(yytext));
-                    if (p) {
-                        yylval.prim = p;
-                        return p->tok;
+                    const PrimOp *prim_op = prim_op_lookup(yytext, strlen(yytext));
+                    if (prim_op) {
+                        yylval.prim_op = prim_op;
+                        return PRIM_OP;
                     }
-                    yylval.sym = sym_save(&CTX_SYMTAB(ctx), yytext, yyleng);
-                    return TOK_SYM_LITERAL;
+                    yylval.symbol = sym_save(&CTX_SYMTAB(ctx), yytext, yyleng);
+                    return SYMBOL;
                     }
     {WS}            { /* ignore */ }
     {NL}            { /* ignore */ }
     ;[^\n]*         { /* ignore */ }
-    .               { return TOK_ERROR; }
+    .               { return ERROR; }
 }
 
 %%

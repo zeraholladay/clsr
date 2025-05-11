@@ -10,23 +10,22 @@
 %struct-type
 %ignore-case
 %define lookup-function-name prim_op_lookup
-%define initializer-suffix ,0,0,0
 %define slot-name name
 
 struct PrimOp;
 
 %%
-APPLY,   TOK_APPLY,   0,       apply  ,
-CLOSURE, TOK_CLOSURE, 0,       closure,
-CONS,    TOK_CONS,    0,       cons   ,
-EVAL,    TOK_EVAL,    eval,    0      ,
-FIRST,   TOK_FIRST,   first,   0      ,
-LEN,     TOK_LEN,     length,  0      ,
-LOOKUP,  TOK_LOOKUP,  lookup,  0      ,
-PAIR,    TOK_PAIR,    0,       pair   ,
-QUOTE,   TOK_QUOTE,   0,       0      ,
-REPR,    TOK_REPR,    repr,    0      ,
-REST,    TOK_REST,    rest,    0      ,
-SET,     TOK_SET,     0,       set    ,
-STR,     TOK_STR,     _str,    0      ,
+APPLY,   PRIM_OP_BINARY_FN, .binary_fn_ptr = apply,
+CLOSURE, PRIM_OP_BINARY_FN, .binary_fn_ptr = closure,
+CONS,    PRIM_OP_BINARY_FN, .binary_fn_ptr = cons,
+EVAL,    PRIM_OP_UNARY_FN,  .unary_fn_ptr  = eval,
+FIRST,   PRIM_OP_UNARY_FN,  .unary_fn_ptr  = first,
+LEN,     PRIM_OP_UNARY_FN,  .unary_fn_ptr  = length,
+LOOKUP,  PRIM_OP_UNARY_FN,  .unary_fn_ptr  = lookup,
+PAIR,    PRIM_OP_BINARY_FN, .binary_fn_ptr = pair,
+QUOTE,   PRIM_OP_UNARY_FN,  .unary_fn_ptr  = quote,
+REPR,    PRIM_OP_UNARY_FN,  .unary_fn_ptr  = repr,
+REST,    PRIM_OP_UNARY_FN,  .unary_fn_ptr  = rest,
+SET,     PRIM_OP_BINARY_FN, .binary_fn_ptr = set,
+STR,     PRIM_OP_UNARY_FN,  .unary_fn_ptr  = _str,
 %%

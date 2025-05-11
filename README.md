@@ -142,7 +142,7 @@ Pairs two lists:
 1. Error status and messages
 1. Memory management (tracking)
 1. I/O subsystem
-1. Refactor PrimOps to Enum
+1. ~~Refactor PrimOps to Enum~~
 1. Docs/README.md
 1. Testing/tests
 1. Repr/str is a mess

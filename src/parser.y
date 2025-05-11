@@ -25,26 +25,23 @@ extern int yylineno;
 
 void reset_parse_context(Context *ctx);
 }
-%define api.token.prefix {TOK_}
 
 %lex-param   {Context *ctx}
 %parse-param {Context *ctx}
 
 %union {
-    CLSR_INTEGER_TYPE num;
-    const char *sym;
-    const struct PrimOp *prim;
+    CLSR_INTEGER_TYPE integer;
+    const char *symbol;
+    const struct PrimOp *prim_op;
     struct Node *node;
 }
 
 %type <node> program expressions expression expression_list list number symbol 
-%type <prim> primitive
 
 %token QUOTE ERROR
-%token <num> INT_LITERAL
-%token <sym> SYM_LITERAL
-
-%token <prim> ADD APPLY CLOSURE CONS DIV EQ EVAL FIRST IF IS LEN LOOKUP MUL PAIR PUSH REST REPR RETURN SET STR SUB
+%token <prim_op> PRIM_OP
+%token <integer> INTEGER
+%token <symbol> SYMBOL
 
 %%
 
@@ -100,40 +97,16 @@ expression_list
     ;
 
 symbol
-    : primitive {
+    : PRIM_OP {
         $$ = cons_primop(CTX_POOL(ctx), $1);
     }
-    | SYM_LITERAL {
+    | SYMBOL {
         $$ = cons_symbol(CTX_POOL(ctx), $1);
     }
     ;
 
-primitive
-    : ADD
-    | APPLY
-    | CONS
-    | CLOSURE
-    | DIV
-    | EQ
-    | EVAL
-    | FIRST
-    | IF
-    | IS
-    | LOOKUP
-    | LEN
-    | MUL
-    | PUSH
-    | PAIR
-    | REPR
-    | REST
-    | RETURN
-    | SET
-    | STR
-    | SUB
-    ;
-
 number
-    : INT_LITERAL {
+    : INTEGER {
         $$ = cons_integer(CTX_POOL(ctx), $1);
     }
     ;

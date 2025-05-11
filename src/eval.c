@@ -43,6 +43,25 @@ static Node *_apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
   return eval(get_closure_body(fn_node), &new_ctx);
 }
 
+static Node *_apply_prim_op(Node *fn_node, Node *arglist, Context *ctx) {
+  const PrimOp *prim_op = get_prim_op(fn_node);
+
+  switch (prim_op->kind) {
+  case PRIM_OP_UNARY_FN:
+    return prim_op->unary_fn_ptr(get_car(arglist), ctx);
+    break;
+
+  case PRIM_OP_BINARY_FN:
+    return prim_op->binary_fn_ptr(get_car(arglist), get_car(get_cdr(arglist)),
+                                  ctx);
+    break;
+
+  default:
+    return raise("Unknown primitive in apply.");
+    break;
+  }
+}
+
 Node *apply(Node *fn_node, Node *arglist, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
 
@@ -51,18 +70,7 @@ Node *apply(Node *fn_node, Node *arglist, Context *ctx) {
   }
 
   if (is_primitive_fn(fn_node)) {
-    const PrimOp *prim_op = get_prim_op(fn_node);
-
-    if (prim_op->unary_f_ptr) {
-      return prim_op->unary_f_ptr(get_car(arglist), ctx);
-    }
-
-    if (prim_op->binary_f_ptr) {
-      return prim_op->binary_f_ptr(get_car(arglist), get_car(get_cdr(arglist)),
-                                   ctx);
-    }
-
-    return raise("Unknown primitive in apply.");
+    return _apply_prim_op(fn_node, arglist, ctx);
   }
 
   return raise("Unknown node type in apply.");

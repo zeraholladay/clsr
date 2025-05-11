@@ -136,11 +136,13 @@ Pairs two lists:
 
 ## TODO
 
+In no particular order:
+
 1. Math
 1. Conditionals
 1. Equality
-1. Error status and messages
 1. Exceptions
+1. ~~Error status and messages~~
 1. Memory management (tracking)
 1. I/O subsystem
 1. ~~Refactor PrimOps to Enum~~
@@ -151,7 +153,7 @@ Pairs two lists:
 1. List operator
 1. Strings
 1. Pool to arena (will need fix to yyparse)
-1. Parse errors
+1. Parse errors (exceptions first)
 1. GC
 1. repl I/O from files
 1. Bug squashing

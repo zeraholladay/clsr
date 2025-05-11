@@ -37,11 +37,13 @@
 // Forward declarations
 struct Node;
 struct Context;
+typedef struct Node Node;
+typedef struct Context Context;
 
 // PrimOp
-typedef struct Node *(*PrimUnaryFunc)(struct Node *node, struct Context *ctx);
-typedef struct Node *(*PrimBinaryFunc)(struct Node *node1, struct Node *node2,
-                                       struct Context *ctx);
+typedef Node *(*PrimUnaryFunc)(Node *node, Context *ctx);
+typedef Node *(*PrimBinaryFunc)(Node *node1, Node *node2, Context *ctx);
+
 typedef enum { PRIM_OP_UNARY_FN, PRIM_OP_BINARY_FN } PrimOpEnum;
 
 typedef struct PrimOp {
@@ -73,8 +75,6 @@ typedef struct {
     const char *symbol;
   } as;
 } Literal;
-
-typedef struct Node Node; // FIXM ME
 
 typedef struct {
   Node *car;
@@ -115,11 +115,11 @@ typedef struct ParserContext {
   Wrapper *parse_mark;
 } ParserContext;
 
-typedef struct Context {
+struct Context {
   Pool *node_pool;
   EvalContext eval_ctx;
   ParserContext parser_ctx;
-} Context;
+};
 
 // coredef.c
 const Kind *get_kind(Node *self);

@@ -9,6 +9,11 @@
 #include "rb_tree.h"
 #include "stack.h"
 
+// PrimOp macros
+#define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
+#define PRIM_OP_CALL()
+
+// formatting
 #ifndef CLSR_INTEGER_TYPE
 #define CLSR_INTEGER_TYPE long long
 #define CLSR_INTEGER_TYPE_FMT "%lld"
@@ -18,8 +23,7 @@
 #define CLSR_INTEGER_TYPE_STR_MAX_SIZE                                         \
   ((size_t)(sizeof(CLSR_INTEGER_TYPE) * CHAR_BIT * LOG10_2 + 3))
 
-#define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
-
+// Context macros
 #define CTX_POOL(ctx) ((ctx)->node_pool)
 #define CTX_ENV(ctx) ((ctx)->eval_ctx.env)
 #define CTX_STACK(ctx) ((ctx)->eval_ctx.stack)
@@ -38,12 +42,15 @@ struct Context;
 typedef struct Node *(*PrimUnaryFunc)(struct Node *node, struct Context *ctx);
 typedef struct Node *(*PrimBinaryFunc)(struct Node *node1, struct Node *node2,
                                        struct Context *ctx);
+typedef enum { PRIM_OP_UNARY_FN, PRIM_OP_BINARY_FN } PrimOpEnum;
 
 typedef struct PrimOp {
   const char *name;
-  const int tok;
-  const PrimUnaryFunc unary_f_ptr;
-  const PrimBinaryFunc binary_f_ptr;
+  const PrimOpEnum kind;
+  union {
+    const PrimUnaryFunc unary_fn_ptr;
+    const PrimBinaryFunc binary_fn_ptr;
+  };
 } PrimOp;
 
 // Node kind "object"
@@ -67,7 +74,7 @@ typedef struct {
   } as;
 } Literal;
 
-typedef struct Node Node;
+typedef struct Node Node; // FIXM ME
 
 typedef struct {
   Node *car;
@@ -113,10 +120,6 @@ typedef struct Context {
   EvalContext eval_ctx;
   ParserContext parser_ctx;
 } Context;
-
-/* prim_op.gperf */
-const struct PrimOp *prim_op_lookup(register const char *str,
-                                    register size_t len);
 
 // coredef.c
 const Kind *get_kind(Node *self);
@@ -211,5 +214,9 @@ static inline Node *get_closure_body(Node *node) {
 static inline Env *get_closure_env(Node *node) {
   return is_closure_fn(node) ? node->as.function.as.closure.env : NULL;
 }
+
+/* prim_op.gperf */
+const struct PrimOp *prim_op_lookup(register const char *str,
+                                    register size_t len);
 
 #endif

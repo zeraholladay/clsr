@@ -16,6 +16,16 @@ static void raise(ErrorCode err_code, const char *msg) {
   longjmp(eval_error_jmp, 1);
 }
 
+// FIXME
+static Node *get_true(Context *ctx) {
+  return cons_primop(CTX_POOL(ctx), PRIM_OP(T));
+}
+
+// FIXME
+static Node *get_nil(Context *ctx) {
+  return cons_primop(CTX_POOL(ctx), PRIM_OP(NIL));
+}
+
 static Node *apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
   // validate
@@ -50,6 +60,7 @@ static Node *apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
 static Node *apply_prim_op(Node *fn_node, Node *arglist, Context *ctx) {
   const PrimOp *prim_op = get_prim_op(fn_node);
 
+  // TODO: validate arglist is correct for type
   switch (prim_op->type) {
   case PRIM_OP_NULL:
     raise(ERR_INTERNAL, DEBUG_LOCATION);
@@ -109,8 +120,7 @@ Node *cons(Node *car, Node *cdr, Context *ctx) {
 
 Node *eq(Node *node1, Node *node2, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
-  return (type(node1)->eq_fn(node1, node2)) ? cons_symbol(CTX_POOL(ctx), "T")
-                                            : cons_symbol(CTX_POOL(ctx), "NIL");
+  return (type(node1)->eq_fn(node1, node2)) ? get_true(ctx) : get_nil(ctx);
 }
 
 Node *first(Node *list, Context *ctx) {
@@ -179,12 +189,12 @@ Node *pair(Node *list1, Node *list2, Context *ctx) {
 }
 
 Node *print(Node *node, Context *ctx) {
-  (void) ctx;
+  (void)ctx;
   DEBUG(DEBUG_LOCATION);
   char *str = type(node)->str_fn(node);
   printf("%s\n", str);
   free(str);
-  return cons_symbol(CTX_POOL(ctx), "T");
+  return get_true(ctx);
 }
 
 Node *repr(Node *node, Context *ctx) {
@@ -212,7 +222,6 @@ Node *set(Node *car, Node *cdr, Context *ctx) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
-  // cdr = (is_list(cdr)) ? first(cdr, ctx) : cdr;
   env_set(CTX_ENV(ctx), get_symbol(car), cdr); // TODO: error handling
   return cdr;
 }

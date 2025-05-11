@@ -54,17 +54,13 @@ static void clsr_eval_program(Context *ctx) {
     Node *eval_result = eval_program(CTX_PARSE_ROOT(ctx), ctx);
     Node *node = _str(eval_result, ctx);
     printf("%s\n", get_string(node));
-    free(node->as.string); // FIXME
+    free(node->as.string); // FIXME with GC
   }
 }
 
 int clsr_repl(void) {
-  Stack stack = {};
   Context ctx = {};
-  CTX_STACK(&ctx) = &stack;
-
   clsr_init(&ctx);
-
   rl_init();
 
   char full_input[REPL_BUF_SIZ];

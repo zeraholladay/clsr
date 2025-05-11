@@ -15,13 +15,13 @@ static inline int type_eq(Node *self, Node *other) {
 
 // NULL type
 static int null_eq(Node *self, Node *other) {
-  (void) self;
-  (void) other;
+  (void)self;
+  (void)other;
   return self == other;
 }
 
 static char *null_str(Node *self) {
-  (void) self;
+  (void)self;
   return STR_LITERAL_DUP("NULL");
 }
 
@@ -160,7 +160,7 @@ static char *string_str(Node *self) { return get_string(self); }
 
 // Singletons
 static Type null_singleton[] = {
-  [0] = KIND("NULL", null_str, null_eq),
+    [0] = KIND("NULL", null_str, null_eq),
 };
 
 static Type literal_singleton[] = {
@@ -182,10 +182,8 @@ static Type fn_singleton[] = {
 };
 
 static Type *type_singleton[] = {
-    [KIND_NULL] = null_singleton,
-    [KIND_LITERAL] = literal_singleton,
-    [KIND_LIST] = list_singleton,
-    [KIND_FUNCTION] = fn_singleton,
+    [KIND_NULL] = null_singleton,  [KIND_LITERAL] = literal_singleton,
+    [KIND_LIST] = list_singleton,  [KIND_FUNCTION] = fn_singleton,
     [KIND_STRING] = str_singleton,
 };
 

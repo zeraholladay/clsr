@@ -26,13 +26,9 @@
 // Context macros
 #define CTX_POOL(ctx) ((ctx)->node_pool)
 #define CTX_ENV(ctx) ((ctx)->eval_ctx.env)
-#define CTX_STACK(ctx) ((ctx)->eval_ctx.stack)
 #define CTX_SYMTAB(ctx) ((ctx)->parser_ctx.sym_tab)
-#define CTX_PARSE_ROOT(ctx) ((ctx)->parser_ctx.root_Node)
+#define CTX_PARSE_ROOT(ctx) ((ctx)->parser_ctx.root_node)
 #define CTX_PARSE_MARK(ctx) ((ctx)->parser_ctx.parse_mark)
-#define CTX_PEEK(ctx) PEEK(CTX_STACK(ctx))
-#define CTX_POP(ctx) POP(CTX_STACK(ctx))
-#define CTX_PUSH(ctx, Node) PUSH(CTX_STACK(ctx), Node)
 
 // Forward declarations
 struct Node;
@@ -67,7 +63,14 @@ typedef struct Type {
 } Type;
 
 // Nodes
-typedef enum { KIND_NULL, KIND_LITERAL, KIND_LIST, KIND_FUNCTION, KIND_STRING } TypeEnum;
+typedef enum {
+  KIND_NULL,
+  KIND_LITERAL,
+  KIND_LIST,
+  KIND_FUNCTION,
+  KIND_STRING
+} TypeEnum;
+
 typedef enum { LITERAL_INTEGER, LITERAL_SYMBOL } LiteralTypeEnum;
 typedef enum { FN_PRIMITIVE, FN_CLOSURE } FnTypeEnum;
 
@@ -114,12 +117,11 @@ struct Node {
 
 typedef struct EvalContext {
   Env *env;
-  Stack *stack;
 } EvalContext;
 
 typedef struct ParserContext {
   rb_node *sym_tab;
-  Node *root_Node;
+  Node *root_node;
   Wrapper *parse_mark;
 } ParserContext;
 

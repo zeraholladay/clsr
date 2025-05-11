@@ -35,6 +35,8 @@ Disables evaluation
 Example:
 
 ```lisp
+T    ; true
+NIL  ; false
 'foo ; symbol foo
 'bar ; symbol bar
 42   ; number 42
@@ -92,14 +94,20 @@ Create and returns a **closure** from a function `body` and its **captured envir
 
 ```lisp
 (closure '(a b) '(cons a (cons b '())))
+; creates an anonymous closure
 
 (set 'foofn 
       (closure '(a b c) 
         '(cons a (cons b (cons c '())))
-      )
+        )
 )
 (foofn 1 2 '3)
+; call a closure named foofn
 
+((closure '(a b c) 
+  '(cons a (cons b (cons c '()))))
+  1 2 3)
+; call an anonymous closure with args 1 2 3
 ```
 
 ---
@@ -115,6 +123,7 @@ Example with closure named `foo`:
 
 ```lisp
 (apply rest '((a b)))
+; 
 ```
 
 ---
@@ -124,6 +133,7 @@ Lenth of a list.
 
 ```lisp
 (len '(1 2 3 4 5))
+; 5
 ```
 ---
 
@@ -131,8 +141,55 @@ Lenth of a list.
 Pairs two lists:
 
 ```lisp
-(pair '(1 2 3 4 5) '(a b c d e))
+(pair '(1 2 3 4 5) 
+      '(a b c d e)
+      )
 ```
+
+---
+
+### `EVAL`
+Evaluates a list:
+
+```lisp
+(set 'a 42)
+(eval 'a)
+; 42
+(eval '(cons 'foo '()))
+; (foo)
+```
+
+---
+
+### `EQ`
+Returns `T` or `NIL` if arguments are equal:
+
+```lisp
+(eq T T)
+; T/true
+(eq T NIL)
+; NIL/false
+(eq '() '())
+; T
+(eq '(dog) '(dog))
+; NIL
+(eq (len '(a b c)) (len '(1 2 3)))
+; T
+```
+
+---
+
+### `PRINT`
+Prints an argument:
+
+```lisp
+(print 'foo)
+; 
+; foo
+; T
+```
+
+---
 
 ## TODO
 
@@ -140,7 +197,8 @@ In no particular order:
 
 1. Math
 1. Conditionals
-1. Equality
+1. Fix T/NIL
+1. ~~Equality~~
 1. Exceptions
 1. ~~Error status and messages~~
 1. Memory management (tracking)
@@ -148,10 +206,10 @@ In no particular order:
 1. ~~Refactor PrimOps to Enum~~
 1. Docs/README.md
 1. Testing/tests
-1. Repr/str is a mess
+1. ~~Repr/str is a mess~~
 1. Define/def
-1. List operator
-1. Strings
+1. List function
+1. Strings (started kind of)
 1. Pool to arena (will need fix to yyparse)
 1. Parse errors (exceptions first)
 1. GC

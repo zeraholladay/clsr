@@ -32,10 +32,12 @@ static const char *error_messages[] = {
 Node *apply(Node *node, Node *args, Context *ctx);
 Node *closure(Node *params, Node *body, Context *ctx);
 Node *cons(Node *car, Node *cdr, Context *ctx);
+Node *eq(Node *node1, Node *node2, Context *ctx);
 Node *first(Node *node, Context *ctx);
 Node *length(Node *list, Context *ctx);
 Node *lookup(Node *node, Context *ctx);
 Node *pair(Node *list1, Node *list2, Context *ctx);
+Node *print(Node *node, Context *ctx);
 Node *repr(Node *node, Context *ctx);
 Node *rest(Node *node, Context *ctx);
 Node *set(Node *car, Node *cdr, Context *ctx);

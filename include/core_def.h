@@ -26,13 +26,9 @@
 // Context macros
 #define CTX_POOL(ctx) ((ctx)->node_pool)
 #define CTX_ENV(ctx) ((ctx)->eval_ctx.env)
-#define CTX_STACK(ctx) ((ctx)->eval_ctx.stack)
 #define CTX_SYMTAB(ctx) ((ctx)->parser_ctx.sym_tab)
-#define CTX_PARSE_ROOT(ctx) ((ctx)->parser_ctx.root_Node)
+#define CTX_PARSE_ROOT(ctx) ((ctx)->parser_ctx.root_node)
 #define CTX_PARSE_MARK(ctx) ((ctx)->parser_ctx.parse_mark)
-#define CTX_PEEK(ctx) PEEK(CTX_STACK(ctx))
-#define CTX_POP(ctx) POP(CTX_STACK(ctx))
-#define CTX_PUSH(ctx, Node) PUSH(CTX_STACK(ctx), Node)
 
 // Forward declarations
 struct Node;
@@ -49,28 +45,39 @@ typedef Node *(*PrimBinaryFunc)(Node *node1, Node *node2, Context *ctx);
 
 typedef struct PrimOp {
   const char *name;
-  const PrimOpEnum kind;
+  const PrimOpEnum type;
   union {
     const PrimUnaryFunc unary_fn_ptr;
     const PrimBinaryFunc binary_fn_ptr;
   };
 } PrimOp;
 
-// Node kind "object"
-typedef char *(*ReprFn)(struct Node *self);
+// Node type "object"
+typedef char *(*StrFn)(Node *self);
+typedef int (*EqFn)(Node *self, Node *other);
 
-typedef struct Kind {
-  const char *kind_name;
-  ReprFn repr_fn;
-} Kind;
+typedef struct Type {
+  const char *type_name;
+  StrFn str_fn;
+  EqFn eq_fn;
+} Type;
 
 // Nodes
-typedef enum { KIND_LITERAL, KIND_LIST, KIND_FUNCTION } KindEnum;
-typedef enum { LITERAL_INTEGER, LITERAL_SYMBOL } LiteralKindEnum;
-typedef enum { FN_PRIMITIVE, FN_CLOSURE } FnKindEnum;
+typedef enum {
+  KIND_NULL,
+  KIND_LITERAL,
+  KIND_LIST,
+  KIND_FUNCTION,
+  KIND_STRING
+} TypeEnum;
+
+typedef enum { LITERAL_INTEGER, LITERAL_SYMBOL } LiteralTypeEnum;
+typedef enum { FN_PRIMITIVE, FN_CLOSURE } FnTypeEnum;
+
+typedef char String; // FIXME: Strings should have a len
 
 typedef struct {
-  LiteralKindEnum kind;
+  LiteralTypeEnum type;
   union {
     CLSR_INTEGER_TYPE integer;
     const char *symbol;
@@ -83,36 +90,38 @@ typedef struct {
 } List;
 
 typedef struct {
-  FnKindEnum kind;
+  Node *params;
+  Node *body;
+  Env *env;
+} Closure;
+
+typedef struct {
+  FnTypeEnum type;
   union {
     struct {
       const PrimOp *prim_op;
     } primitive;
-    struct {
-      Node *params;
-      Node *body;
-      Env *env;
-    } closure;
+    Closure closure;
   } as;
 } Function;
 
 struct Node {
-  KindEnum kind;
+  TypeEnum type;
   union {
     List list;
     Literal literal;
     Function function;
+    String *string;
   } as;
 };
 
 typedef struct EvalContext {
   Env *env;
-  Stack *stack;
 } EvalContext;
 
 typedef struct ParserContext {
   rb_node *sym_tab;
-  Node *root_Node;
+  Node *root_node;
   Wrapper *parse_mark;
 } ParserContext;
 
@@ -123,42 +132,47 @@ struct Context {
 };
 
 // coredef.c
-const Kind *get_kind(Node *self);
+const Type *type(Node *self);
 Node *cons_primop(Pool *p, const PrimOp *prim_op);
 Node *cons_closure(Pool *p, Node *params, Node *body, Env *env);
 Node *cons_integer(Pool *p, CLSR_INTEGER_TYPE i);
 Node *cons_list(Pool *p, Node *car, Node *cdr);
+Node *cons_string(Pool *p, String *str);
 Node *cons_symbol(Pool *p, const char *sym);
 
 // helpers
 static inline int is_literal(const Node *node) {
-  return node && node->kind == KIND_LITERAL;
+  return node && node->type == KIND_LITERAL;
 }
 
 static inline int is_list(const Node *node) {
-  return node && node->kind == KIND_LIST;
+  return node && node->type == KIND_LIST;
 }
 
 static inline int is_function(const Node *node) {
-  return node && node->kind == KIND_FUNCTION;
+  return node && node->type == KIND_FUNCTION;
 }
 
-// Literal kind checks
+static inline int is_string(const Node *node) {
+  return node && node->type == KIND_STRING;
+}
+
+// Literal type checks
 static inline int is_integer(const Node *node) {
-  return is_literal(node) && node->as.literal.kind == LITERAL_INTEGER;
+  return is_literal(node) && node->as.literal.type == LITERAL_INTEGER;
 }
 
 static inline int is_symbol(const Node *node) {
-  return is_literal(node) && node->as.literal.kind == LITERAL_SYMBOL;
+  return is_literal(node) && node->as.literal.type == LITERAL_SYMBOL;
 }
 
-// Function kind checks
+// Function type checks
 static inline int is_primitive_fn(const Node *node) {
-  return is_function(node) && node->as.function.kind == FN_PRIMITIVE;
+  return is_function(node) && node->as.function.type == FN_PRIMITIVE;
 }
 
 static inline int is_closure_fn(const Node *node) {
-  return is_function(node) && node->as.function.kind == FN_CLOSURE;
+  return is_function(node) && node->as.function.type == FN_CLOSURE;
 }
 
 static inline int is_empty_list(const Node *node) {
@@ -204,6 +218,10 @@ static inline const PrimOp *get_prim_op(Node *node) {
   return is_primitive_fn(node) ? node->as.function.as.primitive.prim_op : NULL;
 }
 
+static inline Closure *get_closure(Node *node) {
+  return is_closure_fn(node) ? &node->as.function.as.closure : NULL;
+}
+
 static inline Node *get_closure_params(Node *node) {
   return is_closure_fn(node) ? node->as.function.as.closure.params : NULL;
 }
@@ -214,6 +232,11 @@ static inline Node *get_closure_body(Node *node) {
 
 static inline Env *get_closure_env(Node *node) {
   return is_closure_fn(node) ? node->as.function.as.closure.env : NULL;
+}
+
+// String accessors
+static inline String *get_string(Node *node) {
+  return is_string(node) ? node->as.string : NULL;
 }
 
 /* prim_op.gperf */

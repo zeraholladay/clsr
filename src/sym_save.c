@@ -1,9 +1,11 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "oom_handlers.h"
 #include "palloc.h"
 #include "rb_tree.h"
+#include "safe_str.h"
 #include "sym_save.h"
 
 extern oom_handler_t sym_save_oom_handler;
@@ -40,8 +42,8 @@ static char *bump_pool_alloc(size_t n) {
   return ptr;
 }
 
-static char *bump_pool_strndup(const char *s, size_t n) {
-  size_t len = n + 1;
+static char *bump_pool_strndup(const char *s, size_t len) {
+  len += 1;
   char *new = bump_pool_alloc(len);
   new[len] = '\0';
   return memcpy(new, s, len);
@@ -52,8 +54,9 @@ void sym_save_init(void) {
   pool = pool_init(SYMTAB_POOL_CAPACITY, sizeof(rb_node));
 }
 
-const char *sym_save(rb_node **root, const char *s, size_t n) {
-  rb_node *node = rb_lookup(*root, s, n);
+// TODO: max symbol size/limit
+const char *sym_save(rb_node **root, const char *s, size_t len) {
+  rb_node *node = rb_lookup(*root, s, len);
 
   if (node)
     return RB_KEY(node);
@@ -63,8 +66,8 @@ const char *sym_save(rb_node **root, const char *s, size_t n) {
   if (!node)
     return NULL;
 
-  RB_KEY(node) = bump_pool_strndup(s, n);
-  RB_KEY_LEN(node) = n;
+  RB_KEY(node) = bump_pool_strndup(s, len);
+  RB_KEY_LEN(node) = len;
   // note: no RB_VAL here. ie symbols don't have values.
   RB_VAL(node) = NULL;
 

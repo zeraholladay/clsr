@@ -114,7 +114,7 @@ static int prim_op_eq(Node *self, Node *other) {
 }
 
 static char *prim_op_str(Node *self) {
-  const PrimOp *prim_op = get_prim_op(self);
+  const Primitive *prim_op = get_prim_op(self);
   return safe_strndup(prim_op->name, strlen(prim_op->name));
 }
 
@@ -182,15 +182,15 @@ static Type fn_singleton[] = {
 };
 
 static Type *type_singleton[] = {
-    [KIND_NULL] = null_singleton,  [KIND_LITERAL] = literal_singleton,
-    [KIND_LIST] = list_singleton,  [KIND_FUNCTION] = fn_singleton,
-    [KIND_STRING] = str_singleton,
+    [TYPE_NULL] = null_singleton,  [TYPE_LITERAL] = literal_singleton,
+    [TYPE_LIST] = list_singleton,  [TYPE_FUNCTION] = fn_singleton,
+    [TYPE_STRING] = str_singleton,
 };
 
 // type()
 const Type *type(Node *self) {
   if (!self) {
-    return &type_singleton[KIND_NULL][0];
+    return &type_singleton[TYPE_NULL][0];
   }
 
   Type *type_ptr = type_ptr = type_singleton[self->type];
@@ -216,9 +216,9 @@ const Type *type(Node *self) {
   return NULL; // TODO: fix me
 }
 
-Node *cons_primop(Pool *p, const PrimOp *prim_op) {
+Node *cons_primop(Pool *p, const Primitive *prim_op) {
   Node *node = pool_alloc(p);
-  node->type = KIND_FUNCTION;
+  node->type = TYPE_FUNCTION;
   Function *func = &node->as.function;
   func->type = FN_PRIMITIVE;
   func->as.primitive.prim_op = prim_op;
@@ -227,7 +227,7 @@ Node *cons_primop(Pool *p, const PrimOp *prim_op) {
 
 Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
   Node *node = pool_alloc(p);
-  node->type = KIND_FUNCTION;
+  node->type = TYPE_FUNCTION;
   Function *func = &node->as.function;
   func->type = FN_CLOSURE;
   func->as.closure.params = params;
@@ -238,7 +238,7 @@ Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
 
 Node *cons_integer(Pool *p, CLSR_INTEGER_TYPE i) {
   Node *node = pool_alloc(p);
-  node->type = KIND_LITERAL;
+  node->type = TYPE_LITERAL;
   Literal *literal = &node->as.literal;
   literal->type = LITERAL_INTEGER;
   literal->as.integer = i;
@@ -247,7 +247,7 @@ Node *cons_integer(Pool *p, CLSR_INTEGER_TYPE i) {
 
 Node *cons_list(Pool *p, Node *car, Node *cdr) {
   Node *node = pool_alloc(p);
-  node->type = KIND_LIST;
+  node->type = TYPE_LIST;
   List *list = &node->as.list;
   list->car = car;
   list->cdr = cdr;
@@ -256,14 +256,14 @@ Node *cons_list(Pool *p, Node *car, Node *cdr) {
 
 Node *cons_string(Pool *p, String *str) {
   Node *node = pool_alloc(p);
-  node->type = KIND_STRING;
+  node->type = TYPE_STRING;
   node->as.string = str;
   return node;
 }
 
 Node *cons_symbol(Pool *p, const char *sym) {
   Node *node = pool_alloc(p);
-  node->type = KIND_LITERAL;
+  node->type = TYPE_LITERAL;
   Literal *literal = &node->as.literal;
   literal->type = LITERAL_SYMBOL;
   literal->as.symbol = sym;

@@ -5,7 +5,6 @@
 
 #define RB_KEY(n) ((n)->key)
 #define RB_KEY_LEN(n) ((n)->key_len)
-
 #define RB_VAL(n) ((n)->val)
 
 typedef struct rb_node {

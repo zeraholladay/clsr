@@ -32,19 +32,19 @@ START_TEST(test_insert_and_lookup) {
 
   rb_node *result;
 
-  result = rb_lookup(root, apple, sizeof(apple));
+  result = rb_lookup(root, apple, sizeof(apple) - 1);
   ck_assert_ptr_nonnull(result);
   ck_assert_str_eq(result->key, apple);
 
-  result = rb_lookup(root, banana, sizeof(banana));
+  result = rb_lookup(root, banana, sizeof(banana) - 1);
   ck_assert_ptr_nonnull(result);
   ck_assert_str_eq(result->key, banana);
 
-  result = rb_lookup(root, cherry, sizeof(cherry));
+  result = rb_lookup(root, cherry, sizeof(cherry) - 1);
   ck_assert_ptr_nonnull(result);
   ck_assert_str_eq(result->key, cherry);
 
-  result = rb_lookup(root, "date", sizeof("date"));
+  result = rb_lookup(root, "date", sizeof("date") - 1);
   ck_assert_ptr_null(result);
 
   free((void *)n1->key);
@@ -68,7 +68,7 @@ START_TEST(test_remove) {
   rb_insert(&root, make_node(cherry, sizeof(cherry)));
 
   // Test removal
-  rb_node *found_b = rb_lookup(root, banana, sizeof(banana));
+  rb_node *found_b = rb_lookup(root, banana, sizeof(banana) - 1);
   ck_assert_ptr_nonnull(found_b);
   ck_assert_str_eq(found_b->key, banana);
 
@@ -77,17 +77,17 @@ START_TEST(test_remove) {
 
   ck_assert_ptr_nonnull(removed);
   ck_assert_str_eq(removed_key, banana);
-  ck_assert_ptr_null(rb_lookup(root, banana, sizeof(banana)));
+  ck_assert_ptr_null(rb_lookup(root, banana, sizeof(banana) - 1));
 
   free((void *)removed_key);
   free(removed);
 
   // Verify the rest and cleanup
-  rb_node *found_apple = rb_lookup(root, apple, sizeof(apple));
+  rb_node *found_apple = rb_lookup(root, apple, sizeof(apple) - 1);
   ck_assert_ptr_nonnull(found_apple);
   ck_assert_str_eq(found_apple->key, apple);
 
-  rb_node *found_cherry = rb_lookup(root, cherry, sizeof(cherry));
+  rb_node *found_cherry = rb_lookup(root, cherry, sizeof(cherry) - 1);
   ck_assert_ptr_nonnull(found_cherry);
   ck_assert_str_eq(found_cherry->key, cherry);
 

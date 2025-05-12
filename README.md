@@ -196,7 +196,7 @@ Prints an argument:
 In no particular order:
 
 1. Math
-1. Conditionals
+1. ~~Conditionals~~
 1. Fix T/NIL
 1. ~~Equality~~
 1. Exceptions

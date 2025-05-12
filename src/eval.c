@@ -57,7 +57,7 @@ static Node *apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
   return eval(get_closure_body(fn_node), &new_ctx);
 }
 
-static Node *apply_prim_op(Node *fn_node, Node *arglist, Context *ctx) {
+static Node *apply_primitive(Node *fn_node, Node *arglist, Context *ctx) {
   const Primitive *prim_op = get_prim_op(fn_node);
 
   // TODO: validate arglist is correct for type
@@ -76,6 +76,11 @@ static Node *apply_prim_op(Node *fn_node, Node *arglist, Context *ctx) {
                                   ctx);
     break;
 
+  case PRIMITIVE_TERNARY_FN:
+    return prim_op->ternary_fn_ptr(get_car(arglist), get_car(get_cdr(arglist)),
+                                   get_car(get_cdr(get_cdr(arglist))), ctx);
+    break;
+
   default:
     raise(ERR_INTERNAL, DEBUG_LOCATION);
     return NULL;
@@ -85,6 +90,9 @@ static Node *apply_prim_op(Node *fn_node, Node *arglist, Context *ctx) {
 
 Node *apply(Node *fn_node, Node *arglist, Context *ctx) {
   DEBUG(DEBUG_LOCATION);
+
+  // print(fn_node, ctx);
+  // print(arglist, ctx);
 
   if (!(is_closure_fn(fn_node) || is_primitive_fn(fn_node)) ||
       !is_list(arglist)) {
@@ -97,7 +105,7 @@ Node *apply(Node *fn_node, Node *arglist, Context *ctx) {
   }
 
   if (is_primitive_fn(fn_node)) {
-    return apply_prim_op(fn_node, arglist, ctx);
+    return apply_primitive(fn_node, arglist, ctx);
   }
 
   raise(ERR_INTERNAL, DEBUG_LOCATION);
@@ -131,6 +139,13 @@ Node *first(Node *list, Context *ctx) {
     return NULL;
   }
   return get_car(list) ? get_car(list) : cons(NULL, NULL, ctx);
+}
+
+Node *_if(Node *_bool, Node *then, Node *_else, Context *ctx) {
+  DEBUG(DEBUG_LOCATION);
+  Node *branch =
+      type(get_true(ctx))->eq_fn(_bool, get_true(ctx)) ? then : _else;
+  return eval(branch, ctx);
 }
 
 static size_t _length(Node *list) {

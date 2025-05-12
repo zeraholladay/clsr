@@ -18,12 +18,12 @@ static void raise(ErrorCode err_code, const char *msg) {
 
 // FIXME
 static Node *get_true(Context *ctx) {
-  return cons_primop(CTX_POOL(ctx), PRIM_OP(T));
+  return cons_primop(CTX_POOL(ctx), PRIMITIVE(T));
 }
 
 // FIXME
 static Node *get_nil(Context *ctx) {
-  return cons_primop(CTX_POOL(ctx), PRIM_OP(NIL));
+  return cons_primop(CTX_POOL(ctx), PRIMITIVE(NIL));
 }
 
 static Node *apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
@@ -58,20 +58,20 @@ static Node *apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
 }
 
 static Node *apply_prim_op(Node *fn_node, Node *arglist, Context *ctx) {
-  const PrimOp *prim_op = get_prim_op(fn_node);
+  const Primitive *prim_op = get_prim_op(fn_node);
 
   // TODO: validate arglist is correct for type
   switch (prim_op->type) {
-  case PRIM_OP_NULL:
+  case PRIMITIVE_NULL:
     raise(ERR_INTERNAL, DEBUG_LOCATION);
     return NULL;
     break;
 
-  case PRIM_OP_UNARY_FN:
+  case PRIMITIVE_UNARY_FN:
     return prim_op->unary_fn_ptr(get_car(arglist), ctx);
     break;
 
-  case PRIM_OP_BINARY_FN:
+  case PRIMITIVE_BINARY_FN:
     return prim_op->binary_fn_ptr(get_car(arglist), get_car(get_cdr(arglist)),
                                   ctx);
     break;
@@ -248,7 +248,7 @@ Node *eval(Node *expr, Context *ctx) {
 
     Node *fn_node = eval(first(expr, ctx), ctx);
 
-    if (PRIM_OP(QUOTE) == get_prim_op(fn_node)) {
+    if (PRIMITIVE(QUOTE) == get_prim_op(fn_node)) {
       return first(rest(expr, ctx), ctx);
     }
 

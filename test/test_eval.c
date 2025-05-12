@@ -51,10 +51,10 @@ START_TEST(test_literal_expressions) {
   ck_assert(get_integer(eval_result) == -42);
 
   eval_result = run_eval_program("T");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(T));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(T));
 
   eval_result = run_eval_program("NIL");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(NIL));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(NIL));
 
   eval_result = run_eval_program("'foo");
   ck_assert_str_eq(get_symbol(eval_result), "foo");
@@ -235,77 +235,77 @@ START_TEST(test_eq) {
 
   // True statements
   eval_result = run_eval_program("(eq T T)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(T));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(T));
 
   eval_result = run_eval_program("(eq NIL NIL)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(T));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(T));
 
   eval_result = run_eval_program("(eq 0 0)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(T));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(T));
 
   eval_result = run_eval_program("(eq 42 42)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(T));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(T));
 
   eval_result = run_eval_program("(eq '() '())");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(T));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(T));
 
   eval_result = run_eval_program("(eq 'foo 'foo)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(T));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(T));
 
   test_program = "(set 'foo (closure '() '()))"
                  "(set 'bar foo)"
                  "(eq foo bar)";
   eval_result = run_eval_program(test_program);
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(T));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(T));
 
   test_program = "(set 'foo '(1 2 3 4))"
                  "(set 'bar foo)"
                  "(eq foo bar)";
   eval_result = run_eval_program(test_program);
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(T));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(T));
 
   eval_result = run_eval_program("(eq (str 'foo) (str 'foo))");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(T));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(T));
 
   eval_result = run_eval_program("(eq rest rest)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(T));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(T));
 
   // False statements
   eval_result = run_eval_program("(eq T NIL)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(NIL));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(NIL));
 
   eval_result = run_eval_program("(eq NIL T)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(NIL));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(NIL));
 
   eval_result = run_eval_program("(eq 0 1)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(NIL));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(NIL));
 
   eval_result = run_eval_program("(eq -42 42)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(NIL));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(NIL));
 
   eval_result = run_eval_program("(eq '() '(1))");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(NIL));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(NIL));
 
   eval_result = run_eval_program("(eq 'foo 'bar)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(NIL));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(NIL));
 
   test_program = "(set 'foo (closure '() '()))"
                  "(set 'bar (closure '() '()))"
                  "(eq foo bar)";
   eval_result = run_eval_program(test_program);
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(NIL));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(NIL));
 
   test_program = "(set 'foo '(1 2 3 4))"
                  "(set 'bar '(1 2 3 4))"
                  "(eq foo bar)";
   eval_result = run_eval_program(test_program);
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(NIL));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(NIL));
 
   eval_result = run_eval_program("(eq (str 'foo) (str 'bar))");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(NIL));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(NIL));
 
   eval_result = run_eval_program("(eq first rest)");
-  ck_assert_ptr_eq(get_prim_op(eval_result), PRIM_OP(NIL));
+  ck_assert_ptr_eq(get_prim_op(eval_result), PRIMITIVE(NIL));
 }
 END_TEST
 

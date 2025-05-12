@@ -6,7 +6,7 @@
 #include "eval.h"
 #include "parser.h"
 
-#define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
+#define PRIMITIVE(name) primitive_lookup(#name, sizeof(#name) - 1)
 
 #define yyerror(ctx, s)      \
   do {                       \
@@ -32,14 +32,14 @@ void reset_parse_context(Context *ctx);
 %union {
     CLSR_INTEGER_TYPE integer;
     const char *symbol;
-    const struct PrimOp *prim_op;
+    const struct Primitive *prim_op;
     struct Node *node;
 }
 
 %type <node> program expressions expression expression_list list number symbol 
 
 %token QUOTE ERROR
-%token <prim_op> PRIM_OP
+%token <prim_op> PRIMITIVE
 %token <integer> INTEGER
 %token <symbol> SYMBOL
 
@@ -71,7 +71,7 @@ expression
     | symbol                    
     | list
     | QUOTE expression {
-        Node *quote = cons_primop(CTX_POOL(ctx), PRIM_OP(QUOTE));
+        Node *quote = cons_primop(CTX_POOL(ctx), PRIMITIVE(QUOTE));
         Node *fn_args = cons($2, empty_list(ctx), ctx);
         $$ = cons(quote, fn_args, ctx);
     }
@@ -97,7 +97,7 @@ expression_list
     ;
 
 symbol
-    : PRIM_OP {
+    : PRIMITIVE {
         $$ = cons_primop(CTX_POOL(ctx), $1);
     }
     | SYMBOL {

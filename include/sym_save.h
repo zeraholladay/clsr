@@ -13,6 +13,6 @@
 #endif
 
 void sym_save_init(void);
-const char *sym_save(rb_node **root, const char *s, size_t n);
+const char *sym_save(rb_node **root, const char *s, size_t s_len);
 
 #endif

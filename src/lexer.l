@@ -24,10 +24,10 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
     ")"             { return ')'; }
     {NUM}           { yylval.integer = atoll(yytext); return INTEGER; }
     {ID}            {
-                    const PrimOp *prim_op = prim_op_lookup(yytext, strlen(yytext));
+                    const Primitive *prim_op = primitive_lookup(yytext, yyleng);
                     if (prim_op) {
                         yylval.prim_op = prim_op;
-                        return PRIM_OP;
+                        return PRIMITIVE;
                     }
                     yylval.symbol = sym_save(&CTX_SYMTAB(ctx), yytext, yyleng);
                     return SYMBOL;

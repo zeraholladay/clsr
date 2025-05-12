@@ -1,0 +1,35 @@
+%{
+#include "core_def.h"
+#include "eval.h"
+#include "parser.h"
+%}
+
+%includes
+%language=ANSI-C
+%readonly-tables
+%struct-type
+%ignore-case
+%define lookup-function-name primitive_lookup
+%define slot-name name
+
+struct Primitive;
+
+%%
+T,       PRIMITIVE_NULL,       {NULL},
+NIL,     PRIMITIVE_NULL,       {NULL},
+APPLY,   PRIMITIVE_BINARY_FN, .binary_fn_ptr = apply,
+CLOSURE, PRIMITIVE_BINARY_FN, .binary_fn_ptr = closure,
+CONS,    PRIMITIVE_BINARY_FN, .binary_fn_ptr = cons,
+EQ,      PRIMITIVE_BINARY_FN, .binary_fn_ptr = eq,
+EVAL,    PRIMITIVE_UNARY_FN,  .unary_fn_ptr  = eval,
+FIRST,   PRIMITIVE_UNARY_FN,  .unary_fn_ptr  = first,
+LEN,     PRIMITIVE_UNARY_FN,  .unary_fn_ptr  = length,
+LOOKUP,  PRIMITIVE_UNARY_FN,  .unary_fn_ptr  = lookup,
+PAIR,    PRIMITIVE_BINARY_FN, .binary_fn_ptr = pair,
+PRINT,   PRIMITIVE_UNARY_FN,  .unary_fn_ptr  = print,
+QUOTE,   PRIMITIVE_NULL,       {NULL},
+REPR,    PRIMITIVE_UNARY_FN,  .unary_fn_ptr  = repr,
+REST,    PRIMITIVE_UNARY_FN,  .unary_fn_ptr  = rest,
+SET,     PRIMITIVE_BINARY_FN, .binary_fn_ptr = set,
+STR,     PRIMITIVE_UNARY_FN,  .unary_fn_ptr  = _str,
+%%

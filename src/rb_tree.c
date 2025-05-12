@@ -176,7 +176,7 @@ void rb_insert(rb_node **root, rb_node *n) {
   while (cur) {
     parent = cur;
 
-    int cmp = safe_strncmp_minlen(RB_KEY(n), RB_KEY(cur), RB_KEY_LEN(n));
+    int cmp = safe_strncmp_minlen(RB_KEY(n), RB_KEY(cur), RB_KEY_LEN(n) + 1);
 
     if (cmp == 0)
       return;
@@ -191,7 +191,7 @@ void rb_insert(rb_node **root, rb_node *n) {
     *root = n;
   else {
     RB_PARENT(n) = parent;
-    int cmp = safe_strncmp_minlen(RB_KEY(n), RB_KEY(parent), RB_KEY_LEN(n));
+    int cmp = safe_strncmp_minlen(RB_KEY(n), RB_KEY(parent), RB_KEY_LEN(n) + 1);
 
     if (cmp < 0)
       RB_LEFT(parent) = n;
@@ -215,7 +215,7 @@ rb_node *rb_lookup(rb_node *root, const char *key, size_t key_len) {
   rb_node *cur = root;
 
   while (cur) {
-    int cmp = safe_strncmp_minlen(key, RB_KEY(cur), key_len);
+    int cmp = safe_strncmp_minlen(key, RB_KEY(cur), key_len + 1);
 
     if (cmp == 0)
       return cur;

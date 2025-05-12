@@ -9,9 +9,8 @@
 #include "rb_tree.h"
 #include "stack.h"
 
-// PrimOp macros
-#define PRIM_OP(name) prim_op_lookup(#name, sizeof(#name) - 1)
-#define PRIM_OP_CALL()
+// Primitive macros
+#define PRIMITIVE(name) primitive_lookup(#name, sizeof(#name) - 1)
 
 // formatting
 #ifndef CLSR_INTEGER_TYPE
@@ -36,21 +35,25 @@ struct Context;
 typedef struct Node Node;
 typedef struct Context Context;
 
-// PrimOp
-/* PRIM_OP_NULL for quote. */
-typedef enum { PRIM_OP_NULL, PRIM_OP_UNARY_FN, PRIM_OP_BINARY_FN } PrimOpEnum;
+// Primitive
+/* PRIMITIVE_NULL for quote. */
+typedef enum {
+  PRIMITIVE_NULL,
+  PRIMITIVE_UNARY_FN,
+  PRIMITIVE_BINARY_FN
+} PrimitiveEnum;
 
-typedef Node *(*PrimUnaryFunc)(Node *node, Context *ctx);
-typedef Node *(*PrimBinaryFunc)(Node *node1, Node *node2, Context *ctx);
+typedef Node *(*PrimitiveUnaryFn)(Node *node, Context *ctx);
+typedef Node *(*PrimitiveBinaryFn)(Node *node1, Node *node2, Context *ctx);
 
-typedef struct PrimOp {
+typedef struct Primitive {
   const char *name;
-  const PrimOpEnum type;
+  const PrimitiveEnum type;
   union {
-    const PrimUnaryFunc unary_fn_ptr;
-    const PrimBinaryFunc binary_fn_ptr;
+    const PrimitiveUnaryFn unary_fn_ptr;
+    const PrimitiveBinaryFn binary_fn_ptr;
   };
-} PrimOp;
+} Primitive;
 
 // Node type "object"
 typedef char *(*StrFn)(Node *self);
@@ -64,15 +67,15 @@ typedef struct Type {
 
 // Nodes
 typedef enum {
-  KIND_NULL,
-  KIND_LITERAL,
-  KIND_LIST,
-  KIND_FUNCTION,
-  KIND_STRING
+  TYPE_NULL,
+  TYPE_LITERAL,
+  TYPE_LIST,
+  TYPE_FUNCTION,
+  TYPE_STRING
 } TypeEnum;
 
 typedef enum { LITERAL_INTEGER, LITERAL_SYMBOL } LiteralTypeEnum;
-typedef enum { FN_PRIMITIVE, FN_CLOSURE } FnTypeEnum;
+typedef enum { FN_PRIMITIVE, FN_CLOSURE } FunctionTypeEnum;
 
 typedef char String; // FIXME: Strings should have a len
 
@@ -85,8 +88,8 @@ typedef struct {
 } Literal;
 
 typedef struct {
-  Node *car;
-  Node *cdr;
+  Node *car; // Contents of the Address part of Register
+  Node *cdr; // Contents of the Decrement part of Register
 } List;
 
 typedef struct {
@@ -96,10 +99,10 @@ typedef struct {
 } Closure;
 
 typedef struct {
-  FnTypeEnum type;
+  FunctionTypeEnum type;
   union {
     struct {
-      const PrimOp *prim_op;
+      const Primitive *prim_op;
     } primitive;
     Closure closure;
   } as;
@@ -133,7 +136,7 @@ struct Context {
 
 // coredef.c
 const Type *type(Node *self);
-Node *cons_primop(Pool *p, const PrimOp *prim_op);
+Node *cons_primop(Pool *p, const Primitive *prim_op);
 Node *cons_closure(Pool *p, Node *params, Node *body, Env *env);
 Node *cons_integer(Pool *p, CLSR_INTEGER_TYPE i);
 Node *cons_list(Pool *p, Node *car, Node *cdr);
@@ -142,19 +145,19 @@ Node *cons_symbol(Pool *p, const char *sym);
 
 // helpers
 static inline int is_literal(const Node *node) {
-  return node && node->type == KIND_LITERAL;
+  return node && node->type == TYPE_LITERAL;
 }
 
 static inline int is_list(const Node *node) {
-  return node && node->type == KIND_LIST;
+  return node && node->type == TYPE_LIST;
 }
 
 static inline int is_function(const Node *node) {
-  return node && node->type == KIND_FUNCTION;
+  return node && node->type == TYPE_FUNCTION;
 }
 
 static inline int is_string(const Node *node) {
-  return node && node->type == KIND_STRING;
+  return node && node->type == TYPE_STRING;
 }
 
 // Literal type checks
@@ -214,7 +217,7 @@ static inline Function *get_function(Node *node) {
   return is_function(node) ? &node->as.function : NULL;
 }
 
-static inline const PrimOp *get_prim_op(Node *node) {
+static inline const Primitive *get_prim_op(Node *node) {
   return is_primitive_fn(node) ? node->as.function.as.primitive.prim_op : NULL;
 }
 
@@ -240,7 +243,7 @@ static inline String *get_string(Node *node) {
 }
 
 /* prim_op.gperf */
-const struct PrimOp *prim_op_lookup(register const char *str,
-                                    register size_t len);
+const struct Primitive *primitive_lookup(register const char *str,
+                                         register size_t len);
 
 #endif

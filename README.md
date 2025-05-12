@@ -215,3 +215,4 @@ In no particular order:
 1. GC
 1. repl I/O from files
 1. Bug squashing
+1. Max symbol size

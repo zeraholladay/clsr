@@ -27,7 +27,6 @@ static Node *get_nil(Context *ctx) {
 }
 
 static Node *apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   // validate
   size_t params_len = _length(get_closure_params(fn_node));
   size_t arglist_len = _length(arglist);
@@ -54,7 +53,7 @@ static Node *apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
   }
 
   // eval
-  return eval(get_closure_body(fn_node), &new_ctx);
+  return eval(get_closure_body(fn_node), &new_ctx); // TODO: eval_program()
 }
 
 static Node *apply_primitive(Node *fn_node, Node *arglist, Context *ctx) {
@@ -68,17 +67,18 @@ static Node *apply_primitive(Node *fn_node, Node *arglist, Context *ctx) {
     break;
 
   case PRIMITIVE_UNARY_FN:
-    return prim_op->unary_fn_ptr(get_car(arglist), ctx);
+    return prim_op->unary_fn_ptr(first(arglist, ctx), ctx);
     break;
 
   case PRIMITIVE_BINARY_FN:
-    return prim_op->binary_fn_ptr(get_car(arglist), get_car(get_cdr(arglist)),
-                                  ctx);
+    return prim_op->binary_fn_ptr(first(arglist, ctx),
+                                  first(rest(arglist, ctx), ctx), ctx);
     break;
 
   case PRIMITIVE_TERNARY_FN:
-    return prim_op->ternary_fn_ptr(get_car(arglist), get_car(get_cdr(arglist)),
-                                   get_car(get_cdr(get_cdr(arglist))), ctx);
+    return prim_op->ternary_fn_ptr(
+        first(arglist, ctx), first(rest(arglist, ctx), ctx),
+        first(rest(rest(arglist, ctx), ctx), ctx), ctx);
     break;
 
   default:
@@ -89,11 +89,6 @@ static Node *apply_primitive(Node *fn_node, Node *arglist, Context *ctx) {
 }
 
 Node *apply(Node *fn_node, Node *arglist, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
-
-  // print(fn_node, ctx);
-  // print(arglist, ctx);
-
   if (!(is_closure_fn(fn_node) || is_primitive_fn(fn_node)) ||
       !is_list(arglist)) {
     raise(ERR_INVALID_ARG, __func__);
@@ -121,28 +116,24 @@ Node *closure(Node *params, Node *body, Context *ctx) {
 }
 
 Node *cons(Node *car, Node *cdr, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   Node *node = cons_list(CTX_POOL(ctx), car, cdr);
   return node;
 }
 
 Node *eq(Node *node1, Node *node2, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   return (type(node1)->eq_fn(node1, node2)) ? get_true(ctx) : get_nil(ctx);
 }
 
 Node *first(Node *list, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   (void)ctx;
   if (!is_list(list)) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
-  return get_car(list) ? get_car(list) : cons(NULL, NULL, ctx);
+  return get_car(list);
 }
 
 Node *_if(Node *_bool, Node *then, Node *_else, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   Node *branch =
       type(get_true(ctx))->eq_fn(_bool, get_true(ctx)) ? then : _else;
   return eval(branch, ctx);
@@ -156,7 +147,6 @@ static size_t _length(Node *list) {
 }
 
 Node *length(Node *list, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   if (!is_list(list)) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
@@ -165,13 +155,11 @@ Node *length(Node *list, Context *ctx) {
 }
 
 Node *list(Node *car, Node *cdr, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   Node *empty = empty_list(ctx);
   return cons(car, cons(cdr, empty, ctx), ctx);
 }
 
 Node *lookup(Node *node, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   if (!is_symbol(node)) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
@@ -188,7 +176,6 @@ Node *lookup(Node *node, Context *ctx) {
 }
 
 Node *pair(Node *list1, Node *list2, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   if (!is_list(list1) || !is_list(list2)) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
@@ -205,7 +192,6 @@ Node *pair(Node *list1, Node *list2, Context *ctx) {
 
 Node *print(Node *node, Context *ctx) {
   (void)ctx;
-  DEBUG(DEBUG_LOCATION);
   char *str = type(node)->str_fn(node);
   printf("%s\n", str);
   free(str);
@@ -213,14 +199,12 @@ Node *print(Node *node, Context *ctx) {
 }
 
 Node *repr(Node *node, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   (void)node;
   (void)ctx;
   return NULL;
 }
 
 Node *rest(Node *list, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   (void)ctx;
   if (!is_list(list)) {
     raise(ERR_INVALID_ARG, __func__);
@@ -231,8 +215,6 @@ Node *rest(Node *list, Context *ctx) {
 }
 
 Node *set(Node *car, Node *cdr, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
-
   if (!is_symbol(car)) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
@@ -242,12 +224,10 @@ Node *set(Node *car, Node *cdr, Context *ctx) {
 }
 
 Node *_str(Node *node, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   return cons_string(CTX_POOL(ctx), type(node)->str_fn(node));
 }
 
 Node *eval(Node *expr, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   if (is_symbol(expr)) {
     return lookup(expr, ctx);
   }
@@ -268,7 +248,10 @@ Node *eval(Node *expr, Context *ctx) {
     }
 
     Node *arglist = eval_list(rest(expr, ctx), ctx);
-    return apply(fn_node, arglist, ctx);
+
+    return (PRIMITIVE(APPLY) == get_prim_op(fn_node))
+               ? apply(first(arglist, ctx), rest(arglist, ctx), ctx)
+               : apply(fn_node, arglist, ctx);
   }
 
   raise(ERR_INTERNAL, DEBUG_LOCATION);
@@ -276,7 +259,6 @@ Node *eval(Node *expr, Context *ctx) {
 }
 
 Node *eval_list(Node *list, Context *ctx) {
-  DEBUG(DEBUG_LOCATION);
   if (is_empty_list(list))
     return empty_list(ctx);
 

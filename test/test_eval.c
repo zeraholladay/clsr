@@ -309,6 +309,18 @@ START_TEST(test_eq) {
 }
 END_TEST
 
+START_TEST(test_apply) {
+  Node *eval_result = NULL;
+
+  // define
+  eval_result = run_eval_program("(apply (closure '() '()))");
+  // ck_assert(is_closure_fn(eval_result));
+
+  // run
+  eval_result = run_eval_program("(apply set 'a 42)");
+}
+END_TEST
+
 Suite *eval_suite(void) {
   Suite *s = suite_create("Eval");
 
@@ -325,6 +337,7 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_pair);
   tcase_add_test(tc_core, test_closure);
   tcase_add_test(tc_core, test_eq);
+  tcase_add_test(tc_core, test_apply);
 
   suite_add_tcase(s, tc_core);
   return s;

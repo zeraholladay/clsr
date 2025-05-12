@@ -311,13 +311,25 @@ END_TEST
 
 START_TEST(test_apply) {
   Node *eval_result = NULL;
+  Node *car = NULL;
+  Node *cdr = NULL;
 
-  // define
   eval_result = run_eval_program("(apply (closure '() '()))");
-  // ck_assert(is_closure_fn(eval_result));
+  ck_assert(is_empty_list(eval_result));
 
-  // run
+  eval_result =
+      run_eval_program("(apply (closure '(a b) '(cons a b)) 'foo 'bar)");
+  ck_assert(!is_empty_list(eval_result));
+  car = get_car(eval_result);
+  cdr = get_cdr(eval_result);
+  ck_assert_str_eq(get_symbol(car), "foo");
+  ck_assert_str_eq(get_symbol(cdr), "bar");
+
   eval_result = run_eval_program("(apply set 'a 42)");
+  ck_assert(get_integer(eval_result) == 42);
+
+  eval_result = run_eval_program("(apply set 'a 42)");
+  ck_assert(get_integer(eval_result) == 42);
 }
 END_TEST
 

@@ -16,6 +16,15 @@ static void raise(ErrorCode err_code, const char *msg) {
   longjmp(eval_error_jmp, 1);
 }
 
+static Node *nth(Node *list, int n, Context *ctx) {
+  for (size_t i = 0; i < n; i++) {
+    if (!list)
+      return NULL;
+    list = rest(list, ctx);
+  }
+  return first(list, ctx);
+}
+
 // FIXME
 static Node *get_true(Context *ctx) {
   return cons_primop(CTX_POOL(ctx), PRIMITIVE(T));

@@ -248,6 +248,6 @@ static inline String *get_string(Node *node) {
 
 /* prim_op.gperf */
 const struct Primitive *primitive_lookup(register const char *str,
-                                         register unsigned int len);
+                                         register size_t len);
 
 #endif

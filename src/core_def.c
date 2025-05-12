@@ -20,7 +20,7 @@ static int null_eq(Node *self, Node *other) {
   return self == other;
 }
 
-static char *null_str(Node *self) {
+static char *null_tostr(Node *self) {
   (void)self;
   return STR_LITERAL_DUP("NULL");
 }
@@ -30,7 +30,7 @@ static int integer_eq(Node *self, Node *other) {
   return type_eq(self, other) && get_integer(self) == get_integer(other);
 }
 
-static char *integer_str(Node *self) {
+static char *integer_tostr(Node *self) {
   char str[CLSR_INTEGER_TYPE_STR_MAX_SIZE];
   size_t n = sizeof(str);
 
@@ -47,7 +47,7 @@ static int symbol_eq(Node *self, Node *other) {
   return type_eq(self, other) && get_symbol(self) == get_symbol(other);
 }
 
-static char *symbol_str(Node *self) {
+static char *symbol_tostr(Node *self) {
   const char *str = get_symbol(self);
   return safe_strndup(str, strlen(str));
 }
@@ -59,7 +59,7 @@ static int list_eq(Node *self, Node *other) {
           get_list(self) == get_list(other));
 }
 
-static char *list_str(Node *self) {
+static char *list_tostr(Node *self) {
   HeapList *hl = NULL;
   size_t total = 0;
   Node *cur;
@@ -91,10 +91,10 @@ static char *list_str(Node *self) {
 
   // merge down into a single str
 
-  char *repr_str = calloc(total + 1, sizeof *(repr_str));
-  char *dst = repr_str;
+  char *str = calloc(total + 1, sizeof *(str));
+  char *dst = str;
 
-  if (!repr_str)
+  if (!str)
     return NULL;
 
   for (size_t i = 0; i < hl->count; ++i) {
@@ -105,7 +105,7 @@ static char *list_str(Node *self) {
 
   hl_free(hl);
 
-  return repr_str;
+  return str;
 }
 
 // Prim Ops type
@@ -113,7 +113,7 @@ static int prim_op_eq(Node *self, Node *other) {
   return type_eq(self, other) && get_prim_op(self) == get_prim_op(other);
 }
 
-static char *prim_op_str(Node *self) {
+static char *prim_op_tostr(Node *self) {
   const Primitive *prim_op = get_prim_op(self);
   return safe_strndup(prim_op->name, strlen(prim_op->name));
 }
@@ -123,7 +123,7 @@ static int closure_eq(Node *self, Node *other) {
   return type_eq(self, other) && get_closure(self) == get_closure(other);
 }
 
-static char *closure_str(Node *self) {
+static char *closure_tostr(Node *self) {
   const char *fmt = "closure params=%s body=%s";
 
   char *params_str =
@@ -133,20 +133,20 @@ static char *closure_str(Node *self) {
   size_t total =
       strlen(fmt) + NULLABLE_STRLEN(params_str) + NULLABLE_STRLEN(body_str);
 
-  char *repr_str = calloc(total, sizeof *repr_str);
-  if (!repr_str)
+  char *str = calloc(total, sizeof *str);
+  if (!str)
     return NULL;
 
-  int result = snprintf(repr_str, total, fmt, params_str, body_str);
+  int result = snprintf(str, total, fmt, params_str, body_str);
   if (result < 0 || (size_t)result >= total) {
-    free(repr_str);
+    free(str);
     return NULL;
   }
 
   free(params_str);
   free(body_str);
 
-  return repr_str;
+  return str;
 }
 
 // String type
@@ -160,16 +160,16 @@ static char *string_str(Node *self) { return get_string(self); }
 
 // Singletons
 static Type null_singleton[] = {
-    [0] = KIND("NULL", null_str, null_eq),
+    [0] = KIND("NULL", null_tostr, null_eq),
 };
 
 static Type literal_singleton[] = {
-    [LITERAL_INTEGER] = KIND("Integer", integer_str, integer_eq),
-    [LITERAL_SYMBOL] = KIND("Symbol", symbol_str, symbol_eq),
+    [LITERAL_INTEGER] = KIND("Integer", integer_tostr, integer_eq),
+    [LITERAL_SYMBOL] = KIND("Symbol", symbol_tostr, symbol_eq),
 };
 
 static Type list_singleton[] = {
-    [0] = KIND("List", list_str, list_eq),
+    [0] = KIND("List", list_tostr, list_eq),
 };
 
 static Type str_singleton[] = {
@@ -177,8 +177,8 @@ static Type str_singleton[] = {
 };
 
 static Type fn_singleton[] = {
-    [FN_PRIMITIVE] = KIND("Primitive", prim_op_str, prim_op_eq),
-    [FN_CLOSURE] = KIND("Closure", closure_str, closure_eq),
+    [FN_PRIMITIVE] = KIND("Primitive", prim_op_tostr, prim_op_eq),
+    [FN_CLOSURE] = KIND("Closure", closure_tostr, closure_eq),
 };
 
 static Type *type_singleton[] = {

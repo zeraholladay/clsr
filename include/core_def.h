@@ -40,11 +40,14 @@ typedef struct Context Context;
 typedef enum {
   PRIMITIVE_NULL,
   PRIMITIVE_UNARY_FN,
-  PRIMITIVE_BINARY_FN
+  PRIMITIVE_BINARY_FN,
+  PRIMITIVE_TERNARY_FN,
 } PrimitiveEnum;
 
 typedef Node *(*PrimitiveUnaryFn)(Node *node, Context *ctx);
 typedef Node *(*PrimitiveBinaryFn)(Node *node1, Node *node2, Context *ctx);
+typedef Node *(*PrimitiveTernaryFn)(Node *node1, Node *node2, Node *node3,
+                                    Context *ctx);
 
 typedef struct Primitive {
   const char *name;
@@ -52,6 +55,7 @@ typedef struct Primitive {
   union {
     const PrimitiveUnaryFn unary_fn_ptr;
     const PrimitiveBinaryFn binary_fn_ptr;
+    const PrimitiveTernaryFn ternary_fn_ptr;
   };
 } Primitive;
 

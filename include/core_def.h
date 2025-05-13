@@ -44,19 +44,11 @@ typedef enum {
   PRIMITIVE_TERNARY_FN,
 } PrimitiveEnum;
 
-typedef Node *(*PrimitiveUnaryFn)(Node *node, Context *ctx);
-typedef Node *(*PrimitiveBinaryFn)(Node *node1, Node *node2, Context *ctx);
-typedef Node *(*PrimitiveTernaryFn)(Node *node1, Node *node2, Node *node3,
-                                    Context *ctx);
-
+typedef Node *(*prim_fn_t)(Node *, Context *);
 typedef struct Primitive {
-  const char *name;
-  const PrimitiveEnum type;
-  union {
-    const PrimitiveUnaryFn unary_fn_ptr;
-    const PrimitiveBinaryFn binary_fn_ptr;
-    const PrimitiveTernaryFn ternary_fn_ptr;
-  };
+    const char *name;
+    prim_fn_t fn;
+    int       arity;
 } Primitive;
 
 // Node type "object"

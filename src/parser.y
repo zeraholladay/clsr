@@ -62,7 +62,7 @@ expressions
         $$ = empty_list(ctx);
     }
     | expression expressions {
-        $$ = cons($1, $2, ctx);
+        $$ = CONS($1, $2, ctx);
     }
     ;
 
@@ -72,8 +72,8 @@ expression
     | list
     | QUOTE expression {
         Node *quote = cons_primop(CTX_POOL(ctx), PRIMITIVE(QUOTE));
-        Node *fn_args = cons($2, empty_list(ctx), ctx);
-        $$ = cons(quote, fn_args, ctx);
+        Node *fn_args = CONS($2, empty_list(ctx), ctx);
+        $$ = CONS(quote, fn_args, ctx);
     }
     ;
 
@@ -88,10 +88,10 @@ list
 
 expression_list
     : expression {
-        $$ = cons($1, empty_list(ctx), ctx);
+        $$ = CONS($1, empty_list(ctx), ctx);
     }
     | expression expression_list {
-        $$ = cons($1, $2, ctx);
+        $$ = CONS($1, $2, ctx);
     }
 
     ;

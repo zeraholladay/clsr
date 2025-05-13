@@ -7,8 +7,6 @@
 #include "heap_list.h"
 #include "safe_str.h"
 
-#define KIND(name, str, eq) {.type_name = name, .str_fn = str, .eq_fn = eq}
-
 // Type eq
 static inline int type_eq(Node *self, Node *other) {
   return type(self) == type(other);
@@ -153,27 +151,37 @@ static char *closure_tostr(Node *self) {
 // String type
 static int string_eq(Node *self, Node *other) {
   return type_eq(self, other) &&
-         (0 == strcmp(get_string(self),
-                      get_string(other))); // FIX ME: strings should have len
+         (!strcmp(get_string(self),
+                  get_string(other))); // FIX ME: strings should have len
 }
 
 static char *string_tostr(Node *self) { return get_string(self); }
 
 static Type type_singleton[] = {
     // Special constant
-    [TYPE_NIL] = KIND("NIL", nil_tostr, nil_eq),
+    [TYPE_NIL] = {.type_name = "NIL", .str_fn = nil_tostr, .eq_fn = nil_eq},
 
     // Literal values
-    [TYPE_INTEGER] = KIND("Integer", integer_tostr, integer_eq),
-    [TYPE_STRING] = KIND("String", string_tostr, string_eq),
-    [TYPE_SYMBOL] = KIND("Symbol", symbol_tostr, symbol_eq),
+    [TYPE_INTEGER] = {.type_name = "Integer",
+                      .str_fn = integer_tostr,
+                      .eq_fn = integer_eq},
+    [TYPE_STRING] = {.type_name = "String",
+                     .str_fn = string_tostr,
+                     .eq_fn = string_eq},
+    [TYPE_SYMBOL] = {.type_name = "Symbol",
+                     .str_fn = symbol_tostr,
+                     .eq_fn = symbol_eq},
 
     // Composite structures
-    [TYPE_LIST] = KIND("List", list_tostr, list_eq),
+    [TYPE_LIST] = {.type_name = "List", .str_fn = list_tostr, .eq_fn = list_eq},
 
     // Function-like values
-    [TYPE_PRIMITIVE] = KIND("Primitive", prim_op_tostr, prim_op_eq),
-    [TYPE_CLOSURE] = KIND("Closure", closure_tostr, closure_eq),
+    [TYPE_PRIMITIVE] = {.type_name = "Primitive",
+                        .str_fn = prim_op_tostr,
+                        .eq_fn = prim_op_eq},
+    [TYPE_CLOSURE] = {.type_name = "Closure",
+                      .str_fn = closure_tostr,
+                      .eq_fn = closure_eq},
 };
 
 // type()

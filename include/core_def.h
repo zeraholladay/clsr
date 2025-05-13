@@ -38,6 +38,7 @@ typedef struct Context Context;
 // Primitive
 
 typedef Node *(*prim_fn_t)(Node *, Context *);
+
 typedef struct Primitive {
   const char *name;
   prim_fn_t fn;
@@ -160,11 +161,6 @@ static inline CLSR_INTEGER_TYPE get_integer(Node *node) {
 
 static inline const char *get_symbol(Node *node) {
   return is_symbol(node) ? node->as.symbol : NULL;
-}
-
-// List accessors
-static inline List *get_list(Node *node) {
-  return is_list(node) ? &node->as.list : NULL;
 }
 
 static inline const Primitive *get_prim_op(Node *node) {

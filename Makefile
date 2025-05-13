@@ -103,7 +103,7 @@ $(BIN)/%.o: $(TEST_SRC)/%.c
 # linting
 .PHONY: lint
 lint: clean
-	clang-format -style LLVM -i */*.c */*.h
+	clang-format -style LLVM -sort-includes -i */*.c */*.h
 	cppcheck */*.c */*.h --check-level=exhaustive
 
 # bin/

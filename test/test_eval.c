@@ -77,18 +77,18 @@ START_TEST(test_quote) {
 
   eval_result = run_eval_program("'(foo)");
   ck_assert(!is_empty_list(eval_result));
-  car = get_car(eval_result);
-  cdr = get_cdr(eval_result);
+  car = FIRST(eval_result);
+  cdr = REST(eval_result);
   ck_assert_str_eq(get_symbol(car), "foo");
   ck_assert(is_empty_list(cdr));
 
   eval_result = run_eval_program("'(foo bar)");
   ck_assert(!is_empty_list(eval_result));
-  car = get_car(eval_result);
-  cdr = get_cdr(eval_result);
+  car = FIRST(eval_result);
+  cdr = REST(eval_result);
   ck_assert(!is_empty_list(cdr));
   ck_assert_str_eq(get_symbol(car), "foo");
-  ck_assert_str_eq(get_symbol(get_car(cdr)), "bar");
+  ck_assert_str_eq(get_symbol(FIRST(cdr)), "bar");
 }
 END_TEST
 
@@ -101,17 +101,17 @@ START_TEST(test_cons) {
 
   eval_result = run_eval_program("(cons 'foo 'bar)");
   ck_assert(!is_empty_list(eval_result));
-  car = get_car(eval_result);
-  cdr = get_cdr(eval_result);
+  car = FIRST(eval_result);
+  cdr = REST(eval_result);
   ck_assert_str_eq(get_symbol(car), "foo");
   ck_assert_str_eq(get_symbol(cdr), "bar");
 
   eval_result = run_eval_program("(cons 'foo '(bar))");
   ck_assert(!is_empty_list(eval_result));
-  car = get_car(eval_result);
-  cdr = get_cdr(eval_result);
+  car = FIRST(eval_result);
+  cdr = REST(eval_result);
   ck_assert(!is_empty_list(cdr));
-  ck_assert_str_eq(get_symbol(get_car(cdr)), "bar");
+  ck_assert_str_eq(get_symbol(FIRST(cdr)), "bar");
 }
 END_TEST
 
@@ -162,8 +162,8 @@ START_TEST(test_rest) {
 
   eval_result = run_eval_program("(rest '(foo bar))");
   ck_assert(is_list(eval_result));
-  ck_assert(is_symbol(get_car(eval_result)));
-  ck_assert_str_eq(get_symbol(get_car(eval_result)), "bar");
+  ck_assert(is_symbol(FIRST(eval_result)));
+  ck_assert_str_eq(get_symbol(FIRST(eval_result)), "bar");
 
   if (setjmp(eval_error_jmp) == 0) {
     eval_result = run_eval_program("(rest)");
@@ -225,7 +225,7 @@ START_TEST(test_closure) {
   eval_result = run_eval_program(
       "(set 'foo (closure '(a b) '(cons a b))) (foo 'bar 'biz)");
   ck_assert(is_list(eval_result));
-  ck_assert_str_eq(get_symbol(get_car(eval_result)), "bar");
+  ck_assert_str_eq(get_symbol(FIRST(eval_result)), "bar");
 }
 END_TEST
 
@@ -320,8 +320,8 @@ START_TEST(test_apply) {
   eval_result =
       run_eval_program("(apply (closure '(a b) '(cons a b)) 'foo 'bar)");
   ck_assert(!is_empty_list(eval_result));
-  car = get_car(eval_result);
-  cdr = get_cdr(eval_result);
+  car = FIRST(eval_result);
+  cdr = REST(eval_result);
   ck_assert_str_eq(get_symbol(car), "foo");
   ck_assert_str_eq(get_symbol(cdr), "bar");
 

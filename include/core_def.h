@@ -77,8 +77,8 @@ typedef struct {
 } Literal;
 
 typedef struct {
-  Node *car; // Contents of the Address part of Register
-  Node *cdr; // Contents of the Decrement part of Register
+  Node *first;
+  Node *rest;
 } List;
 
 typedef struct {
@@ -172,7 +172,8 @@ static inline int is_closure_fn(const Node *node) {
 }
 
 static inline int is_empty_list(const Node *node) {
-  return !node || (is_list(node) && !node->as.list.car && !node->as.list.cdr);
+  return !node ||
+         (is_list(node) && !node->as.list.first && !node->as.list.rest);
 }
 
 // Literal accessors
@@ -191,14 +192,6 @@ static inline const char *get_symbol(Node *node) {
 // List accessors
 static inline List *get_list(Node *node) {
   return is_list(node) ? &node->as.list : NULL;
-}
-
-static inline Node *get_car(Node *node) {
-  return is_list(node) ? node->as.list.car : NULL;
-}
-
-static inline Node *get_cdr(Node *node) {
-  return is_list(node) ? node->as.list.cdr : NULL;
 }
 
 // Function accessors

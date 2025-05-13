@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "core_def.h"
+#include "eval.h"
 #include "heap_list.h"
 #include "safe_str.h"
 
@@ -71,13 +72,13 @@ static char *list_tostr(Node *self) {
 
   total += hl_append_strdup(hl, "(");
 
-  for (cur = self; is_list(cur); cur = get_cdr(cur)) {
-    Node *car = get_car(cur), *cdr = get_cdr(cur);
+  for (cur = self; is_list(cur); cur = REST(cur)) {
+    Node *car = FIRST(cur), *cdr = REST(cur);
 
     if (car) {
       total += hl_append_strdup(hl, type(car)->str_fn(car));
 
-      if (get_car(cdr))
+      if (FIRST(cdr))
         total += hl_append_strdup(hl, " ");
     }
   }
@@ -249,8 +250,8 @@ Node *cons_list(Pool *p, Node *car, Node *cdr) {
   Node *node = pool_alloc(p);
   node->type = TYPE_LIST;
   List *list = &node->as.list;
-  list->car = car;
-  list->cdr = cdr;
+  list->first = car;
+  list->rest = cdr;
   return node;
 }
 

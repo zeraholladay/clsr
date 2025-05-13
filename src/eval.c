@@ -9,11 +9,12 @@
 
 #define NIL_STR "NIL"
 #define T_STR "T"
+
 #define T (&t_node)
 #define NIL (&nil_node)
 
 static Node nil_node = {.type = TYPE_NIL,
-                        .as.list = {.car = NULL, .cdr = NULL}};
+                        .as.list = {.first = NULL, .rest = NULL}};
 
 static Node t_node = {.type = TYPE_LITERAL,
                       .as.literal = {
@@ -114,7 +115,7 @@ Node *eval_eq(Node *args, Context *ctx) {
   return (type(FIRST(args))->eq_fn(FIRST(args), FIRST(REST(args)))) ? T : NIL;
 }
 
-Node *first(Node *args, Context *ctx) {
+Node *eval_first(Node *args, Context *ctx) {
   (void)ctx;
   if (!is_list(FIRST(args))) {
     raise(ERR_INVALID_ARG, __func__);
@@ -195,7 +196,7 @@ Node *eval_pair(Node *args, Context *ctx) {
   return pair(FIRST(args), FIRST(REST(args)), ctx);
 }
 
-Node *print(Node *node, Context *ctx) {
+Node *eval_print(Node *node, Context *ctx) {
   (void)ctx;
   char *str = type(node)->str_fn(node);
   printf("%s\n", str);
@@ -203,7 +204,7 @@ Node *print(Node *node, Context *ctx) {
   return T;
 }
 
-Node *rest(Node *args, Context *ctx) {
+Node *eval_rest(Node *args, Context *ctx) {
   (void)ctx;
   if (!is_list(FIRST(args))) {
     raise(ERR_INVALID_ARG, __func__);

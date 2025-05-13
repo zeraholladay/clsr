@@ -54,11 +54,11 @@ START_TEST(test_env) {
       if (hash_i == hash_j)
         ck_assert_str_eq(RB_KEY(n_i), RB_KEY(n_j));
       else {
-        ck_assert_msg(
-            strcmp(RB_KEY(n_i), RB_KEY(n_j)),
-            "Assertion failed: strings equal (\"%s\" == \"%s\") for %s and %s",
-            RB_KEY(n_i), RB_KEY(n_j), test_env_similar_strings[i],
-            test_env_similar_strings[j]);
+        ck_assert_msg(strcmp(RB_KEY(n_i), RB_KEY(n_j)),
+                      "Assertion failed: strings equal (\"%s\" == "
+                      "\"%s\") for %s and %s",
+                      RB_KEY(n_i), RB_KEY(n_j), test_env_similar_strings[i],
+                      test_env_similar_strings[j]);
       }
     }
   }

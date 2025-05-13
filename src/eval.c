@@ -16,10 +16,7 @@
 static Node nil_node = {.type = TYPE_NIL,
                         .as.list = {.first = NULL, .rest = NULL}};
 
-static Node t_node = {.type = TYPE_LITERAL,
-                      .as.literal = {
-                          .as.symbol = T_STR,
-                      }};
+static Node t_node = {.type = TYPE_SYMBOL, .as.symbol = T_STR};
 
 static size_t length(Node *list);
 static Node *lookup_symbol(Node *node, Context *ctx);

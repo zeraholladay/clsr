@@ -45,8 +45,8 @@ typedef struct Primitive {
 } Primitive;
 
 // Node type "object"
-typedef char *(*StrFn)(Node *self);
-typedef int (*EqFn)(Node *self, Node *other);
+typedef char *(*StrFn)(Node *);
+typedef int (*EqFn)(Node *, Node *);
 
 typedef struct Type {
   const char *type_name;
@@ -56,25 +56,14 @@ typedef struct Type {
 
 // Nodes
 typedef enum {
-  TYPE_NIL,
-  TYPE_LITERAL,
-  TYPE_LIST,
-  TYPE_FUNCTION,
-  TYPE_STRING
+  TYPE_NIL,       // special constant
+  TYPE_SYMBOL,    // identifiers
+  TYPE_INTEGER,   // literal
+  TYPE_STRING,    // literal
+  TYPE_LIST,      // cons cells
+  TYPE_PRIMITIVE, // builtin fn
+  TYPE_CLOSURE    // user-defined fn
 } TypeEnum;
-
-typedef enum { LITERAL_INTEGER, LITERAL_SYMBOL } LiteralTypeEnum;
-typedef enum { FN_PRIMITIVE, FN_CLOSURE } FunctionTypeEnum;
-
-typedef char String; // FIXME: Strings should have a len
-
-typedef struct {
-  LiteralTypeEnum type;
-  union {
-    CLSR_INTEGER_TYPE integer;
-    const char *symbol;
-  } as;
-} Literal;
 
 typedef struct {
   Node *first;
@@ -87,23 +76,20 @@ typedef struct {
   Env *env;
 } Closure;
 
-typedef struct {
-  FunctionTypeEnum type;
-  union {
-    struct {
-      const Primitive *prim_op;
-    } primitive;
-    Closure closure;
-  } as;
-} Function;
-
 struct Node {
   TypeEnum type;
   union {
+    // Literal values
+    CLSR_INTEGER_TYPE integer;
+    char *string;
+    const char *symbol;
+
+    // Composite structures
     List list;
-    Literal literal;
-    Function function;
-    String *string;
+
+    // Function-like values
+    const Primitive *primitive;
+    Closure closure;
   } as;
 };
 
@@ -129,7 +115,7 @@ Node *cons_primop(Pool *p, const Primitive *prim_op);
 Node *cons_closure(Pool *p, Node *params, Node *body, Env *env);
 Node *cons_integer(Pool *p, CLSR_INTEGER_TYPE i);
 Node *cons_list(Pool *p, Node *car, Node *cdr);
-Node *cons_string(Pool *p, String *str);
+Node *cons_string(Pool *p, char *str);
 Node *cons_symbol(Pool *p, const char *sym);
 
 // helpers
@@ -137,16 +123,8 @@ static inline int is_nil(const Node *node) {
   return node && node->type == TYPE_NIL;
 }
 
-static inline int is_literal(const Node *node) {
-  return node && node->type == TYPE_LITERAL;
-}
-
 static inline int is_list(const Node *node) {
   return node && node->type == TYPE_LIST;
-}
-
-static inline int is_function(const Node *node) {
-  return node && node->type == TYPE_FUNCTION;
 }
 
 static inline int is_string(const Node *node) {
@@ -155,20 +133,20 @@ static inline int is_string(const Node *node) {
 
 // Literal type checks
 static inline int is_integer(const Node *node) {
-  return is_literal(node) && node->as.literal.type == LITERAL_INTEGER;
+  return node && node->type == TYPE_INTEGER;
 }
 
 static inline int is_symbol(const Node *node) {
-  return is_literal(node) && node->as.literal.type == LITERAL_SYMBOL;
+  return node && node->type == TYPE_SYMBOL;
 }
 
 // Function type checks
 static inline int is_primitive_fn(const Node *node) {
-  return is_function(node) && node->as.function.type == FN_PRIMITIVE;
+  return node && node->type == TYPE_PRIMITIVE;
 }
 
 static inline int is_closure_fn(const Node *node) {
-  return is_function(node) && node->as.function.type == FN_CLOSURE;
+  return node && node->type == TYPE_CLOSURE;
 }
 
 static inline int is_empty_list(const Node *node) {
@@ -176,17 +154,12 @@ static inline int is_empty_list(const Node *node) {
          (is_list(node) && !node->as.list.first && !node->as.list.rest);
 }
 
-// Literal accessors
-static inline Literal *get_literal(Node *node) {
-  return is_literal(node) ? &node->as.literal : NULL;
-}
-
 static inline CLSR_INTEGER_TYPE get_integer(Node *node) {
-  return is_integer(node) ? node->as.literal.as.integer : 0;
+  return is_integer(node) ? node->as.integer : 0;
 }
 
 static inline const char *get_symbol(Node *node) {
-  return is_symbol(node) ? node->as.literal.as.symbol : NULL;
+  return is_symbol(node) ? node->as.symbol : NULL;
 }
 
 // List accessors
@@ -194,33 +167,28 @@ static inline List *get_list(Node *node) {
   return is_list(node) ? &node->as.list : NULL;
 }
 
-// Function accessors
-static inline Function *get_function(Node *node) {
-  return is_function(node) ? &node->as.function : NULL;
-}
-
 static inline const Primitive *get_prim_op(Node *node) {
-  return is_primitive_fn(node) ? node->as.function.as.primitive.prim_op : NULL;
+  return is_primitive_fn(node) ? node->as.primitive : NULL;
 }
 
 static inline Closure *get_closure(Node *node) {
-  return is_closure_fn(node) ? &node->as.function.as.closure : NULL;
+  return is_closure_fn(node) ? &node->as.closure : NULL;
 }
 
 static inline Node *get_closure_params(Node *node) {
-  return is_closure_fn(node) ? node->as.function.as.closure.params : NULL;
+  return is_closure_fn(node) ? node->as.closure.params : NULL;
 }
 
 static inline Node *get_closure_body(Node *node) {
-  return is_closure_fn(node) ? node->as.function.as.closure.body : NULL;
+  return is_closure_fn(node) ? node->as.closure.body : NULL;
 }
 
 static inline Env *get_closure_env(Node *node) {
-  return is_closure_fn(node) ? node->as.function.as.closure.env : NULL;
+  return is_closure_fn(node) ? node->as.closure.env : NULL;
 }
 
 // String accessors
-static inline String *get_string(Node *node) {
+static inline char *get_string(Node *node) {
   return is_string(node) ? node->as.string : NULL;
 }
 

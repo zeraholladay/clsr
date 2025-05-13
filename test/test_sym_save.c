@@ -52,11 +52,12 @@ START_TEST(test_sym_save) {
                  test_sym_save_similar_strings[j]) == 0)
         ck_assert_str_eq(saved_str_i, saved_str_j);
       else {
-        ck_assert_msg(
-            strcmp(saved_str_i, saved_str_j),
-            "Assertion failed: strings equal (\"%s\" == \"%s\") for %s and %s",
-            saved_str_i, saved_str_j, test_sym_save_similar_strings[i],
-            test_sym_save_similar_strings[j]);
+        ck_assert_msg(strcmp(saved_str_i, saved_str_j),
+                      "Assertion failed: strings equal (\"%s\" == "
+                      "\"%s\") for %s and %s",
+                      saved_str_i, saved_str_j,
+                      test_sym_save_similar_strings[i],
+                      test_sym_save_similar_strings[j]);
       }
     }
   }

@@ -157,105 +157,64 @@ static int string_eq(Node *self, Node *other) {
                       get_string(other))); // FIX ME: strings should have len
 }
 
-static char *string_str(Node *self) { return get_string(self); }
+static char *string_tostr(Node *self) { return get_string(self); }
 
-// Singletons
-static Type nil_singleton[] = {
-    [0] = KIND("NIL", nil_tostr, nil_eq),
-};
+static Type type_singleton[] = {
+    // Special constant
+    [TYPE_NIL] = KIND("NIL", nil_tostr, nil_eq),
 
-static Type literal_singleton[] = {
-    [LITERAL_INTEGER] = KIND("Integer", integer_tostr, integer_eq),
-    [LITERAL_SYMBOL] = KIND("Symbol", symbol_tostr, symbol_eq),
-};
+    // Literal values
+    [TYPE_INTEGER] = KIND("Integer", integer_tostr, integer_eq),
+    [TYPE_STRING] = KIND("String", string_tostr, string_eq),
+    [TYPE_SYMBOL] = KIND("Symbol", symbol_tostr, symbol_eq),
 
-static Type list_singleton[] = {
-    [0] = KIND("List", list_tostr, list_eq),
-};
+    // Composite structures
+    [TYPE_LIST] = KIND("List", list_tostr, list_eq),
 
-static Type str_singleton[] = {
-    [0] = KIND("String", string_str, string_eq),
-};
-
-static Type fn_singleton[] = {
-    [FN_PRIMITIVE] = KIND("Primitive", prim_op_tostr, prim_op_eq),
-    [FN_CLOSURE] = KIND("Closure", closure_tostr, closure_eq),
-};
-
-static Type *type_singleton[] = {
-    [TYPE_NIL] = nil_singleton,    [TYPE_LITERAL] = literal_singleton,
-    [TYPE_LIST] = list_singleton,  [TYPE_FUNCTION] = fn_singleton,
-    [TYPE_STRING] = str_singleton,
+    // Function-like values
+    [TYPE_PRIMITIVE] = KIND("Primitive", prim_op_tostr, prim_op_eq),
+    [TYPE_CLOSURE] = KIND("Closure", closure_tostr, closure_eq),
 };
 
 // type()
 const Type *type(Node *self) {
-  if (!self || is_nil(self)) {
-    return &type_singleton[TYPE_NIL][0];
-  }
-
-  Type *type_ptr = type_ptr = type_singleton[self->type];
-
-  if (is_literal(self)) {
-    const Literal *literal = get_literal(self);
-    return &type_ptr[literal->type];
-  }
-
-  if (is_function(self)) {
-    const Function *fn = get_function(self);
-    return &type_ptr[fn->type];
-  }
-
-  if (is_list(self)) {
-    return &type_ptr[0];
-  }
-
-  if (is_string(self)) {
-    return &type_ptr[0];
-  }
-
-  return NULL; // TODO: fix me
+  if (!self || is_nil(self))
+    return &type_singleton[TYPE_NIL];
+  return &type_singleton[self->type];
 }
 
 Node *cons_primop(Pool *p, const Primitive *prim_op) {
   Node *node = pool_alloc(p);
-  node->type = TYPE_FUNCTION;
-  Function *func = &node->as.function;
-  func->type = FN_PRIMITIVE;
-  func->as.primitive.prim_op = prim_op;
+  node->type = TYPE_PRIMITIVE;
+  node->as.primitive = prim_op;
   return node;
 }
 
 Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
   Node *node = pool_alloc(p);
-  node->type = TYPE_FUNCTION;
-  Function *func = &node->as.function;
-  func->type = FN_CLOSURE;
-  func->as.closure.params = params;
-  func->as.closure.body = body;
-  func->as.closure.env = env;
+  node->type = TYPE_CLOSURE;
+  node->as.closure.params = params;
+  node->as.closure.body = body;
+  node->as.closure.env = env;
   return node;
 }
 
 Node *cons_integer(Pool *p, CLSR_INTEGER_TYPE i) {
   Node *node = pool_alloc(p);
-  node->type = TYPE_LITERAL;
-  Literal *literal = &node->as.literal;
-  literal->type = LITERAL_INTEGER;
-  literal->as.integer = i;
+  node->type = TYPE_INTEGER;
+  node->as.integer = i;
   return node;
 }
 
 Node *cons_list(Pool *p, Node *car, Node *cdr) {
   Node *node = pool_alloc(p);
   node->type = TYPE_LIST;
-  List *list = &node->as.list;
-  list->first = car;
-  list->rest = cdr;
+  node->as.list.first = car;
+  node->as.list.rest = cdr;
   return node;
 }
 
-Node *cons_string(Pool *p, String *str) {
+Node *cons_string(Pool *p, char *str) {
   Node *node = pool_alloc(p);
   node->type = TYPE_STRING;
   node->as.string = str;
@@ -264,9 +223,7 @@ Node *cons_string(Pool *p, String *str) {
 
 Node *cons_symbol(Pool *p, const char *sym) {
   Node *node = pool_alloc(p);
-  node->type = TYPE_LITERAL;
-  Literal *literal = &node->as.literal;
-  literal->type = LITERAL_SYMBOL;
-  literal->as.symbol = sym;
+  node->type = TYPE_SYMBOL;
+  node->as.symbol = sym;
   return node;
 }

@@ -70,7 +70,6 @@ int rl_readline(char *full_input, size_t n) {
 
     strcpy(&full_input[len], line);
     len += line_len;
-
   } while (len == 0 || full_input[len - 1] != '\n');
 
   if (full_input[0]) {

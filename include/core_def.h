@@ -36,19 +36,12 @@ typedef struct Node Node;
 typedef struct Context Context;
 
 // Primitive
-/* PRIMITIVE_NULL for quote. */
-typedef enum {
-  PRIMITIVE_NULL,
-  PRIMITIVE_UNARY_FN,
-  PRIMITIVE_BINARY_FN,
-  PRIMITIVE_TERNARY_FN,
-} PrimitiveEnum;
 
 typedef Node *(*prim_fn_t)(Node *, Context *);
 typedef struct Primitive {
-    const char *name;
-    prim_fn_t fn;
-    int       arity;
+  const char *name;
+  prim_fn_t fn;
+  int arity;
 } Primitive;
 
 // Node type "object"
@@ -63,7 +56,7 @@ typedef struct Type {
 
 // Nodes
 typedef enum {
-  TYPE_NULL,
+  TYPE_NIL,
   TYPE_LITERAL,
   TYPE_LIST,
   TYPE_FUNCTION,

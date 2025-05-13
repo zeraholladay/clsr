@@ -52,7 +52,7 @@ static void clsr_eval_program(Context *ctx) {
   if (setjmp(eval_error_jmp) == 0) {
 
     Node *eval_result = eval_program(CTX_PARSE_ROOT(ctx), ctx);
-    Node *node = _str(eval_result, ctx);
+    Node *node = eval_str(eval_result, ctx);
     printf("%s\n", get_string(node));
     free(node->as.string); // FIXME with GC
   }

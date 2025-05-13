@@ -182,7 +182,7 @@ static Type fn_singleton[] = {
 };
 
 static Type *type_singleton[] = {
-    [TYPE_NULL] = null_singleton,  [TYPE_LITERAL] = literal_singleton,
+    [TYPE_NIL] = null_singleton,   [TYPE_LITERAL] = literal_singleton,
     [TYPE_LIST] = list_singleton,  [TYPE_FUNCTION] = fn_singleton,
     [TYPE_STRING] = str_singleton,
 };
@@ -190,7 +190,7 @@ static Type *type_singleton[] = {
 // type()
 const Type *type(Node *self) {
   if (!self) {
-    return &type_singleton[TYPE_NULL][0];
+    return &type_singleton[TYPE_NIL][0];
   }
 
   Type *type_ptr = type_ptr = type_singleton[self->type];

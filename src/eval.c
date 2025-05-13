@@ -5,10 +5,24 @@
 #include "core_def.h"
 #include "debug.h"
 #include "eval.h"
+#include "safe_str.h"
+
+#define NIL_STR "NIL"
+#define T_STR "T"
+#define T (&t_node)
+#define NIL (&nil_node)
 
 extern jmp_buf eval_error_jmp;
 
-static size_t _length(Node *list);
+static Node nil_node = {.type = TYPE_NIL,
+                        .as.list = {.car = NULL, .cdr = NULL}};
+
+static Node t_node = {.type = TYPE_LITERAL,
+                      .as.literal = {
+                          .as.symbol = T_STR,
+                      }};
+
+static size_t length(Node *list);
 static Node *pair(Node *list1, Node *list2, Context *ctx);
 static Node *set(Node *car, Node *cdr, Context *ctx);
 
@@ -18,67 +32,58 @@ static void raise(ErrorCode err_code, const char *msg) {
   longjmp(eval_error_jmp, 1);
 }
 
-static Node *nth(Node *list, size_t n) {
-  for (size_t i = 0; i < n; i++) {
-    if (!list)
-      return NULL;
-    list = get_car(list);
+static Node *match_special_symbol(const char *symstr) {
+  static const struct {
+    const char *name;
+    size_t len;
+    Node *value;
+  } table[] = {
+      {NIL_STR, sizeof(NIL_STR), NIL},
+      {T_STR, sizeof(T_STR), T},
+  };
+
+  for (size_t i = 0; i < sizeof(table) / sizeof(*table); ++i) {
+    if (safe_strncmp_minlen(symstr, table[i].name, table[i].len) == 0) {
+      return table[i].value;
+    }
   }
-  return get_cdr(list);
+
+  return NULL;
 }
 
-// FIXME
-static Node *get_true(Context *ctx) {
-  return cons_primop(CTX_POOL(ctx), PRIMITIVE(T));
-}
+static Node *apply_closure(Node *fn, Node *args, Context *ctx) {
+  size_t expected = length(get_closure_params(fn));
+  size_t received = length(args);
 
-// FIXME
-static Node *get_nil(Context *ctx) {
-  return cons_primop(CTX_POOL(ctx), PRIMITIVE(NIL));
-}
-
-static Node *apply_closure(Node *fn_node, Node *arglist, Context *ctx) {
-  // validate
-  size_t params_len = _length(get_closure_params(fn_node));
-  size_t arglist_len = _length(arglist);
-
-  if (params_len > arglist_len) {
-    raise(ERR_MISSING_ARG, __func__); // FIXME
+  if (expected != received) {
+    ErrorCode err =
+        (received < expected) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
+    raise(err, __func__); // FIXME: context
     return NULL;
   }
 
-  if (params_len < arglist_len) {
-    raise(ERR_UNEXPECTED_ARG, __func__); // FIXME
-    return NULL;
-  }
-
-  // setup context
   Context new_ctx = *ctx;
-  CTX_ENV(&new_ctx) = env_new(get_closure_env(fn_node));
+  CTX_ENV(&new_ctx) = env_new(get_closure_env(fn));
 
-  for (Node *pairs = pair(get_closure_params(fn_node), arglist, ctx);
+  for (Node *pairs = pair(get_closure_params(fn), args, ctx);
        !is_empty_list(pairs); pairs = REST(pairs)) {
 
     Node *pair = FIRST(pairs);
     set(FIRST(pair), FIRST(REST(pair)), &new_ctx);
   }
 
-  // eval
-  return eval(get_closure_body(fn_node), &new_ctx); // TODO: eval_program()
+  return eval(get_closure_body(fn), &new_ctx); // TODO: eval_program()
 }
 
-static Node *apply_primitive(Node *fn_node, Node *arglist, Context *ctx) {
-  // TODO: validate arglist is correct for type
-  const Primitive *prim = get_prim_op(fn_node);
-  return prim->fn(arglist, ctx);
+static Node *apply_primitive(Node *fn, Node *args, Context *ctx) {
+  // TODO: validate args is correct for type
+  const Primitive *prim = get_prim_op(fn);
+  return prim->fn(args, ctx);
 }
 
 Node *eval_apply(Node *list, Context *ctx) {
   Node *fn_node = FIRST(list);
   Node *arglist = REST(list);
-
-  print(fn_node, ctx);
-  print(arglist, ctx);
 
   if (!(is_closure_fn(fn_node) || is_primitive_fn(fn_node)) ||
       !is_list(arglist)) {
@@ -98,75 +103,82 @@ Node *eval_apply(Node *list, Context *ctx) {
   return NULL;
 }
 
-Node *eval_closure(Node *list, Context *ctx) {
-  if (!is_list(FIRST(list))) {
+Node *eval_closure(Node *args, Context *ctx) {
+  if (!is_list(FIRST(args))) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
-  return cons_closure(CTX_POOL(ctx), FIRST(list), FIRST(REST(list)),
+  return cons_closure(CTX_POOL(ctx), FIRST(args), FIRST(REST(args)),
                       CTX_ENV(ctx));
 }
 
-Node *eval_cons(Node *list, Context *ctx) {
-  return CONS(FIRST(list), FIRST(REST(list)), ctx);
+Node *eval_cons(Node *args, Context *ctx) {
+  return CONS(FIRST(args), FIRST(REST(args)), ctx);
 }
 
-Node *eval_eq(Node *list, Context *ctx) {
-  return (type(FIRST(list))->eq_fn(FIRST(list), FIRST(REST(list))))
-             ? get_true(ctx)
-             : get_nil(ctx);
-}
-
-Node *first(Node *list, Context *ctx) {
+Node *eval_eq(Node *args, Context *ctx) {
   (void)ctx;
-  if (!is_list(FIRST(list))) {
+  return (type(FIRST(args))->eq_fn(FIRST(args), FIRST(REST(args)))) ? T : NIL;
+}
+
+Node *first(Node *args, Context *ctx) {
+  (void)ctx;
+  if (!is_list(FIRST(args))) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
-  return FIRST(FIRST(list));
+  return FIRST(FIRST(args));
 }
 
-Node *eval_if(Node *list, Context *ctx) {
-  Node *_bool = FIRST(list);
-  Node *then = FIRST(REST(list));
-  Node *_else = FIRST(REST(REST(list)));
+Node *eval_if(Node *args, Context *ctx) {
+  Node *condition = FIRST(args);
+  Node *true_expr = FIRST(REST(args));
+  Node *false_expr = FIRST(REST(REST(args)));
 
-  Node *branch =
-      type(get_true(ctx))->eq_fn(_bool, get_true(ctx)) ? then : _else;
+  Node *branch = type(T)->eq_fn(condition, T) ? true_expr : false_expr;
   return eval(branch, ctx);
 }
 
-static size_t _length(Node *list) {
+static size_t length(Node *list) {
   size_t i = 0;
-  for (Node *cdr = get_cdr(list); cdr; cdr = get_cdr(cdr))
+  for (Node *cdr = REST(list); cdr; cdr = REST(cdr))
     ++i;
   return i;
 }
 
-Node *length(Node *list, Context *ctx) {
-  if (!is_list(FIRST(list))) {
+Node *eval_len(Node *args, Context *ctx) {
+  if (!is_list(FIRST(args))) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
-  return cons_integer(CTX_POOL(ctx), _length(FIRST(list)));
+  return cons_integer(CTX_POOL(ctx), length(FIRST(args)));
 }
 
+// TODO:
 Node *list(Node *car, Node *cdr, Context *ctx) {
   Node *empty = CONS(NULL, NULL, ctx);
   return CONS(car, CONS(cdr, empty, ctx), ctx);
   ;
 }
 
-Node *lookup(Node *node, Context *ctx) {
+static Node *lookup(Node *node, Context *ctx) {
   if (!is_symbol(node)) {
-    raise(ERR_INVALID_ARG, __func__);
+    raise(ERR_INTERNAL, __func__);
     return NULL;
   }
 
-  rb_node *n = env_lookup(CTX_ENV(ctx), get_symbol(node));
+  const char *symstr = get_symbol(node);
+
+  if (safe_strncmp_minlen(symstr, NIL_STR, sizeof(NIL_STR)) == 0)
+    return NIL;
+
+  if (safe_strncmp_minlen(symstr, T_STR, sizeof(T_STR)) == 0)
+    return T;
+
+  rb_node *n = env_lookup(CTX_ENV(ctx), symstr);
 
   if (!n) {
-    raise(ERR_SYMBOL_NOT_FOUND, get_symbol(node));
+    raise(ERR_SYMBOL_NOT_FOUND, symstr);
     return NULL;
   }
 
@@ -183,12 +195,12 @@ static Node *pair(Node *list1, Node *list2, Context *ctx) {
   return CONS(first_pair, rest_pairs, ctx);
 }
 
-Node *eval_pair(Node *list, Context *ctx) {
-  if (!is_list(FIRST(list)) || !is_list(FIRST(REST(list)))) {
+Node *eval_pair(Node *args, Context *ctx) {
+  if (!is_list(FIRST(args)) || !is_list(FIRST(REST(args)))) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
-  return pair(FIRST(list), FIRST(REST(list)), ctx);
+  return pair(FIRST(args), FIRST(REST(args)), ctx);
 }
 
 Node *print(Node *node, Context *ctx) {
@@ -196,22 +208,16 @@ Node *print(Node *node, Context *ctx) {
   char *str = type(node)->str_fn(node);
   printf("%s\n", str);
   free(str);
-  return get_true(ctx);
+  return T;
 }
 
-Node *repr(Node *node, Context *ctx) {
-  (void)node;
+Node *rest(Node *args, Context *ctx) {
   (void)ctx;
-  return NULL;
-}
-
-Node *rest(Node *list, Context *ctx) {
-  (void)ctx;
-  if (!is_list(FIRST(list))) {
+  if (!is_list(FIRST(args))) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
-  Node *cdr = REST(FIRST(list));
+  Node *cdr = REST(FIRST(args));
   return is_list(cdr) ? cdr : CONS(cdr, NULL, ctx);
 }
 
@@ -224,15 +230,15 @@ static Node *set(Node *car, Node *cdr, Context *ctx) {
   return cdr;
 }
 
-Node *eval_set(Node *list, Context *ctx) {
-  if (!is_symbol(FIRST(list))) {
+Node *eval_set(Node *args, Context *ctx) {
+  if (!is_symbol(FIRST(args))) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
-  return set(FIRST(list), FIRST(REST(list)), ctx);
+  return set(FIRST(args), FIRST(REST(args)), ctx);
 }
 
-Node *_str(Node *node, Context *ctx) {
+Node *eval_str(Node *node, Context *ctx) {
   return cons_string(CTX_POOL(ctx), type(node)->str_fn(node));
 }
 
@@ -250,37 +256,29 @@ Node *eval(Node *expr, Context *ctx) {
       return expr;
     }
 
-    Node *fn_node = eval(FIRST(expr), ctx);
+    Node *fn = eval(FIRST(expr), ctx);
 
-    if (PRIMITIVE(QUOTE) == get_prim_op(fn_node)) {
+    if (PRIMITIVE(QUOTE) == get_prim_op(fn)) {
       return FIRST(REST(expr));
     }
 
-    Node *result = eval_list(REST(expr), ctx);
+    Node *args = (PRIMITIVE(APPLY) != get_prim_op(fn))
+                     ? CONS(fn, eval_list(REST(expr), ctx), ctx)
+                     : eval_list(REST(expr), ctx);
 
-    Node *arglist = (PRIMITIVE(APPLY) == get_prim_op(fn_node))
-               ? CONS(FIRST(result), REST(result), ctx)
-               : CONS(fn_node, result, ctx);
-
-    print(arglist, ctx);
-
-    return eval_apply(arglist, ctx);
-
-    // return (PRIMITIVE(APPLY) == get_prim_op(fn_node))
-    //            ? apply(first(arglist, ctx), rest(arglist, ctx), ctx)
-    //            : apply(fn_node, arglist, ctx);
+    return eval_apply(args, ctx);
   }
 
   raise(ERR_INTERNAL, DEBUG_LOCATION);
   return NULL;
 }
 
-Node *eval_list(Node *list, Context *ctx) {
-  if (is_empty_list(list))
+Node *eval_list(Node *args, Context *ctx) {
+  if (is_empty_list(args))
     return empty_list(ctx);
 
-  Node *car = eval(FIRST(list), ctx);
-  Node *cdr = eval_list(REST(list), ctx);
+  Node *car = eval(FIRST(args), ctx);
+  Node *cdr = eval_list(REST(args), ctx);
 
   return CONS(car, cdr, ctx);
 }

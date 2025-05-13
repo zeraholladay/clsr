@@ -29,7 +29,7 @@ extern FILE *yyin;
 extern int yyparse(Context *ctx);
 extern void yylex_destroy(void);
 
-jmp_buf eval_error_jmp;
+extern jmp_buf eval_error_jmp;
 
 void clsr_init(Context *ctx) {
   static int sym_save_bool = 0;

@@ -1,9 +1,9 @@
 #include <assert.h>
-#include <setjmp.h>
 #include <stdio.h>
 
 #include "core_def.h"
 #include "debug.h"
+#include "error.h"
 #include "eval.h"
 #include "safe_str.h"
 
@@ -11,8 +11,6 @@
 #define T_STR "T"
 #define T (&t_node)
 #define NIL (&nil_node)
-
-extern jmp_buf eval_error_jmp;
 
 static Node nil_node = {.type = TYPE_NIL,
                         .as.list = {.car = NULL, .cdr = NULL}};
@@ -23,16 +21,11 @@ static Node t_node = {.type = TYPE_LITERAL,
                       }};
 
 static size_t length(Node *list);
+static Node *lookup_symbol(Node *node, Context *ctx);
 static Node *pair(Node *list1, Node *list2, Context *ctx);
 static Node *set(Node *car, Node *cdr, Context *ctx);
 
-static void raise(ErrorCode err_code, const char *msg) {
-  const char *err_code_msg = error_messages[err_code];
-  fprintf(stderr, "*** eval error: %s: %s\n", err_code_msg, msg);
-  longjmp(eval_error_jmp, 1);
-}
-
-static Node *match_special_symbol(const char *symstr) {
+static Node *lookup_reserved_symbol(const char *symstr) {
   static const struct {
     const char *name;
     size_t len;
@@ -161,7 +154,7 @@ Node *list(Node *car, Node *cdr, Context *ctx) {
   ;
 }
 
-static Node *lookup(Node *node, Context *ctx) {
+static Node *lookup_symbol(Node *node, Context *ctx) {
   if (!is_symbol(node)) {
     raise(ERR_INTERNAL, __func__);
     return NULL;
@@ -169,11 +162,10 @@ static Node *lookup(Node *node, Context *ctx) {
 
   const char *symstr = get_symbol(node);
 
-  if (safe_strncmp_minlen(symstr, NIL_STR, sizeof(NIL_STR)) == 0)
-    return NIL;
+  Node *reserved = lookup_reserved_symbol(symstr);
 
-  if (safe_strncmp_minlen(symstr, T_STR, sizeof(T_STR)) == 0)
-    return T;
+  if (reserved)
+    return reserved;
 
   rb_node *n = env_lookup(CTX_ENV(ctx), symstr);
 
@@ -226,7 +218,16 @@ static Node *set(Node *car, Node *cdr, Context *ctx) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
-  env_set(CTX_ENV(ctx), get_symbol(car), cdr); // TODO: error handling
+
+  const char *symstr = get_symbol(car);
+  size_t len = strlen(symstr);
+
+  if (primitive_lookup(symstr, len) || lookup_reserved_symbol(symstr)) {
+    raise(ERR_INVALID_ARG, __func__);
+    return NULL;
+  }
+
+  env_set(CTX_ENV(ctx), symstr, cdr); // TODO: error handling
   return cdr;
 }
 
@@ -243,13 +244,11 @@ Node *eval_str(Node *node, Context *ctx) {
 }
 
 Node *eval(Node *expr, Context *ctx) {
-  if (is_symbol(expr)) {
-    return lookup(expr, ctx);
-  }
+  if (is_symbol(expr))
+    return lookup_symbol(expr, ctx);
 
-  if (is_literal(expr) || is_function(expr) || is_string(expr)) {
+  if (!is_list(expr))
     return expr;
-  }
 
   if (is_list(expr)) {
     if (is_empty_list(expr)) {
@@ -275,7 +274,7 @@ Node *eval(Node *expr, Context *ctx) {
 
 Node *eval_list(Node *args, Context *ctx) {
   if (is_empty_list(args))
-    return empty_list(ctx);
+    return CONS(NULL, NULL, ctx);
 
   Node *car = eval(FIRST(args), ctx);
   Node *cdr = eval_list(REST(args), ctx);

@@ -59,7 +59,7 @@ program
 
 expressions
     : /* empty */ {
-        $$ = empty_list(ctx);
+        $$ = CONS(NULL, NULL, ctx);
     }
     | expression expressions {
         $$ = CONS($1, $2, ctx);
@@ -72,14 +72,14 @@ expression
     | list
     | QUOTE expression {
         Node *quote = cons_primop(CTX_POOL(ctx), PRIMITIVE(QUOTE));
-        Node *fn_args = CONS($2, empty_list(ctx), ctx);
+        Node *fn_args = CONS($2, CONS(NULL, NULL, ctx), ctx);
         $$ = CONS(quote, fn_args, ctx);
     }
     ;
 
 list
     : '(' ')' {
-        $$ = empty_list(ctx);
+        $$ = CONS(NULL, NULL, ctx);
     }
     | '(' expression_list ')' {
         $$ = $2;
@@ -88,7 +88,7 @@ list
 
 expression_list
     : expression {
-        $$ = CONS($1, empty_list(ctx), ctx);
+        $$ = CONS($1, CONS(NULL, NULL, ctx), ctx);
     }
     | expression expression_list {
         $$ = CONS($1, $2, ctx);

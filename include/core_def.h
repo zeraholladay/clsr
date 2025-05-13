@@ -133,6 +133,10 @@ Node *cons_string(Pool *p, String *str);
 Node *cons_symbol(Pool *p, const char *sym);
 
 // helpers
+static inline int is_nil(const Node *node) {
+  return node && node->type == TYPE_NIL;
+}
+
 static inline int is_literal(const Node *node) {
   return node && node->type == TYPE_LITERAL;
 }
@@ -169,10 +173,6 @@ static inline int is_closure_fn(const Node *node) {
 
 static inline int is_empty_list(const Node *node) {
   return !node || (is_list(node) && !node->as.list.car && !node->as.list.cdr);
-}
-
-static inline Node *empty_list(Context *ctx) {
-  return cons_list(CTX_POOL(ctx), NULL, NULL);
 }
 
 // Literal accessors

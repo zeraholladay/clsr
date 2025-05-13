@@ -13,16 +13,16 @@ static inline int type_eq(Node *self, Node *other) {
   return type(self) == type(other);
 }
 
-// NULL type
-static int null_eq(Node *self, Node *other) {
+// NIL type
+static int nil_eq(Node *self, Node *other) {
   (void)self;
   (void)other;
   return self == other;
 }
 
-static char *null_tostr(Node *self) {
+static char *nil_tostr(Node *self) {
   (void)self;
-  return STR_LITERAL_DUP("NULL");
+  return STR_LITERAL_DUP("NIL");
 }
 
 // Integer type
@@ -159,8 +159,8 @@ static int string_eq(Node *self, Node *other) {
 static char *string_str(Node *self) { return get_string(self); }
 
 // Singletons
-static Type null_singleton[] = {
-    [0] = KIND("NULL", null_tostr, null_eq),
+static Type nil_singleton[] = {
+    [0] = KIND("NIL", nil_tostr, nil_eq),
 };
 
 static Type literal_singleton[] = {
@@ -182,14 +182,14 @@ static Type fn_singleton[] = {
 };
 
 static Type *type_singleton[] = {
-    [TYPE_NIL] = null_singleton,   [TYPE_LITERAL] = literal_singleton,
+    [TYPE_NIL] = nil_singleton,    [TYPE_LITERAL] = literal_singleton,
     [TYPE_LIST] = list_singleton,  [TYPE_FUNCTION] = fn_singleton,
     [TYPE_STRING] = str_singleton,
 };
 
 // type()
 const Type *type(Node *self) {
-  if (!self) {
+  if (!self || is_nil(self)) {
     return &type_singleton[TYPE_NIL][0];
   }
 

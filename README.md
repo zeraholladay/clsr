@@ -197,7 +197,7 @@ In no particular order:
 
 1. Math
 1. ~~Conditionals~~
-1. Fix T/NIL
+1. ~~Fix T/NIL~~
 1. ~~Equality~~
 1. Exceptions
 1. ~~Error status and messages~~
@@ -214,5 +214,5 @@ In no particular order:
 1. Parse errors (exceptions first)
 1. GC
 1. repl I/O from files
-1. Bug squashing
+1. ~~Bug squashing~~
 1. Max symbol size

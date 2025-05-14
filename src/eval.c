@@ -24,6 +24,67 @@ static Node *lookup_symbol(Node *node, Context *ctx);
 static Node *pair(Node *l1, Node *l2, Context *ctx);
 static Node *set(Node *car, Node *cdr, Context *ctx);
 
+static Node *apply(Node *fn, Node *expr, Context *ctx) {
+  const PrimitiveFn *prim = GET_PRIMITIVE_FN(fn);
+  Node *call_args         = NULL;
+
+  if (prim == PRIM_FN(FUNCALL) || prim == PRIM_FN(APPLY)) {
+    // (funcall f arg1 arg2 ...)
+    // (apply f arglist)
+    Node *fn2       = eval(FIRST(REST(expr)), ctx);
+    Node *rest_args = (prim == PRIM_FN(FUNCALL))
+                          ? eval_list(REST(REST(expr)), ctx)
+                          : eval(FIRST(REST(REST(expr))), ctx);
+    call_args       = CONS(fn2, rest_args, ctx);
+  } else {
+    // (f arg1 arg2 ... )
+    Node *rest_args = eval_list(REST(expr), ctx);
+    call_args       = CONS(fn, rest_args, ctx);
+  }
+
+  return eval_apply(call_args, ctx);
+}
+
+static Node *funcall_closure(Node *fn, Node *args, Context *ctx) {
+  size_t expected = length(GET_CLOSURE_PARAMS(fn));
+  size_t received = length(args);
+
+  if (expected != received) {
+    ErrorCode err =
+        (received < expected) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
+    raise(err, __func__); // FIXME: context
+    return NULL;
+  }
+
+  Context new_ctx   = *ctx;
+  CTX_ENV(&new_ctx) = env_new(GET_CLOSURE_ENV(fn));
+
+  // clang-format off
+  for (Node *pairs = pair(GET_CLOSURE_PARAMS(fn), args, ctx);
+       !IS_EMPTY_LIST(pairs); pairs = REST(pairs)) {
+
+    Node *pair = FIRST(pairs);
+    set(FIRST(pair), FIRST(REST(pair)), &new_ctx);
+  }
+  // clang-format on
+
+  return eval(GET_CLOSURE_BODY(fn), &new_ctx); // TODO: eval_program()
+}
+
+static Node *funcall_primitive_fn(Node *fn, Node *args, Context *ctx) {
+  const PrimitiveFn *prim_fn = GET_PRIMITIVE_FN(fn);
+  int received               = (int)length(args);
+
+  if (prim_fn->arity > 0 && prim_fn->arity != received) {
+    ErrorCode err =
+        (received < prim_fn->arity) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
+    raise(err, __func__); // FIXME: context
+    return NULL;
+  }
+
+  return (prim_fn != PRIM_FN(LIST)) ? prim_fn->fn(args, ctx) : args;
+}
+
 static size_t length(Node *list) {
   size_t i = 0;
   for (Node *cdr = REST(list); cdr; cdr = REST(cdr))
@@ -101,34 +162,7 @@ static Node *set(Node *car, Node *cdr, Context *ctx) {
   return cdr;
 }
 
-Node *eval_apply(Node *expr, Context *ctx) {
-  Node *fn                = eval(FIRST(expr), ctx);
-  const PrimitiveFn *prim = GET_PRIMITIVE_FN(fn);
-
-  if (prim == PRIM_FN(QUOTE)) {
-    return FIRST(REST(expr));
-  }
-
-  Node *call_args;
-  if (prim == PRIM_FN(FUNCALL)) {
-    // (funcall f arg1 arg2 ...)
-    Node *fn2       = eval(FIRST(REST(expr)), ctx);
-    Node *rest_args = eval_list(REST(REST(expr)), ctx);
-    PRINT(rest_args, ctx);
-    call_args = CONS(fn2, rest_args, ctx);
-  } else if (prim == PRIM_FN(APPLY)) {
-    // (apply f arglist)
-    Node *fn2     = eval(FIRST(REST(expr)), ctx);
-    Node *arglist = eval(FIRST(REST(REST(expr))), ctx);
-    call_args     = CONS(fn2, arglist, ctx);
-  } else {
-    // (f arg1 arg2 ... )
-    Node *rest_args = eval_list(REST(expr), ctx);
-    call_args       = CONS(fn, rest_args, ctx);
-  }
-
-  return eval_funcall(call_args, ctx);
-}
+Node *eval_apply(Node *expr, Context *ctx) { return eval_funcall(expr, ctx); }
 
 Node *eval_closure(Node *args, Context *ctx) {
   if (!IS_LIST(FIRST(args))) {
@@ -155,46 +189,6 @@ Node *eval_first(Node *args, Context *ctx) {
     return NULL;
   }
   return FIRST(FIRST(args));
-}
-
-static Node *funcall_closure(Node *fn, Node *args, Context *ctx) {
-  size_t expected = length(GET_CLOSURE_PARAMS(fn));
-  size_t received = length(args);
-
-  if (expected != received) {
-    ErrorCode err =
-        (received < expected) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
-    raise(err, __func__); // FIXME: context
-    return NULL;
-  }
-
-  Context new_ctx   = *ctx;
-  CTX_ENV(&new_ctx) = env_new(GET_CLOSURE_ENV(fn));
-
-  // clang-format off
-  for (Node *pairs = pair(GET_CLOSURE_PARAMS(fn), args, ctx);
-       !IS_EMPTY_LIST(pairs); pairs = REST(pairs)) {
-
-    Node *pair = FIRST(pairs);
-    set(FIRST(pair), FIRST(REST(pair)), &new_ctx);
-  }
-  // clang-format on
-
-  return eval(GET_CLOSURE_BODY(fn), &new_ctx); // TODO: eval_program()
-}
-
-static Node *funcall_primitive_fn(Node *fn, Node *args, Context *ctx) {
-  const PrimitiveFn *prim_fn = GET_PRIMITIVE_FN(fn);
-  int received               = (int)length(args);
-
-  if (prim_fn->arity > 0 && prim_fn->arity != received) {
-    ErrorCode err =
-        (received < prim_fn->arity) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
-    raise(err, __func__); // FIXME: context
-    return NULL;
-  }
-
-  return (prim_fn != PRIM_FN(LIST)) ? prim_fn->fn(args, ctx) : args;
 }
 
 Node *eval_funcall(Node *args, Context *ctx) {
@@ -291,10 +285,18 @@ Node *eval(Node *expr, Context *ctx) {
     return expr;
 
   if (IS_LIST(expr)) {
-    if (IS_EMPTY_LIST(expr))
+    if (IS_EMPTY_LIST(expr)) {
       return expr;
+    }
 
-    return eval_apply(expr, ctx);
+    Node *fn                = eval(FIRST(expr), ctx);
+    const PrimitiveFn *prim = GET_PRIMITIVE_FN(fn);
+
+    if (prim == PRIM_FN(QUOTE)) {
+      return FIRST(REST(expr));
+    }
+
+    return apply(fn, expr, ctx);
   }
 
   raise(ERR_INTERNAL, DEBUG_LOCATION);

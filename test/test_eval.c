@@ -314,21 +314,63 @@ START_TEST(test_apply) {
   Node *car         = NULL;
   Node *cdr         = NULL;
 
-  eval_result = run_eval_program("(apply (closure '() '()))");
+  eval_result = run_eval_program("(apply (closure '() '()) '())");
   ck_assert(IS_EMPTY_LIST(eval_result));
 
   eval_result =
-      run_eval_program("(apply (closure '(a b) '(cons a b)) 'foo 'bar)");
+      run_eval_program("(apply (closure '(a b) '(cons a b)) '(foo bar))");
   ck_assert(!IS_EMPTY_LIST(eval_result));
   car = FIRST(eval_result);
   cdr = REST(eval_result);
   ck_assert_str_eq(GET_SYMBOL(car), "foo");
   ck_assert_str_eq(GET_SYMBOL(cdr), "bar");
 
-  eval_result = run_eval_program("(apply set 'a 42)");
+  eval_result = run_eval_program("(apply set '(a 42))");
   ck_assert(GET_INTEGER(eval_result) == 42);
 
-  eval_result = run_eval_program("(apply set 'a 42)");
+  eval_result = run_eval_program("(apply first '((a 42)))");
+  ck_assert_str_eq(GET_SYMBOL(eval_result), "a");
+
+  eval_result = run_eval_program("(first (apply rest '((a 42))))");
+  ck_assert(GET_INTEGER(eval_result) == 42);
+
+  eval_result = run_eval_program("(first (apply cons '(a 42)))");
+  ck_assert_str_eq(GET_SYMBOL(eval_result), "a");
+
+  eval_result = run_eval_program("(apply funcall '(first (42 2)))");
+  ck_assert(GET_INTEGER(eval_result) == 42);
+}
+END_TEST
+
+START_TEST(test_funcall) {
+  Node *eval_result = NULL;
+  Node *car         = NULL;
+  Node *cdr         = NULL;
+
+  eval_result = run_eval_program("(funcall (closure '() '()))");
+  ck_assert(IS_EMPTY_LIST(eval_result));
+
+  eval_result =
+      run_eval_program("(funcall (closure '(a b) '(cons a b)) 'foo 'bar)");
+  ck_assert(!IS_EMPTY_LIST(eval_result));
+  car = FIRST(eval_result);
+  cdr = REST(eval_result);
+  ck_assert_str_eq(GET_SYMBOL(car), "foo");
+  ck_assert_str_eq(GET_SYMBOL(cdr), "bar");
+
+  eval_result = run_eval_program("(funcall set 'a 42)");
+  ck_assert(GET_INTEGER(eval_result) == 42);
+
+  eval_result = run_eval_program("(funcall first '(a 42))");
+  ck_assert_str_eq(GET_SYMBOL(eval_result), "a");
+
+  eval_result = run_eval_program("(first (funcall rest '(a 42)))");
+  ck_assert(GET_INTEGER(eval_result) == 42);
+
+  eval_result = run_eval_program("(first (funcall cons 'a 42))");
+  ck_assert_str_eq(GET_SYMBOL(eval_result), "a");
+
+  eval_result = run_eval_program("(funcall apply 'first '(42 2))");
   ck_assert(GET_INTEGER(eval_result) == 42);
 }
 END_TEST
@@ -350,6 +392,7 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_closure);
   tcase_add_test(tc_core, test_eq);
   tcase_add_test(tc_core, test_apply);
+  tcase_add_test(tc_core, test_funcall);
 
   suite_add_tcase(s, tc_core);
   return s;

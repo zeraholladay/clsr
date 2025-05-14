@@ -7,17 +7,17 @@
 #include "eval.h"
 #include "parser.h"
 
-#define yyerror(ctx, s)      \
-  do {                       \
-    yyerror_handler(ctx, s); \
-    YYABORT;                 \
+#define yyerror(ctx, s)                                                        \
+  do {                                                                         \
+    yyerror_handler(ctx, s);                                                   \
+    YYABORT;                                                                   \
   } while (0)
 
-int yylex(Context *ctx);
-void yyerror_handler(Context *ctx, const char *s);
+  int yylex(Context * ctx);
+  void yyerror_handler(Context * ctx, const char *s);
 
-extern int yylineno;
-// clang-format off
+  extern int yylineno;
+  // clang-format off
 %}
 
 %code requires {
@@ -112,18 +112,18 @@ number
     ;
 
 %%
-// clang-format on
+    // clang-format on
 
-void reset_parse_context(Context *ctx) {
-    /* assumes pool has already been allocated. */
-    CTX_PARSE_ROOT(ctx) = NULL;
-    CTX_PARSE_MARK(ctx) = CTX_POOL(ctx)->free_list;
+    void reset_parse_context(Context *ctx) {
+  /* assumes pool has already been allocated. */
+  CTX_PARSE_ROOT(ctx) = NULL;
+  CTX_PARSE_MARK(ctx) = CTX_POOL(ctx)->free_list;
 }
 
 void yyerror_handler(Context *ctx, const char *s) {
-    fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
-    pool_reset_from_mark(CTX_POOL(ctx), CTX_PARSE_MARK(ctx));
-    reset_parse_context(ctx);
+  fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
+  pool_reset_from_mark(CTX_POOL(ctx), CTX_PARSE_MARK(ctx));
+  reset_parse_context(ctx);
 }
 
 // clang-format off

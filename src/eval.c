@@ -128,8 +128,6 @@ static Node *apply_primitive(Node *fn, Node *args, Context *ctx) {
   const PrimitiveFn *prim_fn = GET_PRIMITIVE_FN(fn);
   int received               = (int)length(args);
 
-  PRINT(args, ctx);
-
   if (prim_fn->arity > 0 && prim_fn->arity != received) {
     ErrorCode err =
         (received < prim_fn->arity) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;

@@ -8,6 +8,7 @@
 #define FIRST(node)            ((node)->as.list.first)
 #define CONS(first, rest, ctx) (cons_list(CTX_POOL(ctx), first, rest))
 #define REST(node)             ((node)->as.list.rest)
+
 #define LIST(first, rest, ctx)                                                 \
   (CONS(first, CONS(rest, EMPTY_LIST(ctx), ctx), ctx))
 #define PRINT(node, ctx) (eval_print(node, ctx))

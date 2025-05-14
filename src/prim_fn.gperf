@@ -1,18 +1,17 @@
 %{
-#include "core_def.h"
 #include "eval.h"
-#include "parser.h"
+#include "prim_fn.h"
 %}
 
 %includes
 %readonly-tables
 %struct-type
 %ignore-case
-%define lookup-function-name primitive_lookup
+%define lookup-function-name prim_fn_lookup
 %define initializer-suffix ,0,0
 %define slot-name name
 
-struct Primitive;
+struct PrimitiveFn;
 
 %%
 APPLY,   eval_apply, 2

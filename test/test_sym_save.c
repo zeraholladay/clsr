@@ -65,7 +65,7 @@ START_TEST(test_sym_save) {
 END_TEST
 
 Suite *str_save_suite(void) {
-  Suite *s = suite_create("Symsave");
+  Suite *s       = suite_create("Symsave");
   TCase *tc_core = tcase_create("Core");
   tcase_add_test(tc_core, test_sym_save);
   suite_add_tcase(s, tc_core);

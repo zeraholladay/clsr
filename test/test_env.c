@@ -29,7 +29,7 @@ START_TEST(test_env) {
 
   for (int i = 0; i < NUM_STRINGS; ++i) {
     unsigned long hash = djb2(test_env_similar_strings[i]);
-    rb_node *n = env_lookup(env, test_env_similar_strings[i]);
+    rb_node *n         = env_lookup(env, test_env_similar_strings[i]);
     ck_assert_str_eq(RB_KEY(n), test_env_similar_strings[i]);
     ck_assert(RB_KEY_LEN(n) == strlen(test_env_similar_strings[i]));
     ck_assert((unsigned long)RB_VAL(n) == hash);
@@ -37,7 +37,7 @@ START_TEST(test_env) {
 
   for (int i = NUM_STRINGS - 1; i > 0; --i) {
     unsigned long hash = djb2(test_env_similar_strings[i]);
-    rb_node *n = env_lookup(env, test_env_similar_strings[i]);
+    rb_node *n         = env_lookup(env, test_env_similar_strings[i]);
     ck_assert_str_eq(RB_KEY(n), test_env_similar_strings[i]);
     ck_assert(RB_KEY_LEN(n) == strlen(test_env_similar_strings[i]));
     ck_assert((unsigned long)RB_VAL(n) == hash);
@@ -46,10 +46,10 @@ START_TEST(test_env) {
   for (int i = 0; i < NUM_STRINGS; ++i) {
     for (int j = 0; j < NUM_STRINGS; ++j) {
       unsigned long hash_i = djb2(test_env_similar_strings[i]);
-      rb_node *n_i = env_lookup(env, test_env_similar_strings[i]);
+      rb_node *n_i         = env_lookup(env, test_env_similar_strings[i]);
 
       unsigned long hash_j = djb2(test_env_similar_strings[j]);
-      rb_node *n_j = env_lookup(env, test_env_similar_strings[j]);
+      rb_node *n_j         = env_lookup(env, test_env_similar_strings[j]);
 
       if (hash_i == hash_j)
         ck_assert_str_eq(RB_KEY(n_i), RB_KEY(n_j));
@@ -69,7 +69,7 @@ END_TEST
 
 START_TEST(test_env_frame) {
   Env *env_parent = env_new(NULL);
-  Env *env_child = env_new(env_parent);
+  Env *env_child  = env_new(env_parent);
 
   for (int i = 0; i < NUM_STRINGS; ++i) {
     void *hash = (void *)djb2(test_env_similar_strings[i]);
@@ -79,7 +79,7 @@ START_TEST(test_env_frame) {
   // fall through from child to parent
   for (int i = 0; i < NUM_STRINGS; ++i) {
     unsigned long hash = djb2(test_env_similar_strings[i]);
-    rb_node *n = env_lookup(env_child, test_env_similar_strings[i]);
+    rb_node *n         = env_lookup(env_child, test_env_similar_strings[i]);
     ck_assert_str_eq(RB_KEY(n), test_env_similar_strings[i]);
     ck_assert(RB_KEY_LEN(n) == strlen(test_env_similar_strings[i]));
     ck_assert((unsigned long)RB_VAL(n) == hash);

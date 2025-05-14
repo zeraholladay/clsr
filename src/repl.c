@@ -38,7 +38,7 @@ void clsr_init(Context *ctx) {
     sym_save_init();
 
   CTX_POOL(ctx) = pool_init(OBJ_POOL_CAPACITY, sizeof(Node));
-  CTX_ENV(ctx) = env_new(NULL);
+  CTX_ENV(ctx)  = env_new(NULL);
   reset_parse_context(ctx);
 }
 
@@ -52,8 +52,8 @@ static void clsr_eval_program(Context *ctx) {
   if (setjmp(eval_error_jmp) == 0) {
 
     Node *eval_result = eval_program(CTX_PARSE_ROOT(ctx), ctx);
-    Node *node = eval_str(eval_result, ctx);
-    printf("%s\n", get_string(node));
+    Node *node        = eval_str(eval_result, ctx);
+    printf("%s\n", GET_STRING(node));
     free(node->as.string); // FIXME with GC
   }
 }

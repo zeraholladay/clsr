@@ -54,9 +54,9 @@ int env_set(Env *env, const char *sym, void *addr) {
     return -1;
   }
 
-  RB_KEY(n) = sym;
+  RB_KEY(n)     = sym;
   RB_KEY_LEN(n) = len;
-  RB_VAL(n) = addr;
+  RB_VAL(n)     = addr;
 
   rb_insert(&env->root, n);
 

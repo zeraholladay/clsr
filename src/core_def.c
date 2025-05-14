@@ -7,6 +7,12 @@
 #include "heap_list.h"
 #include "safe_str.h"
 
+#define CLSR_INTEGER_TYPE_FMT "%lld"
+
+#define LOG10_2 0.30103
+#define CLSR_INTEGER_TYPE_STR_MAX_SIZE                                         \
+  ((size_t)(sizeof(Integer) * CHAR_BIT * LOG10_2 + 3))
+
 // Type eq
 static inline int type_eq(Node *self, Node *other) {
   return type(self) == type(other);
@@ -26,14 +32,14 @@ static char *nil_tostr(Node *self) {
 
 // Integer type
 static int integer_eq(Node *self, Node *other) {
-  return type_eq(self, other) && get_integer(self) == get_integer(other);
+  return type_eq(self, other) && GET_INTEGER(self) == GET_INTEGER(other);
 }
 
 static char *integer_tostr(Node *self) {
   char str[CLSR_INTEGER_TYPE_STR_MAX_SIZE];
   size_t n = sizeof(str);
 
-  int result = snprintf(str, n, CLSR_INTEGER_TYPE_FMT, get_integer(self));
+  int result = snprintf(str, n, CLSR_INTEGER_TYPE_FMT, GET_INTEGER(self));
 
   if (result < 0 || (size_t)result >= n)
     return NULL;
@@ -43,19 +49,19 @@ static char *integer_tostr(Node *self) {
 
 // Symbol type
 static int symbol_eq(Node *self, Node *other) {
-  return type_eq(self, other) && get_symbol(self) == get_symbol(other);
+  return type_eq(self, other) && GET_SYMBOL(self) == GET_SYMBOL(other);
 }
 
 static char *symbol_tostr(Node *self) {
-  const char *str = get_symbol(self);
+  const char *str = GET_SYMBOL(self);
   return safe_strndup(str, strlen(str));
 }
 
 // List type
 static int list_eq(Node *self, Node *other) {
   return type_eq(self, other) &&
-         ((is_empty_list(self) && is_empty_list(other)) ||
-          get_list(self) == get_list(other));
+         ((IS_EMPTY_LIST(self) && IS_EMPTY_LIST(other)) ||
+          GET_LIST(self) == GET_LIST(other));
 }
 
 static char *list_tostr(Node *self) {
@@ -70,7 +76,7 @@ static char *list_tostr(Node *self) {
 
   total += hl_append_strdup(hl, "(");
 
-  for (cur = self; is_list(cur); cur = REST(cur)) {
+  for (cur = self; IS_LIST(cur); cur = REST(cur)) {
     Node *car = FIRST(cur), *cdr = REST(cur);
 
     if (car) {
@@ -108,26 +114,27 @@ static char *list_tostr(Node *self) {
 }
 
 // Prim Ops type
-static int prim_op_eq(Node *self, Node *other) {
-  return type_eq(self, other) && get_prim_op(self) == get_prim_op(other);
+static int prim_fn_eq(Node *self, Node *other) {
+  return type_eq(self, other) &&
+         GET_PRIMITIVE_FN(self) == GET_PRIMITIVE_FN(other);
 }
 
-static char *prim_op_tostr(Node *self) {
-  const Primitive *prim_op = get_prim_op(self);
-  return safe_strndup(prim_op->name, strlen(prim_op->name));
+static char *prim_fn_tostr(Node *self) {
+  const PrimitiveFn *prim_fn = GET_PRIMITIVE_FN(self);
+  return safe_strndup(prim_fn->name, strlen(prim_fn->name));
 }
 
 // Closure type
 static int closure_eq(Node *self, Node *other) {
-  return type_eq(self, other) && get_closure(self) == get_closure(other);
+  return type_eq(self, other) && GET_CLOSURE(self) == GET_CLOSURE(other);
 }
 
 static char *closure_tostr(Node *self) {
   const char *fmt = "closure params=%s body=%s";
 
   char *params_str =
-      type(get_closure_params(self))->str_fn(get_closure_params(self));
-  char *body_str = type(get_closure_body(self))->str_fn(get_closure_body(self));
+      type(GET_CLOSURE_PARAMS(self))->str_fn(GET_CLOSURE_PARAMS(self));
+  char *body_str = type(GET_CLOSURE_BODY(self))->str_fn(GET_CLOSURE_BODY(self));
 
   size_t total =
       strlen(fmt) + NULLABLE_STRLEN(params_str) + NULLABLE_STRLEN(body_str);
@@ -151,11 +158,11 @@ static char *closure_tostr(Node *self) {
 // String type
 static int string_eq(Node *self, Node *other) {
   return type_eq(self, other) &&
-         (!strcmp(get_string(self),
-                  get_string(other))); // FIX ME: strings should have len
+         (!strcmp(GET_STRING(self),
+                  GET_STRING(other))); // FIX ME: strings should have len
 }
 
-static char *string_tostr(Node *self) { return get_string(self); }
+static char *string_tostr(Node *self) { return GET_STRING(self); }
 
 static Type type_singleton[] = {
     // Special constant
@@ -163,75 +170,75 @@ static Type type_singleton[] = {
 
     // Literal values
     [TYPE_INTEGER] = {.type_name = "Integer",
-                      .str_fn = integer_tostr,
-                      .eq_fn = integer_eq},
-    [TYPE_STRING] = {.type_name = "String",
-                     .str_fn = string_tostr,
-                     .eq_fn = string_eq},
-    [TYPE_SYMBOL] = {.type_name = "Symbol",
-                     .str_fn = symbol_tostr,
-                     .eq_fn = symbol_eq},
+                      .str_fn    = integer_tostr,
+                      .eq_fn     = integer_eq},
+    [TYPE_STRING]  = {.type_name = "String",
+                      .str_fn    = string_tostr,
+                      .eq_fn     = string_eq},
+    [TYPE_SYMBOL]  = {.type_name = "Symbol",
+                      .str_fn    = symbol_tostr,
+                      .eq_fn     = symbol_eq},
 
     // Composite structures
     [TYPE_LIST] = {.type_name = "List", .str_fn = list_tostr, .eq_fn = list_eq},
 
     // Function-like values
-    [TYPE_PRIMITIVE] = {.type_name = "Primitive",
-                        .str_fn = prim_op_tostr,
-                        .eq_fn = prim_op_eq},
-    [TYPE_CLOSURE] = {.type_name = "Closure",
-                      .str_fn = closure_tostr,
-                      .eq_fn = closure_eq},
+    [TYPE_PRIMITIVE_FN] = {.type_name = "PrimitiveFn",
+                           .str_fn    = prim_fn_tostr,
+                           .eq_fn     = prim_fn_eq},
+    [TYPE_CLOSURE]      = {.type_name = "Closure",
+                           .str_fn    = closure_tostr,
+                           .eq_fn     = closure_eq},
 };
 
 // type()
 const Type *type(Node *self) {
-  if (!self || is_nil(self))
+  if (!self || IS_NIL(self))
     return &type_singleton[TYPE_NIL];
   return &type_singleton[self->type];
 }
 
-Node *cons_primop(Pool *p, const Primitive *prim_op) {
-  Node *node = pool_alloc(p);
-  node->type = TYPE_PRIMITIVE;
-  node->as.primitive = prim_op;
+Node *cons_primfn(Pool *p, const PrimitiveFn *prim_fn) {
+  Node *node         = pool_alloc(p);
+  node->type         = TYPE_PRIMITIVE_FN;
+  node->as.primitive = prim_fn;
   return node;
 }
 
 Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
-  Node *node = pool_alloc(p);
-  node->type = TYPE_CLOSURE;
+  Node *node              = pool_alloc(p);
+  node->type              = TYPE_CLOSURE;
   node->as.closure.params = params;
-  node->as.closure.body = body;
-  node->as.closure.env = env;
+  node->as.closure.body   = body;
+  node->as.closure.env    = env;
   return node;
 }
 
-Node *cons_integer(Pool *p, CLSR_INTEGER_TYPE i) {
-  Node *node = pool_alloc(p);
-  node->type = TYPE_INTEGER;
+Node *cons_integer(Pool *p, Integer i) {
+  Node *node       = pool_alloc(p);
+  node->type       = TYPE_INTEGER;
   node->as.integer = i;
   return node;
 }
 
 Node *cons_list(Pool *p, Node *car, Node *cdr) {
-  Node *node = pool_alloc(p);
-  node->type = TYPE_LIST;
+  Node *node          = pool_alloc(p);
+  node->type          = TYPE_LIST;
   node->as.list.first = car;
-  node->as.list.rest = cdr;
+  node->as.list.rest  = cdr;
   return node;
 }
 
 Node *cons_string(Pool *p, char *str) {
-  Node *node = pool_alloc(p);
-  node->type = TYPE_STRING;
+  Node *node      = pool_alloc(p);
+  node->type      = TYPE_STRING;
   node->as.string = str;
   return node;
 }
 
 Node *cons_symbol(Pool *p, const char *sym) {
-  Node *node = pool_alloc(p);
-  node->type = TYPE_SYMBOL;
+  Node *node      = pool_alloc(p);
+  node->type      = TYPE_SYMBOL;
   node->as.symbol = sym;
   return node;
 }

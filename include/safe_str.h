@@ -31,7 +31,7 @@ inline static size_t safe_strnlen(const char *s, size_t maxlen) {
 inline static char *safe_strndup(char const *s, size_t n) {
   assert(s);
   size_t len = safe_strnlen(s, n);
-  char *new = (char *)malloc(len + 1);
+  char *new  = (char *)malloc(len + 1);
 
   if (new == NULL)
     return NULL;

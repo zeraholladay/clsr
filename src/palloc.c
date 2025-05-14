@@ -30,7 +30,7 @@ Pool *pool_init(size_t count, size_t size) {
     return NULL;
   }
 
-  p->count = count;
+  p->count  = count;
   p->stride = stride;
   pool_reset_all(p);
 
@@ -39,7 +39,7 @@ Pool *pool_init(size_t count, size_t size) {
 
 void pool_destroy(Pool **p) {
   free((*p)->pool), (*p)->pool = NULL;
-  free(*p), *p = NULL;
+  free(*p), *p                 = NULL;
 }
 
 void *pool_alloc(Pool *p) {
@@ -48,21 +48,21 @@ void *pool_alloc(Pool *p) {
     return NULL;
   }
   Wrapper *wrapper = p->free_list;
-  p->free_list = wrapper->next_free;
+  p->free_list     = wrapper->next_free;
   return &wrapper->ptr;
 }
 
 void pool_free(Pool *p, void *ptr) {
-  Wrapper *wrapper = (Wrapper *)((void *)ptr - offsetof(Wrapper, ptr));
+  Wrapper *wrapper   = (Wrapper *)((void *)ptr - offsetof(Wrapper, ptr));
   wrapper->next_free = p->free_list;
-  p->free_list = wrapper;
+  p->free_list       = wrapper;
 }
 
 unsigned int pool_reset_from_mark(Pool *p, Wrapper *mark) {
   if (!mark || !p->free_list)
     return 0;
 
-  Wrapper *cur = mark;
+  Wrapper *cur     = mark;
   Wrapper *stop_at = p->free_list;
 
   unsigned int num_freed;
@@ -77,16 +77,16 @@ unsigned int pool_reset_from_mark(Pool *p, Wrapper *mark) {
 }
 
 void pool_reset_all(Pool *p) {
-  size_t count = p->count;
+  size_t count  = p->count;
   size_t stride = p->stride;
 
   Wrapper *cur;
 
   for (size_t i = 0; i < count - 1; ++i) {
-    cur = INDEX(p->pool, i, stride);
+    cur            = INDEX(p->pool, i, stride);
     cur->next_free = INDEX(p->pool, i + 1, stride);
   }
 
   INDEX(p->pool, count - 1, stride)->next_free = NULL;
-  p->free_list = INDEX(p->pool, 0, stride);
+  p->free_list                                 = INDEX(p->pool, 0, stride);
 }

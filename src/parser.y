@@ -1,12 +1,9 @@
 %{
-#include <assert.h>
 #include <stdio.h>
 
 #include "core_def.h"
 #include "eval.h"
 #include "parser.h"
-
-#define PRIMITIVE(name) primitive_lookup(#name, sizeof(#name) - 1)
 
 #define yyerror(ctx, s)      \
   do {                       \
@@ -30,16 +27,16 @@ void reset_parse_context(Context *ctx);
 %parse-param {Context *ctx}
 
 %union {
-    CLSR_INTEGER_TYPE integer;
+    Integer integer;
     const char *symbol;
-    const struct Primitive *prim_op;
+    const struct PrimitiveFn *prim_fn;
     struct Node *node;
 }
 
 %type <node> program expressions expression expression_list list number symbol 
 
 %token QUOTE ERROR
-%token <prim_op> PRIMITIVE
+%token <prim_fn> PRIMITIVE
 %token <integer> INTEGER
 %token <symbol> SYMBOL
 
@@ -71,7 +68,7 @@ expression
     | symbol                    
     | list
     | QUOTE expression {
-        Node *quote = cons_primop(CTX_POOL(ctx), PRIMITIVE(QUOTE));
+        Node *quote = cons_primfn(CTX_POOL(ctx), PRIM_FN(QUOTE));
         Node *fn_args = CONS($2, CONS(NULL, NULL, ctx), ctx);
         $$ = CONS(quote, fn_args, ctx);
     }
@@ -98,7 +95,7 @@ expression_list
 
 symbol
     : PRIMITIVE {
-        $$ = cons_primop(CTX_POOL(ctx), $1);
+        $$ = cons_primfn(CTX_POOL(ctx), $1);
     }
     | SYMBOL {
         $$ = cons_symbol(CTX_POOL(ctx), $1);
@@ -114,9 +111,6 @@ number
 %%
 
 void reset_parse_context(Context *ctx) {
-    assert(ctx);
-    assert(CTX_POOL(ctx));
-
     /* assumes pool has already been allocated. */
     CTX_PARSE_ROOT(ctx) = NULL;
     CTX_PARSE_MARK(ctx) = CTX_POOL(ctx)->free_list;

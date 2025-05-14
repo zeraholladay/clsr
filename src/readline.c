@@ -34,7 +34,7 @@ static void rl_cleanup(void) {
 
 void rl_init(void) {
   rl_attempted_completion_function = _attempted_completion_function;
-  const char *hist_path = get_history_path();
+  const char *hist_path            = get_history_path();
   read_history(hist_path);
   stifle_history(READLIN_HISTORY_MAX);
   atexit(rl_cleanup);

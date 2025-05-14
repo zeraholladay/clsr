@@ -16,7 +16,7 @@ typedef struct BumpPool {
   char buffer[SYM_SAVE_BUMP_SIZE];
 } BumpPool;
 
-static Pool *pool = NULL;
+static Pool *pool          = NULL;
 static BumpPool *bump_pool = NULL;
 
 static BumpPool *bump_pool_new(void) {
@@ -27,15 +27,15 @@ static BumpPool *bump_pool_new(void) {
     return NULL;
   }
   new->offset = 0;
-  new->next = NULL;
+  new->next   = NULL;
   return new;
 }
 
 static char *bump_pool_alloc(size_t n) {
   if (bump_pool->offset + n > SYM_SAVE_BUMP_SIZE) { // FIXME: large symbols
     BumpPool *new = bump_pool_new();
-    new->next = bump_pool;
-    bump_pool = new;
+    new->next     = bump_pool;
+    bump_pool     = new;
   }
   char *ptr = &bump_pool->buffer[bump_pool->offset];
   bump_pool->offset += n;
@@ -45,13 +45,13 @@ static char *bump_pool_alloc(size_t n) {
 static char *bump_pool_strndup(const char *s, size_t len) {
   len += 1;
   char *new = bump_pool_alloc(len);
-  new[len] = '\0';
+  new[len]  = '\0';
   return memcpy(new, s, len);
 }
 
 void sym_save_init(void) {
   bump_pool = bump_pool_new();
-  pool = pool_init(SYMTAB_POOL_CAPACITY, sizeof(rb_node));
+  pool      = pool_init(SYMTAB_POOL_CAPACITY, sizeof(rb_node));
 }
 
 // TODO: max symbol size/limit
@@ -66,7 +66,7 @@ const char *sym_save(rb_node **root, const char *s, size_t len) {
   if (!node)
     return NULL;
 
-  RB_KEY(node) = bump_pool_strndup(s, len);
+  RB_KEY(node)     = bump_pool_strndup(s, len);
   RB_KEY_LEN(node) = len;
   // note: no RB_VAL here. ie symbols don't have values.
   RB_VAL(node) = NULL;

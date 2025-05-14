@@ -1,4 +1,4 @@
-# clsr: Mini Lisp-like Interpreted Language with Closures
+# clsr: Lisp-like Interpreted Language with Closures
 
 A Lisp-dialect.
 
@@ -245,7 +245,9 @@ In no particular order:
 1. ~~Conditionals~~
 1. ~~Fix T/NIL~~
 1. ~~Equality~~
-1. Exceptions
+1. Boolean operators
+1. Test math
+1. Real Exceptions
 1. ~~Error status and messages~~
 1. Memory management (tracking)
 1. I/O subsystem
@@ -263,5 +265,5 @@ In no particular order:
 1. repl I/O from files
 1. ~~Bug squashing~~
 1. Max symbol size
-1. Rename `set` to `let`
+1. Rename `set` to `let` & add `define`
 1. `map-car`

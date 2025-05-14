@@ -1,6 +1,6 @@
 # clsr: Mini Lisp-like Interpreted Language with Closures
 
-A simple stack-based interpreted language with support for closures, lexical environments, and basic function application.
+A Lisp-dialect.
 
 ## Build and Test
 
@@ -22,21 +22,23 @@ Debug:
 env DEBUG=1 make clean test all
 ```
 
-## Atoms
+## Types
 
-- A *symbol* (i.e. a variable name to be resolved later via lookup)
-- A literal value (e.g. integers or `long longs`)
+- NIL
+- Symbols (i.e. a variable name)
+- Integers
+- Closure or lambda
+- Primitive functions (C functions)
+- List (i.e. a Node)
 
 ## Primitives (or Operators)
 
-### `symbols and integers`
-Disables evaluation
-
-Example:
+### `T, NIL, symbols, and integers`
+Examples:
 
 ```lisp
-T    ; true
-NIL  ; false
+T    ; primitive symbol true
+NIL  ; primitive NIL false
 'foo ; symbol foo
 'bar ; symbol bar
 42   ; number 42
@@ -44,47 +46,63 @@ NIL  ; false
 
 ---
 
-### `QUOTE`
-Disables evaluation
+### `QUOTE x`
+Returns the unevaluated expressioin.
 
-Example:
+Examples:
 
 ```lisp
-'(foo)
+'foo            ; foo
+(quote foo)     ; foo
+'(foo)          ; (foo)
+(quote '(foo))  ; (QUOTE foo)
 ```
 
 ---
 
-### `SET`
-Binds a symbol in the current context.
+### `SET x y`
+Sets a symbol to a value in the current context.
 
 Example:
 
 ```lisp
-(set 'foo 42)
+(set 'foo 42) ; 42
+foo           ; 42
 ```
 
 ---
 
-### `CONS`
-Constructs a list.
+### `CONS x y`
+Constructs a list from two arguments.
 
 Example:
 
 ```lisp
-(cons 'foo '(bar))
+(cons 'foo '(bar))  ; (foo bar)
+(cons 'foo 'bar)    ; (foo.bar)
 ```
 
 ---
 
-### `FIRST & REST`
-Returns the first element on the list or the rest of the emelments on the list.
+### `LIST arg1 arg2 ... argN`
+Creates a proper list (one ending in NIL cell).
 
 Example:
 
 ```lisp
-(first '(foo bar)) ; foo
-(first '(foo bar)) ; bar
+(list 'foo '(bar) 42) ; (foo (bar) 42)
+```
+
+---
+
+### `FIRST x & REST x`
+Returns the first or the rest of a list.
+
+Example:
+
+```lisp
+(first '(foo bar))  ; foo
+(rest '(foo bar))   ; (bar)
 ```
 
 ---
@@ -93,43 +111,46 @@ Example:
 Create and returns a **closure** from a function `body` and its **captured environment `env`**.
 
 ```lisp
-(closure '(a b) '(cons a (cons b '())))
-; creates an anonymous closure
+(closure '(a b) '(cons a (cons b '()))) ; creates an anonymous closure
 
 (set 'foofn 
       (closure '(a b c) 
         '(cons a (cons b (cons c '())))
         )
 )
-(foofn 1 2 '3)
-; call a closure named foofn
+(foofn 1 2 '3)  ; call a closure named foofn
 
 ((closure '(a b c) 
   '(cons a (cons b (cons c '()))))
-  1 2 3)
-; call an anonymous closure with args 1 2 3
+  1 2 3) ; call an anonymous closure with args 1 2 3
 ```
 
 ---
 
-### `APPLY`
-Applies arguments to a function.
+### `APPLY fn arglist`
+Applies arguments to a primitive function or closure.
 
 ```lisp
-(apply foofn '(a b c))
+(apply set '(a 42))
+(apply first '((a 42))) ; a
+(apply rest '((a 42)))  ; (42)
 ```
 
-Example with closure named `foo`:
+---
+
+### `FUNCALL fn arg1 arg2 ... argN`
+Calls arguments to a function.
 
 ```lisp
-(apply rest '((a b)))
+(funcall set 'a 42)     ; a is 42
+(funcall first '(a 42)) ; a
 ; 
 ```
 
 ---
 
-### `LEN`
-Lenth of a list.
+### `LEN x`
+Length of a list.
 
 ```lisp
 (len '(1 2 3 4 5))
@@ -137,26 +158,23 @@ Lenth of a list.
 ```
 ---
 
-### `PAIR`
+### `PAIR x y`
 Pairs two lists:
 
 ```lisp
 (pair '(1 2 3 4 5) 
-      '(a b c d e)
-      )
+      '(a b c d e))
 ```
 
 ---
 
-### `EVAL`
-Evaluates a list:
+### `EVAL x`
+Evaluates an expression:
 
 ```lisp
 (set 'a 42)
-(eval 'a)
-; 42
-(eval '(cons 'foo '()))
-; (foo)
+(eval ''a)                  ; 42
+(eval '(cons 'foo '(bar)))  ; (foo bar)
 ```
 
 ---
@@ -164,29 +182,26 @@ Evaluates a list:
 ### `EQ`
 Returns `T` or `NIL` if arguments are equal:
 
+Example:
+
 ```lisp
-(eq T T)
-; T/true
-(eq T NIL)
-; NIL/false
-(eq '() '())
-; T
-(eq '(dog) '(dog))
-; NIL
-(eq (len '(a b c)) (len '(1 2 3)))
-; T
+(eq T T)            ; T/true
+(eq T NIL)          ; NIL/false
+(eq '() '())        ; T
+(eq '(dog) '(dog))  ; NIL
+(eq (len '(a b c)) 
+    (len '(1 2 3))) ; T
 ```
 
 ---
 
-### `PRINT`
+### `PRINT x`
 Prints an argument:
 
+Example:
+
 ```lisp
-(print 'foo)
-; 
-; foo
-; T
+(print 'foo) ; foo and returns T
 ```
 
 ---
@@ -195,7 +210,8 @@ Prints an argument:
 
 In no particular order:
 
-1. funcall
+1. ~~funcall~~
+1. ~~Fix eval and tests.~~
 1. Math
 1. ~~Conditionals~~
 1. ~~Fix T/NIL~~
@@ -206,7 +222,8 @@ In no particular order:
 1. I/O subsystem
 1. ~~Refactor Primitives to Enum~~
 1. Docs/README.md
-1. Testing/tests
+1. Test list
+1. Test heaplist
 1. ~~Repr/str is a mess~~
 1. Define/def
 1. ~~List function~~
@@ -217,3 +234,5 @@ In no particular order:
 1. repl I/O from files
 1. ~~Bug squashing~~
 1. Max symbol size
+1. Rename `set` to `let`
+1. `map-car`

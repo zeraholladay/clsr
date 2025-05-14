@@ -46,7 +46,7 @@ NIL  ; primitive NIL false
 
 ---
 
-### `QUOTE`
+### `QUOTE x`
 Returns the unevaluated expressioin.
 
 Examples:
@@ -95,7 +95,7 @@ Example:
 
 ---
 
-### `FIRST & REST`
+### `FIRST x & REST x`
 Returns the first or the rest of a list.
 
 Example:
@@ -195,13 +195,13 @@ Example:
 
 ---
 
-### `PRINT`
+### `PRINT x`
 Prints an argument:
 
 Example:
 
 ```lisp
-(print 'foo) ; Currently printing arglist for debugging
+(print 'foo) ; foo and returns T
 ```
 
 ---
@@ -211,7 +211,7 @@ Example:
 In no particular order:
 
 1. ~~funcall~~
-1. Fix eval and tests.
+1. ~~Fix eval and tests.~~
 1. Math
 1. ~~Conditionals~~
 1. ~~Fix T/NIL~~

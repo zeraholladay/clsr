@@ -252,7 +252,7 @@ Node *eval_pair(Node *args, Context *ctx) {
 
 Node *eval_print(Node *args, Context *ctx) {
   (void)ctx;
-  char *str = type(args)->str_fn(args);
+  char *str = type(FIRST(args))->str_fn(FIRST(args));
   printf("%s\n", str);
   free(str);
   return T;

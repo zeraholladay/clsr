@@ -19,6 +19,9 @@ static Node nil_node = {.type    = TYPE_NIL,
 
 static Node t_node = {.type = TYPE_SYMBOL, .as.symbol = T_STR};
 
+static Node *apply(Node *fn, Node *expr, Context *ctx);
+static Node *funcall_closure(Node *fn, Node *args, Context *ctx);
+static Node *funcall_primitive_fn(Node *fn, Node *args, Context *ctx);
 static size_t length(Node *list);
 static Node *lookup_symbol(Node *node, Context *ctx);
 static Node *pair(Node *l1, Node *l2, Context *ctx);
@@ -294,6 +297,10 @@ Node *eval(Node *expr, Context *ctx) {
 
     if (prim == PRIM_FN(QUOTE)) {
       return FIRST(REST(expr));
+    }
+
+    if (prim == PRIM_FN(EVAL)) {
+      return eval(eval(FIRST(REST(expr)), ctx), ctx);
     }
 
     return apply(fn, expr, ctx);

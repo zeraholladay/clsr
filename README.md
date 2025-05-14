@@ -173,8 +173,8 @@ Evaluates an expression:
 
 ```lisp
 (set 'a 42)
-(eval 'a)               ; 42
-(eval '(cons 'foo '())) ; (foo)
+(eval ''a)                  ; 42
+(eval '(cons 'foo '(bar)))  ; (foo bar)
 ```
 
 ---

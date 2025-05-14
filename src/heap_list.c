@@ -28,7 +28,7 @@ HeapList *hl_alloc(void) {
   }
 
   hl->capacity = HEAP_LIST_INIT_CAPACITY;
-  hl->count = 0;
+  hl->count    = 0;
 
   return hl;
 }
@@ -54,7 +54,7 @@ static int _hl_resize(HeapList *hl, size_t min_capacity) {
     return -1;
   }
 
-  hl->items = new_nodes;
+  hl->items    = new_nodes;
   hl->capacity = new_capacity;
 
   return 0;
@@ -71,7 +71,7 @@ int hl_append(HeapList *hl, void *item) {
 
 size_t hl_append_strdup(HeapList *hl, char *str) {
   size_t len = NULLABLE_STRLEN(str);
-  char *dup = safe_strndup(str, len);
+  char *dup  = safe_strndup(str, len);
 
   if (!dup) {
     heap_list_oom_handler(NULL, OOM_LOCATION);

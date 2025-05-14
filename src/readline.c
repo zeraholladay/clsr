@@ -34,7 +34,7 @@ static void rl_cleanup(void) {
 
 void rl_init(void) {
   rl_attempted_completion_function = _attempted_completion_function;
-  const char *hist_path = get_history_path();
+  const char *hist_path            = get_history_path();
   read_history(hist_path);
   stifle_history(READLIN_HISTORY_MAX);
   atexit(rl_cleanup);
@@ -70,7 +70,6 @@ int rl_readline(char *full_input, size_t n) {
 
     strcpy(&full_input[len], line);
     len += line_len;
-
   } while (len == 0 || full_input[len - 1] != '\n');
 
   if (full_input[0]) {

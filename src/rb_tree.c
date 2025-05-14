@@ -3,12 +3,12 @@
 #include "rb_tree.h"
 #include "safe_str.h"
 
-#define RB_BLACK 0
-#define RB_RED 1
-#define RB_LEFT(n) ((n)->left)
-#define RB_RIGHT(n) ((n)->right)
-#define RB_PARENT(n) ((n)->parent)
-#define RB_COLOR(n) ((n)->color)
+#define RB_BLACK        0
+#define RB_RED          1
+#define RB_LEFT(n)      ((n)->left)
+#define RB_RIGHT(n)     ((n)->right)
+#define RB_PARENT(n)    ((n)->parent)
+#define RB_COLOR(n)     ((n)->color)
 #define RB_GET_COLOR(n) ((n) ? (RB_COLOR(n)) : (RB_BLACK))
 #define RB_GRANDPARENT(n)                                                      \
   (((n) && (RB_PARENT(n))) ? (RB_PARENT(RB_PARENT(n))) : (NULL))
@@ -28,12 +28,12 @@ inline static void rb_insert_bal(rb_node **root, rb_node *n) {
   if (*root == n)
     RB_COLOR(n) = RB_BLACK;
   else if (RB_RED == RB_GET_COLOR(RB_PARENT(n))) {
-    uncle = rb_uncle(n);
+    uncle       = rb_uncle(n);
     grandparent = RB_GRANDPARENT(n);
 
     if (RB_RED == RB_GET_COLOR(uncle)) {
       RB_COLOR(RB_PARENT(n)) = RB_COLOR(uncle) = RB_BLACK;
-      RB_COLOR(grandparent) = RB_RED;
+      RB_COLOR(grandparent)                    = RB_RED;
       rb_insert_bal(root, grandparent);
       return;
     }
@@ -48,9 +48,9 @@ inline static void rb_insert_bal(rb_node **root, rb_node *n) {
       n = RB_RIGHT(n);
     }
 
-    grandparent = RB_GRANDPARENT(n);
+    grandparent            = RB_GRANDPARENT(n);
     RB_COLOR(RB_PARENT(n)) = RB_BLACK;
-    RB_COLOR(grandparent) = RB_RED;
+    RB_COLOR(grandparent)  = RB_RED;
 
     if ((n == RB_LEFT(RB_PARENT(n))) && (RB_PARENT(n) == RB_LEFT(grandparent)))
       rb_rotate_right(root, grandparent);
@@ -69,7 +69,7 @@ inline static void rb_remove_bal(rb_node **root, rb_node *n) {
 
   if (RB_RED == RB_GET_COLOR(sibling)) {
     RB_COLOR(RB_PARENT(n)) = RB_RED;
-    RB_COLOR(sibling) = RB_BLACK;
+    RB_COLOR(sibling)      = RB_BLACK;
 
     if (n == RB_LEFT(RB_PARENT(n)))
       rb_rotate_left(root, RB_PARENT(n));
@@ -92,25 +92,25 @@ inline static void rb_remove_bal(rb_node **root, rb_node *n) {
       RB_BLACK == RB_GET_COLOR(sibling) &&
       RB_BLACK == RB_GET_COLOR(RB_LEFT(sibling)) &&
       RB_BLACK == RB_GET_COLOR(RB_RIGHT(sibling))) {
-    RB_COLOR(sibling) = RB_RED;
+    RB_COLOR(sibling)      = RB_RED;
     RB_COLOR(RB_PARENT(n)) = RB_BLACK;
   } else {
     if (RB_LEFT(RB_PARENT(n)) == n &&
         RB_BLACK == RB_GET_COLOR(RB_RIGHT(sibling)) &&
         RB_RED == RB_GET_COLOR(RB_LEFT(sibling))) {
-      RB_COLOR(sibling) = RB_RED;
+      RB_COLOR(sibling)          = RB_RED;
       RB_COLOR(RB_LEFT(sibling)) = RB_BLACK;
       rb_rotate_right(root, sibling);
     } else if (RB_RIGHT(RB_PARENT(n)) == n &&
                RB_BLACK == RB_GET_COLOR(RB_LEFT(sibling)) &&
                RB_RED == RB_GET_COLOR(RB_RIGHT(sibling))) {
-      RB_COLOR(sibling) = RB_RED;
+      RB_COLOR(sibling)           = RB_RED;
       RB_COLOR(RB_RIGHT(sibling)) = RB_BLACK;
       rb_rotate_left(root, sibling);
     }
 
-    sibling = RB_SIBLING(n);
-    RB_COLOR(sibling) = RB_GET_COLOR(RB_PARENT(n));
+    sibling                = RB_SIBLING(n);
+    RB_COLOR(sibling)      = RB_GET_COLOR(RB_PARENT(n));
     RB_COLOR(RB_PARENT(n)) = RB_BLACK;
 
     if (RB_LEFT(RB_PARENT(n)) == n) {
@@ -137,7 +137,7 @@ inline static void rb_rotate_left(rb_node **root, rb_node *n) {
     *root = right;
 
   RB_LEFT(right) = n;
-  RB_PARENT(n) = right;
+  RB_PARENT(n)   = right;
 }
 
 inline static void rb_rotate_right(rb_node **root, rb_node *n) {
@@ -154,7 +154,7 @@ inline static void rb_rotate_right(rb_node **root, rb_node *n) {
     *root = left;
 
   RB_RIGHT(left) = n;
-  RB_PARENT(n) = left;
+  RB_PARENT(n)   = left;
 }
 
 inline static rb_node *rb_uncle(rb_node *n) {
@@ -185,7 +185,7 @@ void rb_insert(rb_node **root, rb_node *n) {
   }
 
   RB_PARENT(n) = RB_LEFT(n) = RB_RIGHT(n) = NULL;
-  RB_COLOR(n) = RB_RED;
+  RB_COLOR(n)                             = RB_RED;
 
   if (NULL == *root)
     *root = n;
@@ -234,9 +234,9 @@ rb_node *rb_remove(rb_node **root, rb_node *n) {
     while (RB_RIGHT(tmp))
       tmp = RB_RIGHT(tmp);
 
-    RB_KEY(n) = RB_KEY(tmp);
+    RB_KEY(n)     = RB_KEY(tmp);
     RB_KEY_LEN(n) = RB_KEY_LEN(tmp);
-    RB_VAL(n) = RB_VAL(tmp);
+    RB_VAL(n)     = RB_VAL(tmp);
 
     n = tmp;
   }

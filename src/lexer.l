@@ -4,8 +4,11 @@
 %option nounput
 
 %{
-#include "core_def.h"
+#include <stdlib.h>
+
+#include "eval_ctx.h"
 #include "parser.h"
+#include "prim_fn.h"
 #include "sym_save.h"
 
 #define YY_DECL int yylex(Context *ctx)
@@ -24,9 +27,9 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
     ")"             { return ')'; }
     {NUM}           { yylval.integer = atoll(yytext); return INTEGER; }
     {ID}            {
-                    const Primitive *prim_op = primitive_lookup(yytext, yyleng);
-                    if (prim_op) {
-                        yylval.prim_op = prim_op;
+                    const PrimitiveFn *prim_fn = prim_fn_lookup(yytext, yyleng);
+                    if (prim_fn) {
+                        yylval.prim_fn = prim_fn;
                         return PRIMITIVE;
                     }
                     yylval.symbol = sym_save(&CTX_SYMTAB(ctx), yytext, yyleng);

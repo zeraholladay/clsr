@@ -38,12 +38,12 @@ GPERF := gperf
 
 FLEX_SRC := $(SRC)/lexer.l
 BISON_SRC := $(SRC)/parser.y
-GPERF_SCR := $(SRC)/primitives.gperf
+GPERF_SCR := $(SRC)/prim_fn.gperf
 
 FLEX_C := $(GEN)/lexer.c
 BISON_C := $(GEN)/parser.c
 BISON_H := $(GEN)/parser.h
-GPERF_C := $(GEN)/primitives.c
+GPERF_C := $(GEN)/prim_fn.c
 
 SRC_CFILES := $(wildcard $(SRC)/*.c) $(FLEX_C) $(BISON_C) $(GPERF_C)
 SRC_CFILES_ALL := $(sort $(SRC_CFILES))

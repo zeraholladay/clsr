@@ -10,7 +10,7 @@ static int stack_realloc(Stack *stack, unsigned int count) {
   if (!new_ptr) {
     return 1;
   }
-  stack->data = new_ptr;
+  stack->data      = new_ptr;
   stack->data_size = count;
   return 0;
 }
@@ -52,7 +52,7 @@ void stack_enter_frame(Stack *stack) {
 void stack_exit_frame(Stack *stack) {
   if (stack->fp > 0) {
     uintptr_t old_fp = (uintptr_t)(stack->data[stack->fp - 1]);
-    stack->sp = stack->fp - 1;
-    stack->fp = old_fp;
+    stack->sp        = stack->fp - 1;
+    stack->fp        = old_fp;
   }
 }

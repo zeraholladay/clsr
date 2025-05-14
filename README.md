@@ -34,6 +34,7 @@ env DEBUG=1 make clean test all
 ## Primitives (or Operators)
 
 ### `T, NIL, symbols, and integers`
+
 Examples:
 
 ```lisp
@@ -42,6 +43,7 @@ NIL  ; primitive NIL false
 'foo ; symbol foo
 'bar ; symbol bar
 42   ; number 42
+-42  ; number -42
 ```
 
 ---
@@ -63,7 +65,7 @@ Examples:
 ### `SET x y`
 Sets a symbol to a value in the current context.
 
-Example:
+Examples:
 
 ```lisp
 (set 'foo 42) ; 42
@@ -75,7 +77,7 @@ foo           ; 42
 ### `CONS x y`
 Constructs a list from two arguments.
 
-Example:
+Examples:
 
 ```lisp
 (cons 'foo '(bar))  ; (foo bar)
@@ -87,7 +89,7 @@ Example:
 ### `LIST arg1 arg2 ... argN`
 Creates a proper list (one ending in NIL cell).
 
-Example:
+Examples:
 
 ```lisp
 (list 'foo '(bar) 42) ; (foo (bar) 42)
@@ -98,7 +100,7 @@ Example:
 ### `FIRST x & REST x`
 Returns the first or the rest of a list.
 
-Example:
+Examples:
 
 ```lisp
 (first '(foo bar))  ; foo
@@ -109,6 +111,8 @@ Example:
 
 ### `CLOSURE '(arg0 arg1 ... argN) '(body)`
 Create and returns a **closure** from a function `body` and its **captured environment `env`**.
+
+Examples:
 
 ```lisp
 (closure '(a b) '(cons a (cons b '()))) ; creates an anonymous closure
@@ -130,6 +134,8 @@ Create and returns a **closure** from a function `body` and its **captured envir
 ### `APPLY fn arglist`
 Applies arguments to a primitive function or closure.
 
+Examples:
+
 ```lisp
 (apply set '(a 42))
 (apply first '((a 42))) ; a
@@ -140,6 +146,8 @@ Applies arguments to a primitive function or closure.
 
 ### `FUNCALL fn arg1 arg2 ... argN`
 Calls arguments to a function.
+
+Examples:
 
 ```lisp
 (funcall set 'a 42)     ; a is 42
@@ -152,6 +160,8 @@ Calls arguments to a function.
 ### `LEN x`
 Length of a list.
 
+Examples:
+
 ```lisp
 (len '(1 2 3 4 5))
 ; 5
@@ -160,6 +170,8 @@ Length of a list.
 
 ### `PAIR x y`
 Pairs two lists:
+
+Examples:
 
 ```lisp
 (pair '(1 2 3 4 5) 
@@ -170,6 +182,8 @@ Pairs two lists:
 
 ### `EVAL x`
 Evaluates an expression:
+
+Examples:
 
 ```lisp
 (set 'a 42)
@@ -182,7 +196,7 @@ Evaluates an expression:
 ### `EQ`
 Returns `T` or `NIL` if arguments are equal:
 
-Example:
+Examples:
 
 ```lisp
 (eq T T)            ; T/true
@@ -198,10 +212,25 @@ Example:
 ### `PRINT x`
 Prints an argument:
 
-Example:
+Examples:
 
 ```lisp
 (print 'foo) ; foo and returns T
+```
+
+---
+
+### `MATH arg1 arg2 ... argN`
+Basic math `ADD, SUB, MUL,` and `DIV`.
+
+Examples:
+
+```lisp
+(ADD 10 11 10 11) ; 42
+(+ 10 11 10 11)   ; 42
+(- 43 1)          ; 42
+(* 7 6)           ; 42
+(/ 84 / 2)        ; 42
 ```
 
 ---
@@ -212,7 +241,7 @@ In no particular order:
 
 1. ~~funcall~~
 1. ~~Fix eval and tests.~~
-1. Math
+1. ~~Basic math~~
 1. ~~Conditionals~~
 1. ~~Fix T/NIL~~
 1. ~~Equality~~

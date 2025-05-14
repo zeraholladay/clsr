@@ -1,6 +1,7 @@
 // clang-format off
 %{
 #include "eval.h"
+#include "eval_math.h"
 #include "prim_fn.h"
 %}
 
@@ -31,3 +32,7 @@ QUOTE,   NULL,         0
 REST,    eval_rest,    1
 SET,     eval_set,     2
 STR,     eval_str,     1
+ADD,     eval_add,    -1
+SUB,     eval_sub,    -1
+MUL,     eval_mul,    -1
+DIV,     eval_div,    -1

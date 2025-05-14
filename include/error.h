@@ -12,6 +12,7 @@ typedef enum {
   ERR_INVALID_ARG_LENGTH, // Length of argument is invalid
   ERR_NULL_ARG,           // Null argument where not allowed
   ERR_ARG_NOT_ITERABLE,   // Argument expected to be iterable
+  ERR_DIVISION_BY_0,      // Division by 0
 } ErrorCode;
 
 static const char *error_messages[] = {
@@ -25,7 +26,7 @@ static const char *error_messages[] = {
     [ERR_INVALID_ARG_LENGTH] = "Invalid argument length",
     [ERR_NULL_ARG]           = "Argument cannot be null",
     [ERR_ARG_NOT_ITERABLE]   = "Argument is not iterable when expected",
-};
+    [ERR_DIVISION_BY_0]      = "Division by zero"};
 
 void raise(ErrorCode err_code, const char *msg);
 

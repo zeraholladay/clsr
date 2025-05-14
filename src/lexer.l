@@ -35,6 +35,27 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
                     yylval.symbol = sym_save(&CTX_SYMTAB(ctx), yytext, yyleng);
                     return SYMBOL;
                     }
+    [+\-*/]         {
+                    int op = yytext[0];
+                    switch (op) {
+                        case '+':
+                            yylval.prim_fn = PRIM_FN(ADD);
+                            break;
+                        case '-':
+                            yylval.prim_fn = PRIM_FN(SUB);
+                            break;
+                        case '*':
+                            yylval.prim_fn = PRIM_FN(MUL);
+                            break;
+                        case '/':
+                            yylval.prim_fn = PRIM_FN(DIV);
+                            break;
+                        default:
+                            return ERROR;
+                            break;
+                        }
+                    return PRIMITIVE;
+                    }
     {WS}            { /* ignore */ }
     {NL}            { /* ignore */ }
     ;[^\n]*         { /* ignore */ }

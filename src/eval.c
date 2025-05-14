@@ -114,8 +114,10 @@ static Node *apply_closure(Node *fn, Node *args, Context *ctx) {
   Context new_ctx   = *ctx;
   CTX_ENV(&new_ctx) = env_new(GET_CLOSURE_ENV(fn));
 
-  for (Node *pairs                  = pair(GET_CLOSURE_PARAMS(fn), args, ctx);
+  // clang-format off
+  for (Node *pairs = pair(GET_CLOSURE_PARAMS(fn), args, ctx);
        !IS_EMPTY_LIST(pairs); pairs = REST(pairs)) {
+  // clang-format on
 
     Node *pair = FIRST(pairs);
     set(FIRST(pair), FIRST(REST(pair)), &new_ctx);

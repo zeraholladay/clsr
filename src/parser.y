@@ -1,4 +1,6 @@
+// clang-format off
 %{
+// clang-format on
 #include <stdio.h>
 
 #include "core_def.h"
@@ -15,6 +17,7 @@ int yylex(Context *ctx);
 void yyerror_handler(Context *ctx, const char *s);
 
 extern int yylineno;
+// clang-format off
 %}
 
 %code requires {
@@ -109,6 +112,7 @@ number
     ;
 
 %%
+// clang-format on
 
 void reset_parse_context(Context *ctx) {
     /* assumes pool has already been allocated. */
@@ -121,3 +125,5 @@ void yyerror_handler(Context *ctx, const char *s) {
     pool_reset_from_mark(CTX_POOL(ctx), CTX_PARSE_MARK(ctx));
     reset_parse_context(ctx);
 }
+
+// clang-format off

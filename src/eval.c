@@ -100,65 +100,22 @@ static Node *set(Node *car, Node *cdr, Context *ctx) {
   return cdr;
 }
 
-static Node *apply_closure(Node *fn, Node *args, Context *ctx) {
-  size_t expected = length(GET_CLOSURE_PARAMS(fn));
-  size_t received = length(args);
+Node *eval_apply(Node *expr, Context *ctx) {
+    Node *fn = eval(FIRST(expr), ctx);
 
-  if (expected != received) {
-    ErrorCode err =
-        (received < expected) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
-    raise(err, __func__); // FIXME: context
-    return NULL;
-  }
+    if (PRIM_FN(QUOTE) == GET_PRIMITIVE_FN(fn)) {
+      return FIRST(REST(expr));
+    }
 
-  Context new_ctx   = *ctx;
-  CTX_ENV(&new_ctx) = env_new(GET_CLOSURE_ENV(fn));
+    PRINT(expr, ctx);
 
-  // clang-format off
-  for (Node *pairs = pair(GET_CLOSURE_PARAMS(fn), args, ctx);
-       !IS_EMPTY_LIST(pairs); pairs = REST(pairs)) {
-    // clang-format on
+    Node *args = (PRIM_FN(FUNCALL) != GET_PRIMITIVE_FN(fn))
+                     ? CONS(fn, eval_list(REST(expr), ctx), ctx)
+                     : eval_list(REST(expr), ctx);
 
-    Node *pair = FIRST(pairs);
-    set(FIRST(pair), FIRST(REST(pair)), &new_ctx);
-  }
+    PRINT(args, ctx);
 
-  return eval(GET_CLOSURE_BODY(fn), &new_ctx); // TODO: eval_program()
-}
-
-static Node *apply_primitive(Node *fn, Node *args, Context *ctx) {
-  const PrimitiveFn *prim_fn = GET_PRIMITIVE_FN(fn);
-  int received               = (int)length(args);
-
-  if (prim_fn->arity > 0 && prim_fn->arity != received) {
-    ErrorCode err =
-        (received < prim_fn->arity) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
-    raise(err, __func__); // FIXME: context
-    return NULL;
-  }
-
-  return (prim_fn != PRIM_FN(LIST)) ? prim_fn->fn(args, ctx) : args;
-}
-
-Node *eval_apply(Node *list, Context *ctx) {
-  Node *fn_node = FIRST(list);
-  Node *arglist = REST(list);
-
-  if (!(IS_CLOSURE(fn_node) || IS_PRIMITIVE_FN(fn_node)) || !IS_LIST(arglist)) {
-    raise(ERR_INVALID_ARG, __func__);
-    return NULL;
-  }
-
-  if (IS_CLOSURE(fn_node)) {
-    return apply_closure(fn_node, arglist, ctx);
-  }
-
-  if (IS_PRIMITIVE_FN(fn_node)) {
-    return apply_primitive(fn_node, arglist, ctx);
-  }
-
-  raise(ERR_INTERNAL, DEBUG_LOCATION);
-  return NULL;
+    return eval_funcall(args, ctx); // funcall
 }
 
 Node *eval_closure(Node *args, Context *ctx) {
@@ -186,6 +143,67 @@ Node *eval_first(Node *args, Context *ctx) {
     return NULL;
   }
   return FIRST(FIRST(args));
+}
+
+static Node *funcall_closure(Node *fn, Node *args, Context *ctx) {
+  size_t expected = length(GET_CLOSURE_PARAMS(fn));
+  size_t received = length(args);
+
+  if (expected != received) {
+    ErrorCode err =
+        (received < expected) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
+    raise(err, __func__); // FIXME: context
+    return NULL;
+  }
+
+  Context new_ctx   = *ctx;
+  CTX_ENV(&new_ctx) = env_new(GET_CLOSURE_ENV(fn));
+
+  // clang-format off
+  for (Node *pairs = pair(GET_CLOSURE_PARAMS(fn), args, ctx);
+       !IS_EMPTY_LIST(pairs); pairs = REST(pairs)) {
+
+    Node *pair = FIRST(pairs);
+    set(FIRST(pair), FIRST(REST(pair)), &new_ctx);
+  }
+  // clang-format on
+
+  return eval(GET_CLOSURE_BODY(fn), &new_ctx); // TODO: eval_program()
+}
+
+static Node *funcall_primitive_fn(Node *fn, Node *args, Context *ctx) {
+  const PrimitiveFn *prim_fn = GET_PRIMITIVE_FN(fn);
+  int received               = (int)length(args);
+
+  if (prim_fn->arity > 0 && prim_fn->arity != received) {
+    ErrorCode err =
+        (received < prim_fn->arity) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
+    raise(err, __func__); // FIXME: context
+    return NULL;
+  }
+
+  return (prim_fn != PRIM_FN(LIST)) ? prim_fn->fn(args, ctx) : args;
+}
+
+Node *eval_funcall(Node *args, Context *ctx) {
+  Node *fn_node = FIRST(args);
+  Node *arglist = REST(args);
+
+  if (!(IS_CLOSURE(fn_node) || IS_PRIMITIVE_FN(fn_node)) || !IS_LIST(arglist)) {
+    raise(ERR_INVALID_ARG, __func__);
+    return NULL;
+  }
+
+  if (IS_CLOSURE(fn_node)) {
+    return funcall_closure(fn_node, arglist, ctx);
+  }
+
+  if (IS_PRIMITIVE_FN(fn_node)) {
+    return funcall_primitive_fn(fn_node, arglist, ctx);
+  }
+
+  raise(ERR_INTERNAL, DEBUG_LOCATION);
+  return NULL;
 }
 
 Node *eval_if(Node *args, Context *ctx) {
@@ -265,17 +283,7 @@ Node *eval(Node *expr, Context *ctx) {
       return expr;
     }
 
-    Node *fn = eval(FIRST(expr), ctx);
-
-    if (PRIM_FN(QUOTE) == GET_PRIMITIVE_FN(fn)) {
-      return FIRST(REST(expr));
-    }
-
-    Node *args = (PRIM_FN(APPLY) != GET_PRIMITIVE_FN(fn))
-                     ? CONS(fn, eval_list(REST(expr), ctx), ctx)
-                     : eval_list(REST(expr), ctx);
-
-    return eval_apply(args, ctx);
+    return eval_apply(expr, ctx);
   }
 
   raise(ERR_INTERNAL, DEBUG_LOCATION);

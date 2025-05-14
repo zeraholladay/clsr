@@ -21,6 +21,7 @@ CONS,    eval_cons,    2
 EQ,      eval_eq,      2
 EVAL,    eval,         1
 FIRST,   eval_first,   1
+FUNCALL, eval_funcall, -1
 IF,      eval_if,      3
 LEN,     eval_len,     1
 LIST,    eval_list,   -1

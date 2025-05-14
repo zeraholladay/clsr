@@ -1,6 +1,6 @@
 # clsr: Mini Lisp-like Interpreted Language with Closures
 
-A simple stack-based interpreted language with support for closures, lexical environments, and basic function application.
+A Lisp-dialect.
 
 ## Build and Test
 
@@ -24,8 +24,8 @@ env DEBUG=1 make clean test all
 
 ## Atoms
 
-- A *symbol* (i.e. a variable name to be resolved later via lookup)
-- A literal value (e.g. integers or `long longs`)
+- A *symbol* (i.e. a variable name)
+- A literal value (e.g. integers)
 
 ## Primitives (or Operators)
 
@@ -206,7 +206,8 @@ In no particular order:
 1. I/O subsystem
 1. ~~Refactor Primitives to Enum~~
 1. Docs/README.md
-1. Testing/tests
+1. Test list
+1. Test heaplist
 1. ~~Repr/str is a mess~~
 1. Define/def
 1. ~~List function~~
@@ -217,3 +218,5 @@ In no particular order:
 1. repl I/O from files
 1. ~~Bug squashing~~
 1. Max symbol size
+1. Rename `set` to `let`
+1. `map-car`

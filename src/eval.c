@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "error.h"
 #include "eval.h"
+#include "prim_fn.h"
 #include "safe_str.h"
 
 #define NIL_STR "NIL"
@@ -101,21 +102,32 @@ static Node *set(Node *car, Node *cdr, Context *ctx) {
 }
 
 Node *eval_apply(Node *expr, Context *ctx) {
-    Node *fn = eval(FIRST(expr), ctx);
+  Node *fn                = eval(FIRST(expr), ctx);
+  const PrimitiveFn *prim = GET_PRIMITIVE_FN(fn);
 
-    if (PRIM_FN(QUOTE) == GET_PRIMITIVE_FN(fn)) {
-      return FIRST(REST(expr));
-    }
+  if (prim == PRIM_FN(QUOTE)) {
+    return FIRST(REST(expr));
+  }
 
-    PRINT(expr, ctx);
+  Node *call_args;
+  if (prim == PRIM_FN(FUNCALL)) {
+    // (funcall f arg1 arg2 ...)
+    Node *fn2       = eval(FIRST(REST(expr)), ctx);
+    Node *rest_args = eval_list(REST(REST(expr)), ctx);
+    PRINT(rest_args, ctx);
+    call_args = CONS(fn2, rest_args, ctx);
+  } else if (prim == PRIM_FN(APPLY)) {
+    // (apply f arglist)
+    Node *fn2     = eval(FIRST(REST(expr)), ctx);
+    Node *arglist = eval(FIRST(REST(REST(expr))), ctx);
+    call_args     = CONS(fn2, arglist, ctx);
+  } else {
+    // (f arg1 arg2 ... )
+    Node *rest_args = eval_list(REST(expr), ctx);
+    call_args       = CONS(fn, rest_args, ctx);
+  }
 
-    Node *args = (PRIM_FN(FUNCALL) != GET_PRIMITIVE_FN(fn))
-                     ? CONS(fn, eval_list(REST(expr), ctx), ctx)
-                     : eval_list(REST(expr), ctx);
-
-    PRINT(args, ctx);
-
-    return eval_funcall(args, ctx); // funcall
+  return eval_funcall(call_args, ctx);
 }
 
 Node *eval_closure(Node *args, Context *ctx) {
@@ -279,9 +291,8 @@ Node *eval(Node *expr, Context *ctx) {
     return expr;
 
   if (IS_LIST(expr)) {
-    if (IS_EMPTY_LIST(expr)) {
+    if (IS_EMPTY_LIST(expr))
       return expr;
-    }
 
     return eval_apply(expr, ctx);
   }

@@ -195,6 +195,7 @@ Prints an argument:
 
 In no particular order:
 
+1. funcall
 1. Math
 1. ~~Conditionals~~
 1. ~~Fix T/NIL~~
@@ -208,7 +209,7 @@ In no particular order:
 1. Testing/tests
 1. ~~Repr/str is a mess~~
 1. Define/def
-1. List function
+1. ~~List function~~
 1. Strings (started kind of)
 1. Pool to arena (will need fix to yyparse)
 1. Parse errors (exceptions first)

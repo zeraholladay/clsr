@@ -1,3 +1,4 @@
+// clang-format off
 %option noyywrap
 %option yylineno
 %option noinput

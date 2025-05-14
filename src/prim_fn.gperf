@@ -14,17 +14,18 @@
 struct PrimitiveFn;
 
 %%
-APPLY,   eval_apply, 2
+APPLY,   eval_apply,   2
 CLOSURE, eval_closure, 2
-CONS,    eval_cons, 2
-EQ,      eval_eq, 2
-EVAL,    eval, 1
-FIRST,   eval_first, 1
-IF,      eval_if, 3
-LEN,     eval_len, 1
-PAIR,    eval_pair, 2
-PRINT,   eval_print, 1
-QUOTE,   NULL, 0
-REST,    eval_rest, 1
-SET,     eval_set, 2
-STR,     eval_str, 1
+CONS,    eval_cons,    2
+EQ,      eval_eq,      2
+EVAL,    eval,         1
+FIRST,   eval_first,   1
+IF,      eval_if,      3
+LEN,     eval_len,     1
+LIST,    eval_list,   -1
+PAIR,    eval_pair,    2
+PRINT,   eval_print,   1
+QUOTE,   NULL,         0
+REST,    eval_rest,    1
+SET,     eval_set,     2
+STR,     eval_str,     1

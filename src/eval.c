@@ -18,10 +18,9 @@ static Node nil_node = {.type    = TYPE_NIL,
 
 static Node t_node = {.type = TYPE_SYMBOL, .as.symbol = T_STR};
 
-Node *list(Node *car, Node *cdr, Context *ctx); // FIXME
 static size_t length(Node *list);
 static Node *lookup_symbol(Node *node, Context *ctx);
-static Node *pair(Node *list1, Node *list2, Context *ctx);
+static Node *pair(Node *l1, Node *l2, Context *ctx);
 static Node *set(Node *car, Node *cdr, Context *ctx);
 
 static size_t length(Node *list) {
@@ -77,7 +76,7 @@ static Node *pair(Node *list1, Node *list2, Context *ctx) {
   if (IS_EMPTY_LIST(list1) || IS_EMPTY_LIST(list2))
     return CONS(NULL, NULL, ctx);
 
-  Node *first_pair = list(FIRST(list1), FIRST(list2), ctx);
+  Node *first_pair = LIST(FIRST(list1), FIRST(list2), ctx);
   Node *rest_pairs = pair(REST(list1), REST(list2), ctx);
 
   return CONS(first_pair, rest_pairs, ctx);
@@ -115,7 +114,7 @@ static Node *apply_closure(Node *fn, Node *args, Context *ctx) {
   Context new_ctx   = *ctx;
   CTX_ENV(&new_ctx) = env_new(GET_CLOSURE_ENV(fn));
 
-  for (Node *pairs                  = pair(GET_CLOSURE_PARAMS(fn), args, ctx);
+  for (Node *pairs = pair(GET_CLOSURE_PARAMS(fn), args, ctx);
        !IS_EMPTY_LIST(pairs); pairs = REST(pairs)) {
 
     Node *pair = FIRST(pairs);
@@ -129,14 +128,16 @@ static Node *apply_primitive(Node *fn, Node *args, Context *ctx) {
   const PrimitiveFn *prim_fn = GET_PRIMITIVE_FN(fn);
   int received               = (int)length(args);
 
-  if (prim_fn->arity != received) {
+  PRINT(args, ctx);
+
+  if (prim_fn->arity > 0 && prim_fn->arity != received) {
     ErrorCode err =
         (received < prim_fn->arity) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
     raise(err, __func__); // FIXME: context
     return NULL;
   }
 
-  return prim_fn->fn(args, ctx);
+  return (prim_fn != PRIM_FN(LIST)) ? prim_fn->fn(args, ctx) : args;
 }
 
 Node *eval_apply(Node *list, Context *ctx) {
@@ -204,11 +205,14 @@ Node *eval_len(Node *args, Context *ctx) {
   return cons_integer(CTX_POOL(ctx), length(FIRST(args)));
 }
 
-// TODO: FIXME
-Node *list(Node *car, Node *cdr, Context *ctx) {
-  Node *empty = CONS(NULL, NULL, ctx);
-  return CONS(car, CONS(cdr, empty, ctx), ctx);
-  ;
+Node *eval_list(Node *args, Context *ctx) {
+  if (IS_EMPTY_LIST(args))
+    return CONS(NULL, NULL, ctx);
+
+  Node *car = eval(FIRST(args), ctx);
+  Node *cdr = eval_list(REST(args), ctx);
+
+  return CONS(car, cdr, ctx);
 }
 
 Node *eval_pair(Node *args, Context *ctx) {
@@ -276,16 +280,6 @@ Node *eval(Node *expr, Context *ctx) {
 
   raise(ERR_INTERNAL, DEBUG_LOCATION);
   return NULL;
-}
-
-Node *eval_list(Node *args, Context *ctx) {
-  if (IS_EMPTY_LIST(args))
-    return CONS(NULL, NULL, ctx);
-
-  Node *car = eval(FIRST(args), ctx);
-  Node *cdr = eval_list(REST(args), ctx);
-
-  return CONS(car, cdr, ctx);
 }
 
 Node *eval_program(Node *program, Context *ctx) {

@@ -111,7 +111,7 @@ list_form
 
 lambda_form
     : LAMBDA '(' param_form ')' exprs {
-        $$ = cons_lambda(CTX_POOL(ctx), $3, $5, NULL);
+        $$ = cons_lambda(CTX_POOL(ctx), $3, $5, CTX_ENV(ctx));
     }
     ;
 

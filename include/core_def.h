@@ -11,18 +11,18 @@
 
 #define IS_TYPE(node, kind) ((node) != NULL && (node)->type == (kind))
 
-#define IS_NIL(node)             IS_TYPE((node), TYPE_NIL)
-#define IS_SYMBOL(node)          IS_TYPE((node), TYPE_SYMBOL)
-#define IS_INTEGER(node)         IS_TYPE((node), TYPE_INTEGER)
-#define IS_STRING(node)          IS_TYPE((node), TYPE_STRING)
-#define IS_LIST(node)            IS_TYPE((node), TYPE_LIST)
-#define IS_PRIMITIVE_FN(node)    IS_TYPE((node), TYPE_PRIMITIVE_FN)
+#define IS_NIL(node)            IS_TYPE((node), TYPE_NIL)
+#define IS_SYMBOL(node)         IS_TYPE((node), TYPE_SYMBOL)
+#define IS_INTEGER(node)        IS_TYPE((node), TYPE_INTEGER)
+#define IS_STRING(node)         IS_TYPE((node), TYPE_STRING)
+#define IS_LIST(node)           IS_TYPE((node), TYPE_LIST)
+#define IS_PRIMITIVE_FN(node)   IS_TYPE((node), TYPE_PRIMITIVE_FN)
 #define IS_LAMBDA(node)         IS_TYPE((node), TYPE_LAMBDA)
-#define GET_SYMBOL(node)         ((node)->as.symbol)
-#define GET_INTEGER(node)        ((node)->as.integer)
-#define GET_STRING(node)         ((node)->as.string)
-#define GET_LIST(node)           (&(node)->as.list)
-#define GET_PRIMITIVE_FN(node)   ((node)->as.primitive)
+#define GET_SYMBOL(node)        ((node)->as.symbol)
+#define GET_INTEGER(node)       ((node)->as.integer)
+#define GET_STRING(node)        ((node)->as.string)
+#define GET_LIST(node)          (&(node)->as.list)
+#define GET_PRIMITIVE_FN(node)  ((node)->as.primitive)
 #define GET_LAMBDA(node)        (&(node)->as.lambda)
 #define GET_LAMBDA_PARAMS(node) ((node)->as.lambda.params)
 #define GET_LAMBDA_BODY(node)   ((node)->as.lambda.body)
@@ -85,7 +85,6 @@ struct Node {
 // coredef.c
 const Type *type(Node *self);
 Node *cons_primfn(Pool *p, const PrimitiveFn *prim_fn);
-// Node *cons_closure(Pool *p, Node *params, Node *body, Env *env);
 Node *cons_lambda(Pool *p, Node *params, Node *body, Env *env);
 Node *cons_integer(Pool *p, Integer i);
 Node *cons_list(Pool *p, Node *car, Node *cdr);

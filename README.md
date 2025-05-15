@@ -1,6 +1,4 @@
-# clsr: Lisp-like Interpreted Language with Closures
-
-A Lisp-dialect.
+# clsr: A Lisp-dialect.
 
 ## Build and Test
 
@@ -27,7 +25,7 @@ env DEBUG=1 make clean test all
 - NIL
 - Symbols (i.e. a variable name)
 - Integers
-- Closure or lambda
+- Lambda
 - Primitive functions (C functions)
 - List (i.e. a Node)
 
@@ -109,30 +107,30 @@ Examples:
 
 ---
 
-### `CLOSURE '(arg0 arg1 ... argN) '(body)`
-Create and returns a **closure** from a function `body` and its **captured environment `env`**.
+### `LAMBDA (p1 p2 ... pN) ...`
+Create and returns a **lambda** from a function `body` and its **captured environment `env` (lexical scope)**.
 
 Examples:
 
 ```lisp
-(closure '(a b) '(cons a (cons b '()))) ; creates an anonymous closure
+(lambda (a b) (cons a (cons b '()))) ; creates an anonymous lambda
 
 (set 'foofn 
-      (closure '(a b c) 
-        '(cons a (cons b (cons c '())))
-        )
+      (lambda (a b c)
+              (cons a (cons b (cons c '())))
+      )
 )
-(foofn 1 2 '3)  ; call a closure named foofn
+(foofn 1 2 '3)  ; call a lambda named foofn
 
-((closure '(a b c) 
-  '(cons a (cons b (cons c '()))))
-  1 2 3) ; call an anonymous closure with args 1 2 3
+((lambda (a b c)
+  (cons a (cons b (cons c '()))))
+  1 2 3) ; call an anonymous lambda with args 1 2 3
 ```
 
 ---
 
 ### `APPLY fn arglist`
-Applies arguments to a primitive function or closure.
+Applies arguments to a primitive function or lambda.
 
 Examples:
 

@@ -222,14 +222,20 @@ START_TEST(test_lambda) {
   ck_assert(IS_INTEGER(eval_result) && GET_INTEGER(eval_result) == 42);
 
   // define 'foo and run
-  eval_result =
-      run_eval_program("(set 'foo (lambda () (cons 'a 'b))) (foo)");
+  eval_result = run_eval_program("(set 'foo (lambda () (cons 'a 'b)))"
+                                 "(foo)");
   ck_assert(IS_LIST(eval_result));
 
-  eval_result = run_eval_program(
-      "(set 'foo (lambda (a b) (cons a b))) (foo 'bar 'biz)");
+  // with parameters
+  eval_result = run_eval_program("(set 'foo (lambda (a b) (cons a b)))"
+                                 "(foo 'bar 'biz)");
   ck_assert(IS_LIST(eval_result));
   ck_assert_str_eq(GET_SYMBOL(FIRST(eval_result)), "bar");
+
+  // test lexical scope
+  eval_result = run_eval_program("(set 'foo 'bar)"
+                                 "((lambda () foo))");
+  ck_assert_str_eq(GET_SYMBOL(eval_result), "bar");
 }
 END_TEST
 

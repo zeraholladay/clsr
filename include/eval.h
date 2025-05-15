@@ -18,7 +18,6 @@
   (!node || (IS_NIL(node)) || (IS_LIST(node) && !FIRST(node) && !REST(node)))
 
 Node *eval_apply(Node *args, Context *ctx);
-// Node *eval_closure(Node *args, Context *ctx);
 Node *eval_cons(Node *args, Context *ctx);
 Node *eval_eq(Node *args, Context *ctx);
 Node *eval_first(Node *args, Context *ctx);

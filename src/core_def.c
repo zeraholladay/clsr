@@ -186,7 +186,7 @@ static Type type_tab[] = {
     [TYPE_PRIMITIVE_FN] = {.type_name = "PRIMITIVE",
                            .str_fn    = prim_fn_tostr,
                            .eq_fn     = prim_fn_eq},
-    [TYPE_LAMBDA]      = {.type_name = "LAMBDA",
+    [TYPE_LAMBDA]       = {.type_name = "LAMBDA",
                            .str_fn    = lambda_tostr,
                            .eq_fn     = lambda_eq},
 };
@@ -205,22 +205,14 @@ Node *cons_primfn(Pool *p, const PrimitiveFn *prim_fn) {
   return node;
 }
 
-// Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
-//   Node *node              = pool_alloc(p);
-//   node->type              = TYPE_LAMBDA;
-//   node->as.closure.params = params;
-//   node->as.closure.body   = body;
-//   node->as.closure.env    = env;
-//   return node;
-// }
-
 Node *cons_lambda(Pool *p, Node *params, Node *body, Env *env) {
-  Node *node              = pool_alloc(p);
-  node->type              = TYPE_LAMBDA;
+  Node *node             = pool_alloc(p);
+  node->type             = TYPE_LAMBDA;
   node->as.lambda.params = params;
   node->as.lambda.body   = body;
   node->as.lambda.env    = env;
-  return node;}
+  return node;
+}
 
 Node *cons_integer(Pool *p, Integer i) {
   Node *node       = pool_alloc(p);

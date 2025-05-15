@@ -19,5 +19,6 @@ typedef struct PrimitiveFn {
 /* prim_fn.gperf */
 const struct PrimitiveFn *prim_fn_lookup(register const char *str,
                                          register size_t len);
+const char *is_in_gperf_keyword_table(const char *text, int state);
 
 #endif

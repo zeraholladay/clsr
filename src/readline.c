@@ -6,9 +6,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "prim_fn.h"
+
 #ifndef READLIN_HISTORY_MAX
 #define READLIN_HISTORY_MAX 100
 #endif
+
+char *prim_fn_completion_generator(const char *text, int state) {
+  const char *word = is_in_gperf_keyword_table(text, state);
+
+  if (word) {
+    return strdup(word);
+  }
+
+  return NULL;
+}
 
 static const char *get_history_path(void) {
   const char *home = getenv("HOME");
@@ -19,12 +31,10 @@ static const char *get_history_path(void) {
 
 static char **_attempted_completion_function(const char *text, int start,
                                              int end) {
-  (void)text;
   (void)start;
   (void)end;
-
-  rl_bind_key('\t', rl_insert);
-  return NULL;
+  rl_attempted_completion_over = 1;
+  return rl_completion_matches(text, prim_fn_completion_generator);
 }
 
 static void rl_cleanup(void) {
@@ -37,6 +47,7 @@ void rl_init(void) {
   const char *hist_path            = get_history_path();
   read_history(hist_path);
   stifle_history(READLIN_HISTORY_MAX);
+  rl_variable_bind("blink-matching-paren", "on");
   atexit(rl_cleanup);
 }
 

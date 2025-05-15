@@ -30,7 +30,10 @@ else
 endif
 
 # libs
-LIBS := -lreadline
+ifeq ($(shell uname), Darwin)
+	LDLIBS   += $(shell pkg-config --cflags --libs readline)
+	LDFLAGS  += $(shell pkg-config --cflags --libs readline)
+endif
 
 FLEX := flex
 BISON := bison
@@ -53,7 +56,7 @@ SRC_OBJS := $(patsubst $(SRC)/%.c, $(BIN)/%.o, $(SRC_CFILES_ALL))
 all: src exec
 
 exec: $(MAIN_SRC)
-	$(CC) $(CFLAGS) -DCLSR_MAIN=1 -o $(EXEC) $(SRC_OBJS) $(MAIN_SRC) $(LIBS)
+	$(CC) $(CFLAGS) -DCLSR_MAIN=1 -o $(EXEC) $(SRC_OBJS) $(MAIN_SRC) $(LDLIBS)
 
 .PHONY: src
 src: gen $(SRC_OBJS)

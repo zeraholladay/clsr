@@ -7,6 +7,7 @@ case "$OS_NAME" in
     Darwin)
         case "$ARCH" in
             arm64)
+                export PKG_CONFIG_PATH="/opt/homebrew/opt/readline/lib/pkgconfig:$PKG_CONFIG_PATH"
                 export PATH="/opt/homebrew/opt/flex/bin:/opt/homebrew/opt/bison/bin:/opt/homebrew/opt/gperf/bin:$PATH"
                 ;;
             x86_64)

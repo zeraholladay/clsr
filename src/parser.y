@@ -1,6 +1,6 @@
 // clang-format off
 %{
-// clang-format on
+// clang-format off
 #include <stdio.h>
 
 #include "core_def.h"
@@ -11,13 +11,13 @@
   do {                                                                         \
     yyerror_handler(ctx, s);                                                   \
     YYABORT;                                                                   \
-  } while (0)
+} while (0)
 
-  int yylex(Context * ctx);
-  void yyerror_handler(Context * ctx, const char *s);
+int yylex(Context * ctx);
+void yyerror_handler(Context * ctx, const char *s);
 
-  extern int yylineno;
-  // clang-format off
+extern int yylineno;
+// clang-format off
 %}
 
 %code requires {
@@ -36,12 +36,13 @@ void reset_parse_context(Context *ctx);
     struct Node *node;
 }
 
-%type <node> program expressions expression expression_list list number symbol 
+%type <node> program expressions expression expression_list list literal_expr symbol
+%type <node> lambda parameter_list
 
-%token QUOTE ERROR
+%token ERROR LAMBDA QUOTE
 %token <prim_fn> PRIMITIVE
 %token <integer> INTEGER
-%token <symbol> SYMBOL
+%token <symbol>  SYMBOL
 
 %%
 
@@ -67,9 +68,9 @@ expressions
     ;
 
 expression
-    : number                    
-    | symbol                    
-    | list
+    : list
+    | lambda
+    | literal_expr
     | QUOTE expression {
         Node *quote = cons_primfn(CTX_POOL(ctx), PRIM_FN(QUOTE));
         Node *fn_args = CONS($2, CONS(NULL, NULL, ctx), ctx);
@@ -93,28 +94,42 @@ expression_list
     | expression expression_list {
         $$ = CONS($1, $2, ctx);
     }
-
     ;
 
-symbol
-    : PRIMITIVE {
+literal_expr
+    : symbol
+    | PRIMITIVE {
         $$ = cons_primfn(CTX_POOL(ctx), $1);
     }
-    | SYMBOL {
-        $$ = cons_symbol(CTX_POOL(ctx), $1);
-    }
-    ;
-
-number
-    : INTEGER {
+    | INTEGER {
         $$ = cons_integer(CTX_POOL(ctx), $1);
     }
     ;
 
-%%
-    // clang-format on
+symbol
+    : SYMBOL {
+        $$ = cons_symbol(CTX_POOL(ctx), $1);
+    }
 
-    void reset_parse_context(Context *ctx) {
+lambda
+    : LAMBDA '(' parameter_list ')' '(' program ')' {
+        $$ = cons_lambda(CTX_POOL(ctx), $3, $6);
+    }
+    ;
+
+parameter_list
+    : /* empty */ {
+        $$ = CONS(NULL, NULL, ctx);
+    }
+    symbol parameter_list {
+        $$ = LIST(cons_symbol(CTX_POOL(ctx), $1), $2, ctx);
+    }
+    ;
+
+%%
+// clang-format off
+
+void reset_parse_context(Context *ctx) {
   /* assumes pool has already been allocated. */
   CTX_PARSE_ROOT(ctx) = NULL;
   CTX_PARSE_MARK(ctx) = CTX_POOL(ctx)->free_list;

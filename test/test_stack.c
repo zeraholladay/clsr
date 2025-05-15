@@ -65,10 +65,12 @@
 // }
 // END_TEST
 
-Suite *stack_suite(void) {
-  Suite *s = suite_create("Stack");
+Suite *
+stack_suite (void)
+{
+  Suite *s = suite_create ("Stack");
 
-  TCase *tc_core = tcase_create("Core");
+  TCase *tc_core = tcase_create ("Core");
 
   // tcase_add_test(tc_core, test_push_pop);
   // tcase_add_test(tc_core, test_lifo_order);
@@ -76,6 +78,6 @@ Suite *stack_suite(void) {
   // tcase_add_test(tc_core, test_enter_exit_frame);
   // tcase_add_test(tc_core, test_grow);
 
-  suite_add_tcase(s, tc_core);
+  suite_add_tcase (s, tc_core);
   return s;
 }

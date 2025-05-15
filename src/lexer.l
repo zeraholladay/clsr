@@ -8,7 +8,7 @@
 
 #include "eval_ctx.h"
 #include "parser.h"
-#include "prim_fn.h"
+#include "keywords.h"
 #include "sym_save.h"
 
 #define YY_DECL int yylex(Context *ctx)
@@ -27,10 +27,10 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
     ")"             { return ')'; }
     {NUM}           { yylval.integer = atoll(yytext); return INTEGER; }
     {ID}            {
-                    const PrimitiveFn *prim_fn = prim_fn_lookup(yytext, yyleng);
-                    if (prim_fn) {
-                        yylval.prim_fn = prim_fn;
-                        return (prim_fn != PRIM_FN(LAMBDA)) ? PRIMITIVE : LAMBDA;
+                    const Keyword *keyword = keyword_lookup(yytext, yyleng);
+                    if (keyword) {
+                        yylval.keyword = keyword;
+                        return (keyword != KEYWORD(LAMBDA)) ? PRIMITIVE : LAMBDA;
                     }
                     yylval.symbol = sym_save(&CTX_SYMTAB(ctx), yytext, yyleng);
                     return SYMBOL;
@@ -39,16 +39,16 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
                     int op = yytext[0];
                     switch (op) {
                         case '+':
-                            yylval.prim_fn = PRIM_FN(ADD);
+                            yylval.keyword = KEYWORD(ADD);
                             break;
                         case '-':
-                            yylval.prim_fn = PRIM_FN(SUB);
+                            yylval.keyword = KEYWORD(SUB);
                             break;
                         case '*':
-                            yylval.prim_fn = PRIM_FN(MUL);
+                            yylval.keyword = KEYWORD(MUL);
                             break;
                         case '/':
-                            yylval.prim_fn = PRIM_FN(DIV);
+                            yylval.keyword = KEYWORD(DIV);
                             break;
                         default:
                             return ERROR;

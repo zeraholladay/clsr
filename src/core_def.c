@@ -7,10 +7,11 @@
 #include "heap_list.h"
 #include "safe_str.h"
 
-#define CLSR_INTEGER_TYPE_FMT "%lld"
+#define CINTEGER_TYPE_FMT "%lld"
 
 #define LOG10_2 0.30103
-#define CLSR_INTEGER_TYPE_STR_MAX_SIZE                                         \
+
+#define INTEGER_TYPE_STR_MAX_SIZE                                              \
   ((size_t)(sizeof(Integer) * CHAR_BIT * LOG10_2 + 3))
 
 // Type eq
@@ -36,10 +37,10 @@ static int integer_eq(Node *self, Node *other) {
 }
 
 static char *integer_tostr(Node *self) {
-  char str[CLSR_INTEGER_TYPE_STR_MAX_SIZE];
+  char str[INTEGER_TYPE_STR_MAX_SIZE];
   size_t n = sizeof(str);
 
-  int result = snprintf(str, n, CLSR_INTEGER_TYPE_FMT, GET_INTEGER(self));
+  int result = snprintf(str, n, CINTEGER_TYPE_FMT, GET_INTEGER(self));
 
   if (result < 0 || (size_t)result >= n)
     return NULL;
@@ -113,15 +114,14 @@ static char *list_tostr(Node *self) {
   return str;
 }
 
-// Prim Ops type
-static int prim_fn_eq(Node *self, Node *other) {
-  return type_eq(self, other) &&
-         GET_PRIMITIVE_FN(self) == GET_PRIMITIVE_FN(other);
+// Primitive type
+static int primitive_eq(Node *self, Node *other) {
+  return type_eq(self, other) && GET_PRIMITIVE(self) == GET_PRIMITIVE(other);
 }
 
-static char *prim_fn_tostr(Node *self) {
-  const PrimitiveFn *prim_fn = GET_PRIMITIVE_FN(self);
-  return safe_strndup(prim_fn->name, strlen(prim_fn->name));
+static char *primitive_tostr(Node *self) {
+  const Primitive *prim = GET_PRIMITIVE(self);
+  return safe_strndup(prim->name, strlen(prim->name));
 }
 
 // Lambda type
@@ -183,12 +183,12 @@ static Type type_tab[] = {
     [TYPE_LIST] = {.type_name = "List", .str_fn = list_tostr, .eq_fn = list_eq},
 
     // Function-like values
-    [TYPE_PRIMITIVE_FN] = {.type_name = "PRIMITIVE",
-                           .str_fn    = prim_fn_tostr,
-                           .eq_fn     = prim_fn_eq},
-    [TYPE_LAMBDA]       = {.type_name = "LAMBDA",
-                           .str_fn    = lambda_tostr,
-                           .eq_fn     = lambda_eq},
+    [TYPE_PRIMITIVE] = {.type_name = "PRIMITIVE",
+                        .str_fn    = primitive_tostr,
+                        .eq_fn     = primitive_eq},
+    [TYPE_LAMBDA]    = {.type_name = "LAMBDA",
+                        .str_fn    = lambda_tostr,
+                        .eq_fn     = lambda_eq},
 };
 
 // type()
@@ -198,10 +198,10 @@ const Type *type(Node *self) {
   return &type_tab[self->type];
 }
 
-Node *cons_primfn(Pool *p, const PrimitiveFn *prim_fn) {
+Node *cons_prim(Pool *p, const Keyword *keyword) {
   Node *node         = pool_alloc(p);
-  node->type         = TYPE_PRIMITIVE_FN;
-  node->as.primitive = prim_fn;
+  node->type         = TYPE_PRIMITIVE;
+  node->as.primitive = keyword;
   return node;
 }
 

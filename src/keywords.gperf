@@ -5,7 +5,7 @@
 
 #include "eval.h"
 #include "eval_math.h"
-#include "prim_fn.h"
+#include "keywords.h"
 // clang-format off
 %}
 
@@ -15,11 +15,11 @@
 %define word-array-name keyword_table
 %struct-type
 %ignore-case
-%define lookup-function-name prim_fn_lookup
+%define lookup-function-name keyword_lookup
 %define initializer-suffix ,0,0
 %define slot-name name
 
-struct PrimitiveFn;
+struct Keyword;
 
 %%
 APPLY,   eval_apply,   2
@@ -49,7 +49,7 @@ DIV,     eval_div,    -1
 #define PRIN_FN_TAB_NUM              \
 ((int)(sizeof(keyword_table) / sizeof(keyword_table[0])))
 
-const char *is_in_gperf_keyword_table(const char *text, int state) {
+const char *is_keyword_strncmp(const char *text, int state) {
     static int idx;
     static size_t len;
 

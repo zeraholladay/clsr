@@ -32,7 +32,7 @@ void reset_parse_context(Context *ctx);
 %union {
     Integer integer;
     const char *symbol;
-    const struct PrimitiveFn *prim_fn;
+    const struct Keyword *keyword;
     struct Node *node;
 }
 
@@ -40,7 +40,7 @@ void reset_parse_context(Context *ctx);
 %type <node> lambda_form param_form
 
 %token ERROR LAMBDA QUOTE
-%token <prim_fn> PRIMITIVE
+%token <keyword> PRIMITIVE
 %token <integer> INTEGER
 %token <symbol>  SYMBOL
 
@@ -71,7 +71,7 @@ expr
     : list_expr
     | literal_expr
     | QUOTE expr {
-        Node *quote = cons_primfn(CTX_POOL(ctx), PRIM_FN(QUOTE));
+        Node *quote = cons_prim(CTX_POOL(ctx), KEYWORD(QUOTE));
         $$ = LIST2(quote, $2, ctx);
     }
     ;
@@ -93,7 +93,7 @@ literal_expr
         $$ = cons_symbol(CTX_POOL(ctx), $1);
     }
     | PRIMITIVE {
-        $$ = cons_primfn(CTX_POOL(ctx), $1);
+        $$ = cons_prim(CTX_POOL(ctx), $1);
     }
     | INTEGER {
         $$ = cons_integer(CTX_POOL(ctx), $1);

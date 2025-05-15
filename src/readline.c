@@ -6,14 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "prim_fn.h"
+#include "keywords.h"
 
 #ifndef READLIN_HISTORY_MAX
 #define READLIN_HISTORY_MAX 100
 #endif
 
-char *prim_fn_completion_generator(const char *text, int state) {
-  const char *word = is_in_gperf_keyword_table(text, state);
+char *keyword_completion_generator(const char *text, int state) {
+  const char *word = is_keyword_strncmp(text, state);
 
   if (word) {
     return strdup(word);
@@ -34,7 +34,7 @@ static char **_attempted_completion_function(const char *text, int start,
   (void)start;
   (void)end;
   rl_attempted_completion_over = 1;
-  return rl_completion_matches(text, prim_fn_completion_generator);
+  return rl_completion_matches(text, keyword_completion_generator);
 }
 
 static void rl_cleanup(void) {

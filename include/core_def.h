@@ -6,8 +6,8 @@
 
 #include "env.h"
 #include "eval_ctx.h"
+#include "keywords.h"
 #include "palloc.h"
-#include "prim_fn.h"
 
 #define IS_TYPE(node, kind) ((node) != NULL && (node)->type == (kind))
 
@@ -16,13 +16,13 @@
 #define IS_INTEGER(node)        IS_TYPE((node), TYPE_INTEGER)
 #define IS_STRING(node)         IS_TYPE((node), TYPE_STRING)
 #define IS_LIST(node)           IS_TYPE((node), TYPE_LIST)
-#define IS_PRIMITIVE_FN(node)   IS_TYPE((node), TYPE_PRIMITIVE_FN)
+#define IS_PRIMITIVE(node)      IS_TYPE((node), TYPE_PRIMITIVE)
 #define IS_LAMBDA(node)         IS_TYPE((node), TYPE_LAMBDA)
 #define GET_SYMBOL(node)        ((node)->as.symbol)
 #define GET_INTEGER(node)       ((node)->as.integer)
 #define GET_STRING(node)        ((node)->as.string)
 #define GET_LIST(node)          (&(node)->as.list)
-#define GET_PRIMITIVE_FN(node)  ((node)->as.primitive)
+#define GET_PRIMITIVE(node)     ((node)->as.primitive)
 #define GET_LAMBDA(node)        (&(node)->as.lambda)
 #define GET_LAMBDA_PARAMS(node) ((node)->as.lambda.params)
 #define GET_LAMBDA_BODY(node)   ((node)->as.lambda.body)
@@ -30,6 +30,7 @@
 
 struct Node;
 typedef struct Node Node;
+typedef struct Keyword Primitive;
 
 // Node type "object"
 typedef char *(*StrFn)(Node *);
@@ -43,13 +44,13 @@ typedef struct Type {
 
 // Nodes
 typedef enum {
-  TYPE_NIL,          // special constant
-  TYPE_SYMBOL,       // identifiers
-  TYPE_INTEGER,      // literal
-  TYPE_STRING,       // literal
-  TYPE_LIST,         // cons cells
-  TYPE_PRIMITIVE_FN, // builtin fn
-  TYPE_LAMBDA        // user-defined fn
+  TYPE_NIL,       // special constant
+  TYPE_SYMBOL,    // identifiers
+  TYPE_INTEGER,   // literal
+  TYPE_STRING,    // literal
+  TYPE_LIST,      // cons cells
+  TYPE_PRIMITIVE, // builtin fn
+  TYPE_LAMBDA     // user-defined fn
 } TypeEnum;
 
 typedef long long Integer;
@@ -77,14 +78,14 @@ struct Node {
     List list;
 
     // Function-like values
-    const PrimitiveFn *primitive;
+    const Primitive *primitive;
     Lambda lambda;
   } as;
 };
 
 // coredef.c
 const Type *type(Node *self);
-Node *cons_primfn(Pool *p, const PrimitiveFn *prim_fn);
+Node *cons_prim(Pool *p, const Keyword *keyword);
 Node *cons_lambda(Pool *p, Node *params, Node *body, Env *env);
 Node *cons_integer(Pool *p, Integer i);
 Node *cons_list(Pool *p, Node *car, Node *cdr);

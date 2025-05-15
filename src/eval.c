@@ -5,7 +5,7 @@
 #include "debug.h"
 #include "error.h"
 #include "eval.h"
-#include "prim_fn.h"
+#include "keywords.h"
 #include "safe_str.h"
 
 #define NIL_STR "NIL"
@@ -28,14 +28,14 @@ static Node *pair(Node *l1, Node *l2, Context *ctx);
 static Node *set(Node *car, Node *cdr, Context *ctx);
 
 static Node *apply(Node *fn, Node *expr, Context *ctx) {
-  const PrimitiveFn *prim = GET_PRIMITIVE_FN(fn);
-  Node *call_args         = NULL;
+  const Keyword *prim = GET_PRIMITIVE(fn);
+  Node *call_args     = NULL;
 
-  if (prim == PRIM_FN(FUNCALL) || prim == PRIM_FN(APPLY)) {
+  if (prim == KEYWORD(FUNCALL) || prim == KEYWORD(APPLY)) {
     // (funcall f arg1 arg2 ...)
     // (apply f arglist)
     Node *fn2       = eval(FIRST(REST(expr)), ctx);
-    Node *rest_args = (prim == PRIM_FN(FUNCALL))
+    Node *rest_args = (prim == KEYWORD(FUNCALL))
                           ? eval_list(REST(REST(expr)), ctx)
                           : eval(FIRST(REST(REST(expr))), ctx);
     call_args       = CONS(fn2, rest_args, ctx);
@@ -75,17 +75,17 @@ static Node *lambda(Node *fn, Node *args, Context *ctx) {
 }
 
 static Node *funcall_prim_fn(Node *fn, Node *args, Context *ctx) {
-  const PrimitiveFn *prim_fn = GET_PRIMITIVE_FN(fn);
-  int received               = (int)length(args);
+  const Primitive *prim = GET_PRIMITIVE(fn);
+  int received          = (int)length(args);
 
-  if (prim_fn->arity > 0 && prim_fn->arity != received) {
+  if (prim->arity > 0 && prim->arity != received) {
     ErrorCode err =
-        (received < prim_fn->arity) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
+        (received < prim->arity) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
     raise(err, __func__); // FIXME: context
     return NULL;
   }
 
-  return (prim_fn != PRIM_FN(LIST)) ? prim_fn->fn(args, ctx) : args;
+  return (prim != KEYWORD(LIST)) ? prim->fn(args, ctx) : args;
 }
 
 static size_t length(Node *list) {
@@ -156,7 +156,7 @@ static Node *set(Node *car, Node *cdr, Context *ctx) {
   const char *symstr = GET_SYMBOL(car);
   size_t len         = strlen(symstr);
 
-  if (prim_fn_lookup(symstr, len) || lookup_reserved_symbol(symstr)) {
+  if (keyword_lookup(symstr, len) || lookup_reserved_symbol(symstr)) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
@@ -189,7 +189,7 @@ Node *eval_funcall(Node *args, Context *ctx) {
   Node *fn_node = FIRST(args);
   Node *arglist = REST(args);
 
-  if (!(IS_LAMBDA(fn_node) || IS_PRIMITIVE_FN(fn_node)) || !IS_LIST(arglist)) {
+  if (!(IS_LAMBDA(fn_node) || IS_PRIMITIVE(fn_node)) || !IS_LIST(arglist)) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
@@ -198,7 +198,7 @@ Node *eval_funcall(Node *args, Context *ctx) {
     return lambda(fn_node, arglist, ctx);
   }
 
-  if (IS_PRIMITIVE_FN(fn_node)) {
+  if (IS_PRIMITIVE(fn_node)) {
     return funcall_prim_fn(fn_node, arglist, ctx);
   }
 
@@ -288,14 +288,14 @@ Node *eval(Node *expr, Context *ctx) {
       return FIRST(expr);
     }
 
-    Node *fn                = eval(FIRST(expr), ctx);
-    const PrimitiveFn *prim = GET_PRIMITIVE_FN(fn);
+    Node *fn            = eval(FIRST(expr), ctx);
+    const Keyword *prim = GET_PRIMITIVE(fn);
 
-    if (prim == PRIM_FN(QUOTE)) {
+    if (prim == KEYWORD(QUOTE)) {
       return FIRST(REST(expr));
     }
 
-    if (prim == PRIM_FN(EVAL)) {
+    if (prim == KEYWORD(EVAL)) {
       return eval(eval(FIRST(REST(expr)), ctx), ctx);
     }
 

@@ -84,7 +84,7 @@ int rl_readline(char *full_input, size_t n) {
   } while (len == 0 || full_input[len - 1] != '\n');
 
   if (full_input[0]) {
-    full_input[--len] = '\0';  // delete last newline
+    full_input[--len] = '\0'; // delete last newline
     add_history(full_input);
   }
 

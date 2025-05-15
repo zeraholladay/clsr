@@ -110,8 +110,8 @@ list_form
     ;
 
 lambda_form
-    : LAMBDA '(' param_form ')' '(' exprs ')' {
-        $$ = cons_lambda(CTX_POOL(ctx), $3, $6, NULL);
+    : LAMBDA '(' param_form ')' exprs {
+        $$ = cons_lambda(CTX_POOL(ctx), $3, $5, NULL);
     }
     ;
 
@@ -120,7 +120,8 @@ param_form
         $$ = CONS(NULL, NULL, ctx);
     }
     | SYMBOL param_form {
-        $$ = LIST2(cons_symbol(CTX_POOL(ctx), $1), $2, ctx);
+        Node *sym_node = cons_symbol(CTX_POOL(ctx), $1);
+        $$ = CONS(sym_node, $2, ctx);
     }
     ;
 

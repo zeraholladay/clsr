@@ -30,7 +30,7 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
                     const PrimitiveFn *prim_fn = prim_fn_lookup(yytext, yyleng);
                     if (prim_fn) {
                         yylval.prim_fn = prim_fn;
-                        return PRIMITIVE;
+                        return (prim_fn != PRIM_FN(LAMBDA)) ? PRIMITIVE : LAMBDA;
                     }
                     yylval.symbol = sym_save(&CTX_SYMTAB(ctx), yytext, yyleng);
                     return SYMBOL;

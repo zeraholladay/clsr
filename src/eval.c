@@ -20,8 +20,8 @@ static Node nil_node = {.type    = TYPE_NIL,
 static Node t_node = {.type = TYPE_SYMBOL, .as.symbol = T_STR};
 
 static Node *apply(Node *fn, Node *expr, Context *ctx);
-static Node *funcall_closure(Node *fn, Node *args, Context *ctx);
-static Node *funcall_primitive_fn(Node *fn, Node *args, Context *ctx);
+static Node *lambda(Node *fn, Node *args, Context *ctx);
+static Node *funcall_prim_fn(Node *fn, Node *args, Context *ctx);
 static size_t length(Node *list);
 static Node *lookup_symbol(Node *node, Context *ctx);
 static Node *pair(Node *l1, Node *l2, Context *ctx);
@@ -48,22 +48,22 @@ static Node *apply(Node *fn, Node *expr, Context *ctx) {
   return eval_apply(call_args, ctx);
 }
 
-static Node *funcall_closure(Node *fn, Node *args, Context *ctx) {
-  size_t expected = length(GET_CLOSURE_PARAMS(fn));
+static Node *lambda(Node *fn, Node *args, Context *ctx) {
+  size_t expected = length(GET_LAMBDA_PARAMS(fn));
   size_t received = length(args);
 
   if (expected != received) {
     ErrorCode err =
         (received < expected) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
-    raise(err, __func__); // FIXME: context
+    raise(err, __func__);
     return NULL;
   }
 
   Context new_ctx   = *ctx;
-  CTX_ENV(&new_ctx) = env_new(GET_CLOSURE_ENV(fn));
+  CTX_ENV(&new_ctx) = env_new(GET_LAMBDA_ENV(fn));
 
   // clang-format off
-  for (Node *pairs = pair(GET_CLOSURE_PARAMS(fn), args, ctx);
+  for (Node *pairs = pair(GET_LAMBDA_PARAMS(fn), args, ctx);
        !IS_EMPTY_LIST(pairs); pairs = REST(pairs)) {
 
     Node *pair = FIRST(pairs);
@@ -71,10 +71,10 @@ static Node *funcall_closure(Node *fn, Node *args, Context *ctx) {
   }
   // clang-format on
 
-  return eval(GET_CLOSURE_BODY(fn), &new_ctx); // TODO: eval_program()
+  return eval_program(GET_LAMBDA_BODY(fn), &new_ctx);
 }
 
-static Node *funcall_primitive_fn(Node *fn, Node *args, Context *ctx) {
+static Node *funcall_prim_fn(Node *fn, Node *args, Context *ctx) {
   const PrimitiveFn *prim_fn = GET_PRIMITIVE_FN(fn);
   int received               = (int)length(args);
 
@@ -167,15 +167,6 @@ static Node *set(Node *car, Node *cdr, Context *ctx) {
 
 Node *eval_apply(Node *expr, Context *ctx) { return eval_funcall(expr, ctx); }
 
-Node *eval_closure(Node *args, Context *ctx) {
-  if (!IS_LIST(FIRST(args))) {
-    raise(ERR_INVALID_ARG, __func__);
-    return NULL;
-  }
-  return cons_closure(CTX_POOL(ctx), FIRST(args), FIRST(REST(args)),
-                      CTX_ENV(ctx));
-}
-
 Node *eval_cons(Node *args, Context *ctx) {
   return CONS(FIRST(args), FIRST(REST(args)), ctx);
 }
@@ -198,17 +189,17 @@ Node *eval_funcall(Node *args, Context *ctx) {
   Node *fn_node = FIRST(args);
   Node *arglist = REST(args);
 
-  if (!(IS_CLOSURE(fn_node) || IS_PRIMITIVE_FN(fn_node)) || !IS_LIST(arglist)) {
+  if (!(IS_LAMBDA(fn_node) || IS_PRIMITIVE_FN(fn_node)) || !IS_LIST(arglist)) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
 
-  if (IS_CLOSURE(fn_node)) {
-    return funcall_closure(fn_node, arglist, ctx);
+  if (IS_LAMBDA(fn_node)) {
+    return lambda(fn_node, arglist, ctx);
   }
 
   if (IS_PRIMITIVE_FN(fn_node)) {
-    return funcall_primitive_fn(fn_node, arglist, ctx);
+    return funcall_prim_fn(fn_node, arglist, ctx);
   }
 
   raise(ERR_INTERNAL, DEBUG_LOCATION);
@@ -252,7 +243,8 @@ Node *eval_pair(Node *args, Context *ctx) {
 
 Node *eval_print(Node *args, Context *ctx) {
   (void)ctx;
-  char *str = type(FIRST(args))->str_fn(FIRST(args));
+  char *str = type(args)->str_fn(args);
+  // char *str = type(FIRST(args))->str_fn(FIRST(args));
   printf("%s\n", str);
   free(str);
   return T;
@@ -290,6 +282,10 @@ Node *eval(Node *expr, Context *ctx) {
   if (IS_LIST(expr)) {
     if (IS_EMPTY_LIST(expr)) {
       return expr;
+    }
+
+    if (IS_LAMBDA(FIRST(expr))) {
+      return FIRST(expr);
     }
 
     Node *fn                = eval(FIRST(expr), ctx);

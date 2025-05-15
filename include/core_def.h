@@ -17,16 +17,16 @@
 #define IS_STRING(node)          IS_TYPE((node), TYPE_STRING)
 #define IS_LIST(node)            IS_TYPE((node), TYPE_LIST)
 #define IS_PRIMITIVE_FN(node)    IS_TYPE((node), TYPE_PRIMITIVE_FN)
-#define IS_CLOSURE(node)         IS_TYPE((node), TYPE_CLOSURE)
+#define IS_LAMBDA(node)         IS_TYPE((node), TYPE_LAMBDA)
 #define GET_SYMBOL(node)         ((node)->as.symbol)
 #define GET_INTEGER(node)        ((node)->as.integer)
 #define GET_STRING(node)         ((node)->as.string)
 #define GET_LIST(node)           (&(node)->as.list)
 #define GET_PRIMITIVE_FN(node)   ((node)->as.primitive)
-#define GET_CLOSURE(node)        (&(node)->as.closure)
-#define GET_CLOSURE_PARAMS(node) ((node)->as.closure.params)
-#define GET_CLOSURE_BODY(node)   ((node)->as.closure.body)
-#define GET_CLOSURE_ENV(node)    ((node)->as.closure.env)
+#define GET_LAMBDA(node)        (&(node)->as.lambda)
+#define GET_LAMBDA_PARAMS(node) ((node)->as.lambda.params)
+#define GET_LAMBDA_BODY(node)   ((node)->as.lambda.body)
+#define GET_LAMBDA_ENV(node)    ((node)->as.lambda.env)
 
 struct Node;
 typedef struct Node Node;
@@ -49,7 +49,7 @@ typedef enum {
   TYPE_STRING,       // literal
   TYPE_LIST,         // cons cells
   TYPE_PRIMITIVE_FN, // builtin fn
-  TYPE_CLOSURE       // user-defined fn
+  TYPE_LAMBDA        // user-defined fn
 } TypeEnum;
 
 typedef long long Integer;
@@ -63,7 +63,7 @@ typedef struct {
   Node *params;
   Node *body;
   Env *env;
-} Closure;
+} Lambda;
 
 struct Node {
   TypeEnum type;
@@ -78,14 +78,14 @@ struct Node {
 
     // Function-like values
     const PrimitiveFn *primitive;
-    Closure closure;
+    Lambda lambda;
   } as;
 };
 
 // coredef.c
 const Type *type(Node *self);
 Node *cons_primfn(Pool *p, const PrimitiveFn *prim_fn);
-Node *cons_closure(Pool *p, Node *params, Node *body, Env *env);
+// Node *cons_closure(Pool *p, Node *params, Node *body, Env *env);
 Node *cons_lambda(Pool *p, Node *params, Node *body, Env *env);
 Node *cons_integer(Pool *p, Integer i);
 Node *cons_list(Pool *p, Node *car, Node *cdr);

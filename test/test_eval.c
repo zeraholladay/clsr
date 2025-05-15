@@ -130,8 +130,8 @@ START_TEST(test_set_and_lookup) {
   eval_result = run_eval_program("(set 'bar '(1 2 3))");
   ck_assert(IS_LIST(eval_result));
 
-  eval_result = run_eval_program("(set 'bar (closure '() '()))");
-  ck_assert(IS_CLOSURE(eval_result));
+  eval_result = run_eval_program("(set 'bar (lambda () ()))");
+  ck_assert(IS_LAMBDA(eval_result));
 }
 END_TEST
 
@@ -202,28 +202,32 @@ START_TEST(test_pair) {
 }
 END_TEST
 
-START_TEST(test_closure) {
+START_TEST(test_lambda) {
   Node *eval_result = NULL;
 
   // define
-  eval_result = run_eval_program("(closure '() '())");
-  ck_assert(IS_CLOSURE(eval_result));
+  eval_result = run_eval_program("(lambda () ())");
+  ck_assert(IS_LAMBDA(eval_result));
 
   // run
-  eval_result = run_eval_program("((closure '() '()))");
+  eval_result = run_eval_program("((lambda () ()))");
   ck_assert(IS_EMPTY_LIST(eval_result));
 
+  // run
+  eval_result = run_eval_program("((lambda () (cons 'a 'b) 42))");
+  ck_assert(IS_INTEGER(eval_result) && GET_INTEGER(eval_result) == 42);
+
   // run body with a=42
-  eval_result = run_eval_program("((closure '(a) 'a) 42)");
+  eval_result = run_eval_program("((lambda (a) a) 42)");
   ck_assert(IS_INTEGER(eval_result) && GET_INTEGER(eval_result) == 42);
 
   // define 'foo and run
   eval_result =
-      run_eval_program("(set 'foo (closure '() '(cons 'a 'b))) (foo)");
+      run_eval_program("(set 'foo (lambda () (cons 'a 'b))) (foo)");
   ck_assert(IS_LIST(eval_result));
 
   eval_result = run_eval_program(
-      "(set 'foo (closure '(a b) '(cons a b))) (foo 'bar 'biz)");
+      "(set 'foo (lambda (a b) (cons a b))) (foo 'bar 'biz)");
   ck_assert(IS_LIST(eval_result));
   ck_assert_str_eq(GET_SYMBOL(FIRST(eval_result)), "bar");
 }
@@ -252,7 +256,7 @@ START_TEST(test_eq) {
   eval_result = run_eval_program("(eq 'foo 'foo)");
   ck_assert_str_eq(GET_SYMBOL(eval_result), "T");
 
-  test_program = "(set 'foo (closure '() '()))"
+  test_program = "(set 'foo (lambda () ()))"
                  "(set 'bar foo)"
                  "(eq foo bar)";
   eval_result  = run_eval_program(test_program);
@@ -289,8 +293,8 @@ START_TEST(test_eq) {
   eval_result = run_eval_program("(eq 'foo 'bar)");
   ck_assert(IS_NIL(eval_result));
 
-  test_program = "(set 'foo (closure '() '()))"
-                 "(set 'bar (closure '() '()))"
+  test_program = "(set 'foo (lambda () ()))"
+                 "(set 'bar (lambda () ()))"
                  "(eq foo bar)";
   eval_result  = run_eval_program(test_program);
   ck_assert(IS_NIL(eval_result));
@@ -314,11 +318,11 @@ START_TEST(test_apply) {
   Node *car         = NULL;
   Node *cdr         = NULL;
 
-  eval_result = run_eval_program("(apply (closure '() '()) '())");
+  eval_result = run_eval_program("(apply (lambda () ()) '())");
   ck_assert(IS_EMPTY_LIST(eval_result));
 
   eval_result =
-      run_eval_program("(apply (closure '(a b) '(cons a b)) '(foo bar))");
+      run_eval_program("(apply (lambda (a b) (cons a b)) '(foo bar))");
   ck_assert(!IS_EMPTY_LIST(eval_result));
   car = FIRST(eval_result);
   cdr = REST(eval_result);
@@ -347,11 +351,11 @@ START_TEST(test_funcall) {
   Node *car         = NULL;
   Node *cdr         = NULL;
 
-  eval_result = run_eval_program("(funcall (closure '() '()))");
+  eval_result = run_eval_program("(funcall (lambda () ()))");
   ck_assert(IS_EMPTY_LIST(eval_result));
 
   eval_result =
-      run_eval_program("(funcall (closure '(a b) '(cons a b)) 'foo 'bar)");
+      run_eval_program("(funcall (lambda (a b) (cons a b)) 'foo 'bar)");
   ck_assert(!IS_EMPTY_LIST(eval_result));
   car = FIRST(eval_result);
   cdr = REST(eval_result);
@@ -403,7 +407,7 @@ Suite *eval_suite(void) {
   tcase_add_test(tc_core, test_rest);
   tcase_add_test(tc_core, test_len);
   tcase_add_test(tc_core, test_pair);
-  tcase_add_test(tc_core, test_closure);
+  tcase_add_test(tc_core, test_lambda);
   tcase_add_test(tc_core, test_eq);
   tcase_add_test(tc_core, test_apply);
   tcase_add_test(tc_core, test_funcall);

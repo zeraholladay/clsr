@@ -124,17 +124,17 @@ static char *prim_fn_tostr(Node *self) {
   return safe_strndup(prim_fn->name, strlen(prim_fn->name));
 }
 
-// Closure type
-static int closure_eq(Node *self, Node *other) {
-  return type_eq(self, other) && GET_CLOSURE(self) == GET_CLOSURE(other);
+// Lambda type
+static int lambda_eq(Node *self, Node *other) {
+  return type_eq(self, other) && GET_LAMBDA(self) == GET_LAMBDA(other);
 }
 
-static char *closure_tostr(Node *self) {
-  const char *fmt = "closure params=%s body=%s";
+static char *lambda_tostr(Node *self) {
+  const char *fmt = "(LAMBDA %s %s)";
 
   char *params_str =
-      type(GET_CLOSURE_PARAMS(self))->str_fn(GET_CLOSURE_PARAMS(self));
-  char *body_str = type(GET_CLOSURE_BODY(self))->str_fn(GET_CLOSURE_BODY(self));
+      type(GET_LAMBDA_PARAMS(self))->str_fn(GET_LAMBDA_PARAMS(self));
+  char *body_str = type(GET_LAMBDA_BODY(self))->str_fn(GET_LAMBDA_BODY(self));
 
   size_t total =
       strlen(fmt) + NULLABLE_STRLEN(params_str) + NULLABLE_STRLEN(body_str);
@@ -164,18 +164,18 @@ static int string_eq(Node *self, Node *other) {
 
 static char *string_tostr(Node *self) { return GET_STRING(self); }
 
-static Type type_singleton[] = {
+static Type type_tab[] = {
     // Special constant
     [TYPE_NIL] = {.type_name = "NIL", .str_fn = nil_tostr, .eq_fn = nil_eq},
 
     // Literal values
-    [TYPE_INTEGER] = {.type_name = "Integer",
+    [TYPE_INTEGER] = {.type_name = "INTEGER",
                       .str_fn    = integer_tostr,
                       .eq_fn     = integer_eq},
-    [TYPE_STRING]  = {.type_name = "String",
+    [TYPE_STRING]  = {.type_name = "STRING",
                       .str_fn    = string_tostr,
                       .eq_fn     = string_eq},
-    [TYPE_SYMBOL]  = {.type_name = "Symbol",
+    [TYPE_SYMBOL]  = {.type_name = "SYMBOL",
                       .str_fn    = symbol_tostr,
                       .eq_fn     = symbol_eq},
 
@@ -183,19 +183,19 @@ static Type type_singleton[] = {
     [TYPE_LIST] = {.type_name = "List", .str_fn = list_tostr, .eq_fn = list_eq},
 
     // Function-like values
-    [TYPE_PRIMITIVE_FN] = {.type_name = "PrimitiveFn",
+    [TYPE_PRIMITIVE_FN] = {.type_name = "PRIMITIVE",
                            .str_fn    = prim_fn_tostr,
                            .eq_fn     = prim_fn_eq},
-    [TYPE_CLOSURE]      = {.type_name = "Closure",
-                           .str_fn    = closure_tostr,
-                           .eq_fn     = closure_eq},
+    [TYPE_LAMBDA]      = {.type_name = "LAMBDA",
+                           .str_fn    = lambda_tostr,
+                           .eq_fn     = lambda_eq},
 };
 
 // type()
 const Type *type(Node *self) {
   if (!self || IS_NIL(self))
-    return &type_singleton[TYPE_NIL];
-  return &type_singleton[self->type];
+    return &type_tab[TYPE_NIL];
+  return &type_tab[self->type];
 }
 
 Node *cons_primfn(Pool *p, const PrimitiveFn *prim_fn) {
@@ -205,18 +205,22 @@ Node *cons_primfn(Pool *p, const PrimitiveFn *prim_fn) {
   return node;
 }
 
-Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
-  Node *node              = pool_alloc(p);
-  node->type              = TYPE_CLOSURE;
-  node->as.closure.params = params;
-  node->as.closure.body   = body;
-  node->as.closure.env    = env;
-  return node;
-}
+// Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
+//   Node *node              = pool_alloc(p);
+//   node->type              = TYPE_LAMBDA;
+//   node->as.closure.params = params;
+//   node->as.closure.body   = body;
+//   node->as.closure.env    = env;
+//   return node;
+// }
 
 Node *cons_lambda(Pool *p, Node *params, Node *body, Env *env) {
-  return cons_closure(p, params, body, env);
-}
+  Node *node              = pool_alloc(p);
+  node->type              = TYPE_LAMBDA;
+  node->as.lambda.params = params;
+  node->as.lambda.body   = body;
+  node->as.lambda.env    = env;
+  return node;}
 
 Node *cons_integer(Pool *p, Integer i) {
   Node *node       = pool_alloc(p);

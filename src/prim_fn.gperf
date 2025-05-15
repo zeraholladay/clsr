@@ -23,7 +23,6 @@ struct PrimitiveFn;
 
 %%
 APPLY,   eval_apply,   2
-CLOSURE, eval_closure, 2
 CONS,    eval_cons,    2
 EQ,      eval_eq,      2
 EVAL,    eval,         1

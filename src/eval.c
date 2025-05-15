@@ -31,13 +31,13 @@ static Node *set (Node *car, Node *cdr, Context *ctx);
 static Node *
 apply (Node *fn, Node *expr, Context *ctx)
 {
-  const Keyword *prim = GET_PRIMITIVE (fn);
+  const Primitive *prim = GET_PRIMITIVE (fn);
 
   // (funcall f arg1 arg2 ...)
   if (prim == KEYWORD (FUNCALL))
     {
       Node *fn2 = eval (FIRST (REST (expr)), ctx);
-      Node *rest_args = eval_list (REST (REST (expr)), ctx); // funcall
+      Node *rest_args = eval_list (REST (REST (expr)), ctx);
 
       return funcall (fn2, rest_args, ctx);
     }
@@ -46,7 +46,7 @@ apply (Node *fn, Node *expr, Context *ctx)
   if (prim == KEYWORD (APPLY))
     {
       Node *fn2 = eval (FIRST (REST (expr)), ctx);
-      Node *rest_args = eval (FIRST (REST (REST (expr))), ctx); // apply
+      Node *rest_args = eval (FIRST (REST (REST (expr))), ctx);
 
       return funcall (fn2, rest_args, ctx);
     }
@@ -123,8 +123,10 @@ static size_t
 length (Node *list)
 {
   size_t i = 0;
+
   for (Node *cdr = REST (list); cdr; cdr = REST (cdr))
     ++i;
+    
   return i;
 }
 

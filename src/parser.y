@@ -3,7 +3,7 @@
 // clang-format off
 #include <stdio.h>
 
-#include "core_def.h"
+#include "types.h"
 #include "eval.h"
 #include "parser.h"
 
@@ -21,7 +21,7 @@ extern int yylineno;
 %}
 
 %code requires {
-#include "core_def.h"
+#include "types.h"
 
 void reset_parse_context(Context *ctx);
 }

@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "core_def.h"
 #include "eval.h"
 #include "heap_list.h"
 #include "safe_str.h"
+#include "types.h"
 
 #define CINTEGER_TYPE_FMT "%lld"
 

@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "core_def.h"
 #include "eval.h"
 #include "parser.h"
 #include "repl.h"
+#include "types.h"
 
 extern FILE *yyin;
 extern int yyparse(Context *ctx);

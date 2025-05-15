@@ -1,5 +1,5 @@
-#ifndef CORE_DEF_H
-#define CORE_DEF_H
+#ifndef TYPES_H
+#define TYPES_H
 
 #include <limits.h>
 #include <stddef.h>

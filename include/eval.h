@@ -1,8 +1,8 @@
 #ifndef EVAL_H
 #define EVAL_H
 
-#include "core_def.h"
 #include "eval_ctx.h"
+#include "types.h"
 
 #define FIRST(node) ((node)->as.list.first)
 #define REST(node)  ((node)->as.list.rest)

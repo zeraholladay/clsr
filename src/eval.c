@@ -1,12 +1,12 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "core_def.h"
 #include "debug.h"
 #include "error.h"
 #include "eval.h"
 #include "keywords.h"
 #include "safe_str.h"
+#include "types.h"
 
 #define NIL_STR "NIL"
 #define T_STR   "T"
@@ -20,35 +20,60 @@ static Node nil_node = {.type    = TYPE_NIL,
 static Node t_node = {.type = TYPE_SYMBOL, .as.symbol = T_STR};
 
 static Node *apply(Node *fn, Node *expr, Context *ctx);
-static Node *lambda(Node *fn, Node *args, Context *ctx);
-static Node *funcall_prim_fn(Node *fn, Node *args, Context *ctx);
+static Node *funcall(Node *fn_node, Node *arglist, Context *ctx);
+static Node *funcall_builtin(Node *fn, Node *args, Context *ctx);
+static Node *funcall_lambda(Node *fn, Node *args, Context *ctx);
 static size_t length(Node *list);
-static Node *lookup_symbol(Node *node, Context *ctx);
+static Node *lookup_sym(Node *node, Context *ctx);
 static Node *pair(Node *l1, Node *l2, Context *ctx);
 static Node *set(Node *car, Node *cdr, Context *ctx);
 
 static Node *apply(Node *fn, Node *expr, Context *ctx) {
   const Keyword *prim = GET_PRIMITIVE(fn);
-  Node *call_args     = NULL;
 
   if (prim == KEYWORD(FUNCALL) || prim == KEYWORD(APPLY)) {
     // (funcall f arg1 arg2 ...)
     // (apply f arglist)
     Node *fn2       = eval(FIRST(REST(expr)), ctx);
     Node *rest_args = (prim == KEYWORD(FUNCALL))
-                          ? eval_list(REST(REST(expr)), ctx)
-                          : eval(FIRST(REST(REST(expr))), ctx);
-    call_args       = CONS(fn2, rest_args, ctx);
-  } else {
-    // (f arg1 arg2 ... )
-    Node *rest_args = eval_list(REST(expr), ctx);
-    call_args       = CONS(fn, rest_args, ctx);
+                          ? eval_list(REST(REST(expr)), ctx)    // funcall
+                          : eval(FIRST(REST(REST(expr))), ctx); // apply
+    return funcall(fn2, rest_args, ctx);
   }
 
-  return eval_apply(call_args, ctx);
+  // (fun arg1 arg2 ... )
+  Node *rest_args = eval_list(REST(expr), ctx);
+  return funcall(fn, rest_args, ctx);
 }
 
-static Node *lambda(Node *fn, Node *args, Context *ctx) {
+static Node *funcall(Node *fn, Node *arglist, Context *ctx) {
+  if (IS_PRIMITIVE(fn)) {
+    return funcall_builtin(fn, arglist, ctx);
+  }
+
+  if (IS_LAMBDA(fn)) {
+    return funcall_lambda(fn, arglist, ctx);
+  }
+
+  raise(ERR_INTERNAL, DEBUG_LOCATION);
+  return NULL;
+}
+
+static Node *funcall_builtin(Node *fn, Node *arglist, Context *ctx) {
+  const Primitive *prim = GET_PRIMITIVE(fn);
+  int received          = (int)length(arglist);
+
+  if (prim->arity > 0 && prim->arity != received) {
+    ErrorCode err =
+        (received < prim->arity) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
+    raise(err, __func__); // FIXME: context
+    return NULL;
+  }
+
+  return (prim != KEYWORD(LIST)) ? prim->fn(arglist, ctx) : arglist;
+}
+
+static Node *funcall_lambda(Node *fn, Node *args, Context *ctx) {
   size_t expected = length(GET_LAMBDA_PARAMS(fn));
   size_t received = length(args);
 
@@ -74,20 +99,6 @@ static Node *lambda(Node *fn, Node *args, Context *ctx) {
   return eval_program(GET_LAMBDA_BODY(fn), &new_ctx);
 }
 
-static Node *funcall_prim_fn(Node *fn, Node *args, Context *ctx) {
-  const Primitive *prim = GET_PRIMITIVE(fn);
-  int received          = (int)length(args);
-
-  if (prim->arity > 0 && prim->arity != received) {
-    ErrorCode err =
-        (received < prim->arity) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
-    raise(err, __func__); // FIXME: context
-    return NULL;
-  }
-
-  return (prim != KEYWORD(LIST)) ? prim->fn(args, ctx) : args;
-}
-
 static size_t length(Node *list) {
   size_t i = 0;
   for (Node *cdr = REST(list); cdr; cdr = REST(cdr))
@@ -95,7 +106,7 @@ static size_t length(Node *list) {
   return i;
 }
 
-static Node *lookup_reserved_symbol(const char *symstr) {
+static Node *lookup_reserved_sym(const char *symstr) {
   static const struct {
     const char *name;
     size_t len;
@@ -114,7 +125,7 @@ static Node *lookup_reserved_symbol(const char *symstr) {
   return NULL;
 }
 
-static Node *lookup_symbol(Node *node, Context *ctx) {
+static Node *lookup_sym(Node *node, Context *ctx) {
   if (!IS_SYMBOL(node)) {
     raise(ERR_INTERNAL, __func__);
     return NULL;
@@ -122,7 +133,7 @@ static Node *lookup_symbol(Node *node, Context *ctx) {
 
   const char *symstr = GET_SYMBOL(node);
 
-  Node *reserved = lookup_reserved_symbol(symstr);
+  Node *reserved = lookup_reserved_sym(symstr);
 
   if (reserved)
     return reserved;
@@ -147,25 +158,29 @@ static Node *pair(Node *list1, Node *list2, Context *ctx) {
   return CONS(first_pair, rest_pairs, ctx);
 }
 
-static Node *set(Node *car, Node *cdr, Context *ctx) {
-  if (!IS_SYMBOL(car)) {
+static Node *set(Node *first, Node *rest, Context *ctx) {
+  if (!IS_SYMBOL(first)) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
 
-  const char *symstr = GET_SYMBOL(car);
+  const char *symstr = GET_SYMBOL(first);
   size_t len         = strlen(symstr);
 
-  if (keyword_lookup(symstr, len) || lookup_reserved_symbol(symstr)) {
+  if (keyword_lookup(symstr, len) || lookup_reserved_sym(symstr)) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
 
-  env_set(CTX_ENV(ctx), symstr, cdr); // TODO: error handling
-  return cdr;
+  env_set(CTX_ENV(ctx), symstr, rest); // TODO: error handling
+  return rest;
 }
 
-Node *eval_apply(Node *expr, Context *ctx) { return eval_funcall(expr, ctx); }
+// clang-format off
+Node *eval_apply(Node *args, Context *ctx) {
+  return eval_funcall(args, ctx);  // the real apply has alread run.
+}
+// clang-format on
 
 Node *eval_cons(Node *args, Context *ctx) {
   return CONS(FIRST(args), FIRST(REST(args)), ctx);
@@ -186,24 +201,15 @@ Node *eval_first(Node *args, Context *ctx) {
 }
 
 Node *eval_funcall(Node *args, Context *ctx) {
-  Node *fn_node = FIRST(args);
+  Node *fn      = FIRST(args);
   Node *arglist = REST(args);
 
-  if (!(IS_LAMBDA(fn_node) || IS_PRIMITIVE(fn_node)) || !IS_LIST(arglist)) {
+  if (!(IS_LAMBDA(fn) || IS_PRIMITIVE(fn)) || !IS_LIST(arglist)) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
 
-  if (IS_LAMBDA(fn_node)) {
-    return lambda(fn_node, arglist, ctx);
-  }
-
-  if (IS_PRIMITIVE(fn_node)) {
-    return funcall_prim_fn(fn_node, arglist, ctx);
-  }
-
-  raise(ERR_INTERNAL, DEBUG_LOCATION);
-  return NULL;
+  return funcall(fn, arglist, ctx);
 }
 
 Node *eval_if(Node *args, Context *ctx) {
@@ -238,13 +244,19 @@ Node *eval_pair(Node *args, Context *ctx) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
+
   return pair(FIRST(args), FIRST(REST(args)), ctx);
 }
 
 Node *eval_print(Node *args, Context *ctx) {
   (void)ctx;
-  char *str = type(args)->str_fn(args);
-  // char *str = type(FIRST(args))->str_fn(FIRST(args));
+
+  if (!IS_LIST(args)) {
+    raise(ERR_INVALID_ARG, __func__);
+    return NULL;
+  }
+
+  char *str = type(FIRST(args))->str_fn(FIRST(args));
   printf("%s\n", str);
   free(str);
   return T;
@@ -252,10 +264,12 @@ Node *eval_print(Node *args, Context *ctx) {
 
 Node *eval_rest(Node *args, Context *ctx) {
   (void)ctx;
+
   if (!IS_LIST(FIRST(args))) {
     raise(ERR_INVALID_ARG, __func__);
     return NULL;
   }
+
   Node *cdr = REST(FIRST(args));
   return IS_LIST(cdr) ? cdr : CONS(cdr, NULL, ctx);
 }
@@ -274,7 +288,7 @@ Node *eval_str(Node *args, Context *ctx) {
 
 Node *eval(Node *expr, Context *ctx) {
   if (IS_SYMBOL(expr))
-    return lookup_symbol(expr, ctx);
+    return lookup_sym(expr, ctx);
 
   if (!IS_LIST(expr))
     return expr;
@@ -288,8 +302,8 @@ Node *eval(Node *expr, Context *ctx) {
       return FIRST(expr);
     }
 
-    Node *fn            = eval(FIRST(expr), ctx);
-    const Keyword *prim = GET_PRIMITIVE(fn);
+    Node *fn              = eval(FIRST(expr), ctx);
+    const Primitive *prim = GET_PRIMITIVE(fn);
 
     if (prim == KEYWORD(QUOTE)) {
       return FIRST(REST(expr));

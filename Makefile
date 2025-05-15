@@ -41,12 +41,12 @@ GPERF := gperf
 
 FLEX_SRC := $(SRC)/lexer.l
 BISON_SRC := $(SRC)/parser.y
-GPERF_SCR := $(SRC)/prim_fn.gperf
+GPERF_SCR := $(SRC)/keywords.gperf
 
 FLEX_C := $(GEN)/lexer.c
 BISON_C := $(GEN)/parser.c
 BISON_H := $(GEN)/parser.h
-GPERF_C := $(GEN)/prim_fn.c
+GPERF_C := $(GEN)/keywords.c
 
 SRC_CFILES := $(wildcard $(SRC)/*.c) $(FLEX_C) $(BISON_C) $(GPERF_C)
 SRC_CFILES_ALL := $(sort $(SRC_CFILES))
@@ -98,7 +98,7 @@ test: src $(TEST_EXE)
 	@./$(TEST_EXE)
 
 $(TEST_EXE): $(TEST_OBJS) | bin
-	$(CC) $(CFLAGS) -DTEST_MAIN=1 -o $(TEST_EXE) $(SRC_OBJS) $(TEST_OBJS) $(TEST_MAIN_SRC) $(TEST_FLAGS) $(TEST_LIBS)
+	$(CC) $(CFLAGS) -DTEST_MAIN=1 -o $(TEST_EXE) $(SRC_OBJS) $(TEST_OBJS) $(TEST_MAIN_SRC) $(TEST_FLAGS) $(TEST_LIBS) $(LDLIBS)
 
 $(BIN)/%.o: $(TEST_SRC)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@ $(TEST_FLAGS)

@@ -1,23 +1,23 @@
 #ifndef EVAL_H
 #define EVAL_H
 
-#include "core_def.h"
 #include "eval_ctx.h"
+#include "types.h"
 
-#define EMPTY_LIST(ctx)        (CONS(NULL, NULL, ctx))
-#define FIRST(node)            ((node)->as.list.first)
-#define CONS(first, rest, ctx) (cons_list(CTX_POOL(ctx), first, rest))
-#define REST(node)             ((node)->as.list.rest)
+#define FIRST(node) ((node)->as.list.first)
+#define REST(node)  ((node)->as.list.rest)
 
-#define LIST(first, rest, ctx)                                                 \
-  (CONS(first, CONS(rest, EMPTY_LIST(ctx), ctx), ctx))
+#define CONS(first, rest, ctx)  (cons_list(CTX_POOL(ctx), first, rest))
+#define EMPTY_LIST(ctx)         (CONS(NULL, NULL, ctx))
+#define LIST1(item, ctx)        (CONS(item, EMPTY_LIST(ctx), ctx))
+#define LIST2(first, rest, ctx) (CONS(first, LIST1(rest, ctx), ctx))
+
 #define PRINT(node, ctx) eval_print(node, ctx)
 
 #define IS_EMPTY_LIST(node)                                                    \
   (!node || (IS_NIL(node)) || (IS_LIST(node) && !FIRST(node) && !REST(node)))
 
 Node *eval_apply(Node *args, Context *ctx);
-Node *eval_closure(Node *args, Context *ctx);
 Node *eval_cons(Node *args, Context *ctx);
 Node *eval_eq(Node *args, Context *ctx);
 Node *eval_first(Node *args, Context *ctx);

@@ -2,11 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "core_def.h"
 #include "eval.h"
 #include "parser.h"
 #include "readline.h"
 #include "sym_save.h"
+#include "types.h"
 
 #ifndef OBJ_POOL_CAPACITY
 #define OBJ_POOL_CAPACITY 4096

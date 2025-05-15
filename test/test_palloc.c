@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "core_def.h"
 #include "palloc.h"
+#include "types.h"
 
 START_TEST(test_palloc) {
   size_t count = 4096;

@@ -2,15 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "core_def.h"
 #include "eval.h"
 #include "heap_list.h"
 #include "safe_str.h"
+#include "types.h"
 
-#define CLSR_INTEGER_TYPE_FMT "%lld"
+#define CINTEGER_TYPE_FMT "%lld"
 
 #define LOG10_2 0.30103
-#define CLSR_INTEGER_TYPE_STR_MAX_SIZE                                         \
+
+#define INTEGER_TYPE_STR_MAX_SIZE                                              \
   ((size_t)(sizeof(Integer) * CHAR_BIT * LOG10_2 + 3))
 
 // Type eq
@@ -36,10 +37,10 @@ static int integer_eq(Node *self, Node *other) {
 }
 
 static char *integer_tostr(Node *self) {
-  char str[CLSR_INTEGER_TYPE_STR_MAX_SIZE];
+  char str[INTEGER_TYPE_STR_MAX_SIZE];
   size_t n = sizeof(str);
 
-  int result = snprintf(str, n, CLSR_INTEGER_TYPE_FMT, GET_INTEGER(self));
+  int result = snprintf(str, n, CINTEGER_TYPE_FMT, GET_INTEGER(self));
 
   if (result < 0 || (size_t)result >= n)
     return NULL;
@@ -113,28 +114,27 @@ static char *list_tostr(Node *self) {
   return str;
 }
 
-// Prim Ops type
-static int prim_fn_eq(Node *self, Node *other) {
-  return type_eq(self, other) &&
-         GET_PRIMITIVE_FN(self) == GET_PRIMITIVE_FN(other);
+// Primitive type
+static int primitive_eq(Node *self, Node *other) {
+  return type_eq(self, other) && GET_PRIMITIVE(self) == GET_PRIMITIVE(other);
 }
 
-static char *prim_fn_tostr(Node *self) {
-  const PrimitiveFn *prim_fn = GET_PRIMITIVE_FN(self);
-  return safe_strndup(prim_fn->name, strlen(prim_fn->name));
+static char *primitive_tostr(Node *self) {
+  const Primitive *prim = GET_PRIMITIVE(self);
+  return safe_strndup(prim->name, strlen(prim->name));
 }
 
-// Closure type
-static int closure_eq(Node *self, Node *other) {
-  return type_eq(self, other) && GET_CLOSURE(self) == GET_CLOSURE(other);
+// Lambda type
+static int lambda_eq(Node *self, Node *other) {
+  return type_eq(self, other) && GET_LAMBDA(self) == GET_LAMBDA(other);
 }
 
-static char *closure_tostr(Node *self) {
-  const char *fmt = "closure params=%s body=%s";
+static char *lambda_tostr(Node *self) {
+  const char *fmt = "(LAMBDA %s %s)";
 
   char *params_str =
-      type(GET_CLOSURE_PARAMS(self))->str_fn(GET_CLOSURE_PARAMS(self));
-  char *body_str = type(GET_CLOSURE_BODY(self))->str_fn(GET_CLOSURE_BODY(self));
+      type(GET_LAMBDA_PARAMS(self))->str_fn(GET_LAMBDA_PARAMS(self));
+  char *body_str = type(GET_LAMBDA_BODY(self))->str_fn(GET_LAMBDA_BODY(self));
 
   size_t total =
       strlen(fmt) + NULLABLE_STRLEN(params_str) + NULLABLE_STRLEN(body_str);
@@ -164,18 +164,18 @@ static int string_eq(Node *self, Node *other) {
 
 static char *string_tostr(Node *self) { return GET_STRING(self); }
 
-static Type type_singleton[] = {
+static Type type_tab[] = {
     // Special constant
     [TYPE_NIL] = {.type_name = "NIL", .str_fn = nil_tostr, .eq_fn = nil_eq},
 
     // Literal values
-    [TYPE_INTEGER] = {.type_name = "Integer",
+    [TYPE_INTEGER] = {.type_name = "INTEGER",
                       .str_fn    = integer_tostr,
                       .eq_fn     = integer_eq},
-    [TYPE_STRING]  = {.type_name = "String",
+    [TYPE_STRING]  = {.type_name = "STRING",
                       .str_fn    = string_tostr,
                       .eq_fn     = string_eq},
-    [TYPE_SYMBOL]  = {.type_name = "Symbol",
+    [TYPE_SYMBOL]  = {.type_name = "SYMBOL",
                       .str_fn    = symbol_tostr,
                       .eq_fn     = symbol_eq},
 
@@ -183,34 +183,34 @@ static Type type_singleton[] = {
     [TYPE_LIST] = {.type_name = "List", .str_fn = list_tostr, .eq_fn = list_eq},
 
     // Function-like values
-    [TYPE_PRIMITIVE_FN] = {.type_name = "PrimitiveFn",
-                           .str_fn    = prim_fn_tostr,
-                           .eq_fn     = prim_fn_eq},
-    [TYPE_CLOSURE]      = {.type_name = "Closure",
-                           .str_fn    = closure_tostr,
-                           .eq_fn     = closure_eq},
+    [TYPE_PRIMITIVE] = {.type_name = "PRIMITIVE",
+                        .str_fn    = primitive_tostr,
+                        .eq_fn     = primitive_eq},
+    [TYPE_LAMBDA]    = {.type_name = "LAMBDA",
+                        .str_fn    = lambda_tostr,
+                        .eq_fn     = lambda_eq},
 };
 
 // type()
 const Type *type(Node *self) {
   if (!self || IS_NIL(self))
-    return &type_singleton[TYPE_NIL];
-  return &type_singleton[self->type];
+    return &type_tab[TYPE_NIL];
+  return &type_tab[self->type];
 }
 
-Node *cons_primfn(Pool *p, const PrimitiveFn *prim_fn) {
+Node *cons_prim(Pool *p, const Keyword *keyword) {
   Node *node         = pool_alloc(p);
-  node->type         = TYPE_PRIMITIVE_FN;
-  node->as.primitive = prim_fn;
+  node->type         = TYPE_PRIMITIVE;
+  node->as.primitive = keyword;
   return node;
 }
 
-Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
-  Node *node              = pool_alloc(p);
-  node->type              = TYPE_CLOSURE;
-  node->as.closure.params = params;
-  node->as.closure.body   = body;
-  node->as.closure.env    = env;
+Node *cons_lambda(Pool *p, Node *params, Node *body, Env *env) {
+  Node *node             = pool_alloc(p);
+  node->type             = TYPE_LAMBDA;
+  node->as.lambda.params = params;
+  node->as.lambda.body   = body;
+  node->as.lambda.env    = env;
   return node;
 }
 

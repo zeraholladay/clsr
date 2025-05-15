@@ -1,9 +1,9 @@
 // clang-format off
 %{
-// clang-format on
+// clang-format off
 #include <stdio.h>
 
-#include "core_def.h"
+#include "types.h"
 #include "eval.h"
 #include "parser.h"
 
@@ -11,17 +11,17 @@
   do {                                                                         \
     yyerror_handler(ctx, s);                                                   \
     YYABORT;                                                                   \
-  } while (0)
+} while (0)
 
-  int yylex(Context * ctx);
-  void yyerror_handler(Context * ctx, const char *s);
+int yylex(Context * ctx);
+void yyerror_handler(Context * ctx, const char *s);
 
-  extern int yylineno;
-  // clang-format off
+extern int yylineno;
+// clang-format off
 %}
 
 %code requires {
-#include "core_def.h"
+#include "types.h"
 
 void reset_parse_context(Context *ctx);
 }
@@ -32,89 +32,103 @@ void reset_parse_context(Context *ctx);
 %union {
     Integer integer;
     const char *symbol;
-    const struct PrimitiveFn *prim_fn;
+    const struct Keyword *keyword;
     struct Node *node;
 }
 
-%type <node> program expressions expression expression_list list number symbol 
+%type <node> program exprs expr list_expr list_form literal_expr
+%type <node> lambda_form param_form
 
-%token QUOTE ERROR
-%token <prim_fn> PRIMITIVE
+%token ERROR LAMBDA QUOTE
+%token <keyword> PRIMITIVE
 %token <integer> INTEGER
-%token <symbol> SYMBOL
+%token <symbol>  SYMBOL
 
 %%
 
 program
-    : expressions {
+    : exprs {
         CTX_PARSE_ROOT(ctx) = $1;
         YYACCEPT;
     }
-    | expressions error {
+    | exprs error {
         CTX_PARSE_ROOT(ctx) = NULL;
         yyerror(ctx, "Parse error\n");
         YYABORT;
     }
     ;
 
-expressions
+exprs
     : /* empty */ {
         $$ = CONS(NULL, NULL, ctx);
     }
-    | expression expressions {
+    | expr exprs {
         $$ = CONS($1, $2, ctx);
     }
     ;
 
-expression
-    : number                    
-    | symbol                    
-    | list
-    | QUOTE expression {
-        Node *quote = cons_primfn(CTX_POOL(ctx), PRIM_FN(QUOTE));
-        Node *fn_args = CONS($2, CONS(NULL, NULL, ctx), ctx);
-        $$ = CONS(quote, fn_args, ctx);
+expr
+    : list_expr
+    | literal_expr
+    | QUOTE expr {
+        Node *quote = cons_prim(CTX_POOL(ctx), KEYWORD(QUOTE));
+        $$ = LIST2(quote, $2, ctx);
     }
     ;
 
-list
+list_expr
     : '(' ')' {
-        $$ = CONS(NULL, NULL, ctx);
+        $$ = EMPTY_LIST(ctx);
     }
-    | '(' expression_list ')' {
+    | '(' list_form ')' {
         $$ = $2;
     }
+    | '(' lambda_form ')' {
+        $$ = LIST1($2, ctx);
+    }
     ;
 
-expression_list
-    : expression {
-        $$ = CONS($1, CONS(NULL, NULL, ctx), ctx);
-    }
-    | expression expression_list {
-        $$ = CONS($1, $2, ctx);
-    }
-
-    ;
-
-symbol
-    : PRIMITIVE {
-        $$ = cons_primfn(CTX_POOL(ctx), $1);
-    }
-    | SYMBOL {
+literal_expr
+    : SYMBOL {
         $$ = cons_symbol(CTX_POOL(ctx), $1);
     }
-    ;
-
-number
-    : INTEGER {
+    | PRIMITIVE {
+        $$ = cons_prim(CTX_POOL(ctx), $1);
+    }
+    | INTEGER {
         $$ = cons_integer(CTX_POOL(ctx), $1);
     }
     ;
 
-%%
-    // clang-format on
+list_form
+    : expr {
+        $$ = LIST1($1, ctx);
+    }
+    | expr list_form {
+        $$ = CONS($1, $2, ctx);
+    }
+    ;
 
-    void reset_parse_context(Context *ctx) {
+lambda_form
+    : LAMBDA '(' param_form ')' exprs {
+        $$ = cons_lambda(CTX_POOL(ctx), $3, $5, CTX_ENV(ctx));
+    }
+    ;
+
+param_form
+    : /* empty */ {
+        $$ = CONS(NULL, NULL, ctx);
+    }
+    | SYMBOL param_form {
+        Node *sym_node = cons_symbol(CTX_POOL(ctx), $1);
+        $$ = CONS(sym_node, $2, ctx);
+    }
+    ;
+
+%%
+// clang-format off
+
+void reset_parse_context(Context *ctx) {
   /* assumes pool has already been allocated. */
   CTX_PARSE_ROOT(ctx) = NULL;
   CTX_PARSE_MARK(ctx) = CTX_POOL(ctx)->free_list;

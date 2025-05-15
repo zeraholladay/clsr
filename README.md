@@ -108,7 +108,7 @@ Examples:
 ---
 
 ### `LAMBDA (p1 p2 ... pN) ...`
-Create and returns a **lambda** from a function `body` and its **captured environment `env` (lexical scope)**.
+Create and returns a lambda from a function `body` and its captured environment (lexical scope).
 
 Examples:
 
@@ -243,6 +243,7 @@ In no particular order:
 1. ~~Conditionals~~
 1. ~~Fix T/NIL~~
 1. ~~Equality~~
+1. ~~lambda~~
 1. Boolean operators
 1. Test math
 1. Real Exceptions

@@ -8,8 +8,8 @@
 
 #include "keywords.h"
 
-#ifndef READLIN_HISTORY_MAX
-#define READLIN_HISTORY_MAX 100
+#ifndef READLINE_HISTORY_MAX
+#define READLINE_HISTORY_MAX 100
 #endif
 
 char *keyword_completion_generator(const char *text, int state) {
@@ -25,7 +25,7 @@ char *keyword_completion_generator(const char *text, int state) {
 static const char *get_history_path(void) {
   const char *home = getenv("HOME");
   static char path[PATH_MAX];
-  snprintf(path, sizeof(path), "%s/.myrepl_history", home ? home : ".");
+  snprintf(path, sizeof(path), "%s/.clsr_history", home ? home : ".");
   return path;
 }
 
@@ -46,7 +46,7 @@ void rl_init(void) {
   rl_attempted_completion_function = _attempted_completion_function;
   const char *hist_path            = get_history_path();
   read_history(hist_path);
-  stifle_history(READLIN_HISTORY_MAX);
+  stifle_history(READLINE_HISTORY_MAX);
   rl_variable_bind("blink-matching-paren", "on");
   atexit(rl_cleanup);
 }
@@ -63,7 +63,7 @@ int rl_readline(char *full_input, size_t n) {
       line = NULL;
     }
 
-    line = readline(len == 0 ? "clsr> " : "... ");
+    line = readline(len == 0 ? "repl> " : "... ");
 
     if (!line)
       return -1;
@@ -84,6 +84,7 @@ int rl_readline(char *full_input, size_t n) {
   } while (len == 0 || full_input[len - 1] != '\n');
 
   if (full_input[0]) {
+    full_input[--len] = '\0';  // delete last newline
     add_history(full_input);
   }
 

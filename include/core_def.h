@@ -86,6 +86,7 @@ struct Node {
 const Type *type(Node *self);
 Node *cons_primfn(Pool *p, const PrimitiveFn *prim_fn);
 Node *cons_closure(Pool *p, Node *params, Node *body, Env *env);
+Node *cons_lambda(Pool *p, Node *params, Node *body, Env *env);
 Node *cons_integer(Pool *p, Integer i);
 Node *cons_list(Pool *p, Node *car, Node *cdr);
 Node *cons_string(Pool *p, char *str);

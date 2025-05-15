@@ -141,7 +141,7 @@ static Node *pair(Node *list1, Node *list2, Context *ctx) {
   if (IS_EMPTY_LIST(list1) || IS_EMPTY_LIST(list2))
     return CONS(NULL, NULL, ctx);
 
-  Node *first_pair = LIST(FIRST(list1), FIRST(list2), ctx);
+  Node *first_pair = LIST2(FIRST(list1), FIRST(list2), ctx);
   Node *rest_pairs = pair(REST(list1), REST(list2), ctx);
 
   return CONS(first_pair, rest_pairs, ctx);

@@ -36,8 +36,8 @@ void reset_parse_context(Context *ctx);
     struct Node *node;
 }
 
-%type <node> program expressions expression expression_list list literal_expr symbol
-%type <node> lambda parameter_list
+%type <node> program exprs expr list_expr list_form literal_expr
+%type <node> lambda_form param_form
 
 %token ERROR LAMBDA QUOTE
 %token <prim_fn> PRIMITIVE
@@ -47,57 +47,51 @@ void reset_parse_context(Context *ctx);
 %%
 
 program
-    : expressions {
+    : exprs {
         CTX_PARSE_ROOT(ctx) = $1;
         YYACCEPT;
     }
-    | expressions error {
+    | exprs error {
         CTX_PARSE_ROOT(ctx) = NULL;
         yyerror(ctx, "Parse error\n");
         YYABORT;
     }
     ;
 
-expressions
+exprs
     : /* empty */ {
         $$ = CONS(NULL, NULL, ctx);
     }
-    | expression expressions {
+    | expr exprs {
         $$ = CONS($1, $2, ctx);
     }
     ;
 
-expression
-    : list
-    | lambda
+expr
+    : list_expr
     | literal_expr
-    | QUOTE expression {
+    | QUOTE expr {
         Node *quote = cons_primfn(CTX_POOL(ctx), PRIM_FN(QUOTE));
-        Node *fn_args = CONS($2, CONS(NULL, NULL, ctx), ctx);
-        $$ = CONS(quote, fn_args, ctx);
+        $$ = LIST2(quote, $2, ctx);
     }
     ;
 
-list
+list_expr
     : '(' ')' {
-        $$ = CONS(NULL, NULL, ctx);
+        $$ = EMPTY_LIST(ctx);
     }
-    | '(' expression_list ')' {
+    | '(' list_form ')' {
         $$ = $2;
     }
-    ;
-
-expression_list
-    : expression {
-        $$ = CONS($1, CONS(NULL, NULL, ctx), ctx);
-    }
-    | expression expression_list {
-        $$ = CONS($1, $2, ctx);
+    | '(' lambda_form ')' {
+        $$ = LIST1($2, ctx);
     }
     ;
 
 literal_expr
-    : symbol
+    : SYMBOL {
+        $$ = cons_symbol(CTX_POOL(ctx), $1);
+    }
     | PRIMITIVE {
         $$ = cons_primfn(CTX_POOL(ctx), $1);
     }
@@ -106,23 +100,27 @@ literal_expr
     }
     ;
 
-symbol
-    : SYMBOL {
-        $$ = cons_symbol(CTX_POOL(ctx), $1);
+list_form
+    : expr {
+        $$ = LIST1($1, ctx);
     }
-
-lambda
-    : LAMBDA '(' parameter_list ')' '(' program ')' {
-        $$ = cons_lambda(CTX_POOL(ctx), $3, $6);
+    | expr list_form {
+        $$ = CONS($1, $2, ctx);
     }
     ;
 
-parameter_list
+lambda_form
+    : LAMBDA '(' param_form ')' '(' exprs ')' {
+        $$ = cons_lambda(CTX_POOL(ctx), $3, $6, NULL);
+    }
+    ;
+
+param_form
     : /* empty */ {
         $$ = CONS(NULL, NULL, ctx);
     }
-    symbol parameter_list {
-        $$ = LIST(cons_symbol(CTX_POOL(ctx), $1), $2, ctx);
+    | SYMBOL param_form {
+        $$ = LIST2(cons_symbol(CTX_POOL(ctx), $1), $2, ctx);
     }
     ;
 

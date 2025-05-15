@@ -30,6 +30,7 @@ EVAL,    eval,         1
 FIRST,   eval_first,   1
 FUNCALL, eval_funcall, -1
 IF,      eval_if,      3
+LAMBDA,  NULL,         0
 LEN,     eval_len,     1
 LIST,    eval_list,   -1
 PAIR,    eval_pair,    2

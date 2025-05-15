@@ -214,6 +214,10 @@ Node *cons_closure(Pool *p, Node *params, Node *body, Env *env) {
   return node;
 }
 
+Node *cons_lambda(Pool *p, Node *params, Node *body, Env *env) {
+  return cons_closure(p, params, body, env);
+}
+
 Node *cons_integer(Pool *p, Integer i) {
   Node *node       = pool_alloc(p);
   node->type       = TYPE_INTEGER;

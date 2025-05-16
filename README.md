@@ -258,7 +258,8 @@ In no particular order:
 1. Define/def
 1. ~~List function~~
 1. Strings (started kind of)
-1. Pool to arena (will need fix to yyparse)
+1. ~~Pool forever (will need fix to yyparse)~~
+1. Fix yyarse after pool forever.
 1. Parse errors (exceptions first)
 1. GC
 1. repl I/O from files

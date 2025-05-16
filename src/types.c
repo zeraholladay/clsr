@@ -172,7 +172,7 @@ lambda_tostr (Node *self)
                  + NULLABLE_STRLEN (body_str);
 
   char *str = calloc (total, sizeof *str);
-  
+
   if (!str)
     return NULL;
 
@@ -238,18 +238,18 @@ type (Node *self)
 }
 
 Node *
-cons_prim (Pool *p, const Keyword *keyword)
+cons_prim (Pool **p, const Keyword *keyword)
 {
-  Node *node = pool_alloc (p);
+  Node *node = pool_alloc_hier (p);
   node->type = TYPE_PRIMITIVE;
   node->as.primitive = keyword;
   return node;
 }
 
 Node *
-cons_lambda (Pool *p, Node *params, Node *body, Env *env)
+cons_lambda (Pool **p, Node *params, Node *body, Env *env)
 {
-  Node *node = pool_alloc (p);
+  Node *node = pool_alloc_hier (p);
   node->type = TYPE_LAMBDA;
   node->as.lambda.params = params;
   node->as.lambda.body = body;
@@ -258,18 +258,18 @@ cons_lambda (Pool *p, Node *params, Node *body, Env *env)
 }
 
 Node *
-cons_integer (Pool *p, Integer i)
+cons_integer (Pool **p, Integer i)
 {
-  Node *node = pool_alloc (p);
+  Node *node = pool_alloc_hier (p);
   node->type = TYPE_INTEGER;
   node->as.integer = i;
   return node;
 }
 
 Node *
-cons_list (Pool *p, Node *car, Node *cdr)
+cons_list (Pool **p, Node *car, Node *cdr)
 {
-  Node *node = pool_alloc (p);
+  Node *node = pool_alloc_hier (p);
   node->type = TYPE_LIST;
   node->as.list.first = car;
   node->as.list.rest = cdr;
@@ -277,18 +277,18 @@ cons_list (Pool *p, Node *car, Node *cdr)
 }
 
 Node *
-cons_string (Pool *p, char *str)
+cons_string (Pool **p, char *str)
 {
-  Node *node = pool_alloc (p);
+  Node *node = pool_alloc_hier (p);
   node->type = TYPE_STRING;
   node->as.string = str;
   return node;
 }
 
 Node *
-cons_symbol (Pool *p, const char *sym)
+cons_symbol (Pool **p, const char *sym)
 {
-  Node *node = pool_alloc (p);
+  Node *node = pool_alloc_hier (p);
   node->type = TYPE_SYMBOL;
   node->as.symbol = sym;
   return node;

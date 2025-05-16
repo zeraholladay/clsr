@@ -9,7 +9,6 @@
 #define CTX_ENV(ctx) ((ctx)->env)
 #define CTX_SYMTAB(ctx) ((ctx)->parser_ctx.sym_tab)
 #define CTX_PARSE_ROOT(ctx) ((ctx)->parser_ctx.root_node)
-#define CTX_PARSE_MARK(ctx) ((ctx)->parser_ctx.parse_mark)
 
 struct Node;
 
@@ -17,7 +16,6 @@ typedef struct ParserContext
 {
   rb_node *sym_tab;
   struct Node *root_node;
-  Wrapper *parse_mark;
 } ParserContext;
 
 typedef struct Context

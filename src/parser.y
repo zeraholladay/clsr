@@ -71,7 +71,7 @@ expr
     : list_expr
     | literal_expr
     | QUOTE expr {
-        Node *quote = cons_prim(CTX_POOL(ctx), KEYWORD(QUOTE));
+        Node *quote = cons_prim(&CTX_POOL(ctx), KEYWORD(QUOTE));
         $$ = LIST2(quote, $2, ctx);
     }
     ;
@@ -90,13 +90,13 @@ list_expr
 
 literal_expr
     : SYMBOL {
-        $$ = cons_symbol(CTX_POOL(ctx), $1);
+        $$ = cons_symbol(&CTX_POOL(ctx), $1);
     }
     | PRIMITIVE {
-        $$ = cons_prim(CTX_POOL(ctx), $1);
+        $$ = cons_prim(&CTX_POOL(ctx), $1);
     }
     | INTEGER {
-        $$ = cons_integer(CTX_POOL(ctx), $1);
+        $$ = cons_integer(&CTX_POOL(ctx), $1);
     }
     ;
 
@@ -111,7 +111,7 @@ list_form
 
 lambda_form
     : LAMBDA '(' param_form ')' exprs {
-        $$ = cons_lambda(CTX_POOL(ctx), $3, $5, CTX_ENV(ctx));
+        $$ = cons_lambda(&CTX_POOL(ctx), $3, $5, CTX_ENV(ctx));
     }
     ;
 
@@ -120,7 +120,7 @@ param_form
         $$ = CONS(NULL, NULL, ctx);
     }
     | SYMBOL param_form {
-        Node *sym_node = cons_symbol(CTX_POOL(ctx), $1);
+        Node *sym_node = cons_symbol(&CTX_POOL(ctx), $1);
         $$ = CONS(sym_node, $2, ctx);
     }
     ;
@@ -131,12 +131,10 @@ param_form
 void reset_parse_context(Context *ctx) {
   /* assumes pool has already been allocated. */
   CTX_PARSE_ROOT(ctx) = NULL;
-  CTX_PARSE_MARK(ctx) = CTX_POOL(ctx)->free_list;
 }
 
 void yyerror_handler(Context *ctx, const char *s) {
   fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
-  pool_reset_from_mark(CTX_POOL(ctx), CTX_PARSE_MARK(ctx));
   reset_parse_context(ctx);
 }
 

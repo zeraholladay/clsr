@@ -1,23 +1,25 @@
 // clang-format off
 %{
-// clang-format off
+// clang-format on
 #include <stdio.h>
 
-#include "types.h"
 #include "eval.h"
 #include "parser.h"
+#include "types.h"
 
-#define yyerror(ctx, s)                                                        \
-  do {                                                                         \
-    yyerror_handler(ctx, s);                                                   \
-    YYABORT;                                                                   \
-} while (0)
+#define yyerror(ctx, s)                                                       \
+  do                                                                          \
+    {                                                                         \
+      yyerror_handler (ctx, s);                                               \
+      YYABORT;                                                                \
+    }                                                                         \
+  while (0)
 
-int yylex(Context * ctx);
-void yyerror_handler(Context * ctx, const char *s);
+  int yylex (Context * ctx);
+  void yyerror_handler (Context * ctx, const char *s);
 
-extern int yylineno;
-// clang-format off
+  extern int yylineno;
+  // clang-format off
 %}
 
 %code requires {
@@ -48,22 +50,22 @@ void reset_parse_context(Context *ctx);
 
 program
     : exprs {
-        CTX_PARSE_ROOT(ctx) = $1;
+        CTX_PARSE_ROOT (ctx) = $1;
         YYACCEPT;
     }
     | exprs error {
-        CTX_PARSE_ROOT(ctx) = NULL;
-        yyerror(ctx, "Parse error\n");
+        CTX_PARSE_ROOT (ctx) = NULL;
+        yyerror (ctx, "Parse error\n");
         YYABORT;
     }
     ;
 
 exprs
     : /* empty */ {
-        $$ = CONS(NULL, NULL, ctx);
+        $$ = CONS (NULL, NULL, ctx);
     }
     | expr exprs {
-        $$ = CONS($1, $2, ctx);
+        $$ = CONS ($1, $2, ctx);
     }
     ;
 
@@ -71,71 +73,75 @@ expr
     : list_expr
     | literal_expr
     | QUOTE expr {
-        Node *quote = cons_prim(&CTX_POOL(ctx), KEYWORD(QUOTE));
-        $$ = LIST2(quote, $2, ctx);
+        Node *quote = cons_prim (&CTX_POOL (ctx), KEYWORD (QUOTE));
+        $$ = LIST2 (quote, $2, ctx);
     }
     ;
 
 list_expr
     : '(' ')' {
-        $$ = EMPTY_LIST(ctx);
+        $$ = EMPTY_LIST (ctx);
     }
     | '(' list_form ')' {
         $$ = $2;
     }
     | '(' lambda_form ')' {
-        $$ = LIST1($2, ctx);
+        $$ = LIST1 ($2, ctx);
     }
     ;
 
 literal_expr
     : SYMBOL {
-        $$ = cons_symbol(&CTX_POOL(ctx), $1);
+        $$ = cons_symbol (&CTX_POOL (ctx), $1);
     }
     | PRIMITIVE {
-        $$ = cons_prim(&CTX_POOL(ctx), $1);
+        $$ = cons_prim (&CTX_POOL (ctx), $1);
     }
     | INTEGER {
-        $$ = cons_integer(&CTX_POOL(ctx), $1);
+        $$ = cons_integer (&CTX_POOL (ctx), $1);
     }
     ;
 
 list_form
     : expr {
-        $$ = LIST1($1, ctx);
+        $$ = LIST1 ($1, ctx);
     }
     | expr list_form {
-        $$ = CONS($1, $2, ctx);
+        $$ = CONS ($1, $2, ctx);
     }
     ;
 
 lambda_form
     : LAMBDA '(' param_form ')' exprs {
-        $$ = cons_lambda(&CTX_POOL(ctx), $3, $5, CTX_ENV(ctx));
+        $$ = cons_lambda (&CTX_POOL (ctx), $3, $5, CTX_ENV (ctx));
     }
     ;
 
 param_form
     : /* empty */ {
-        $$ = CONS(NULL, NULL, ctx);
+        $$ = CONS (NULL, NULL, ctx);
     }
     | SYMBOL param_form {
-        Node *sym_node = cons_symbol(&CTX_POOL(ctx), $1);
-        $$ = CONS(sym_node, $2, ctx);
+        Node *sym_node = cons_symbol( &CTX_POOL (ctx), $1);
+        $$ = CONS (sym_node, $2, ctx);
     }
     ;
 
 %%
-// clang-format off
+    // clang-format on
 
-void reset_parse_context(Context *ctx) {
+    void
+    reset_parse_context (Context *ctx)
+{
   /* assumes pool has already been allocated. */
-  CTX_PARSE_ROOT(ctx) = NULL;
+  CTX_PARSE_ROOT (ctx) = NULL;
 }
 
-void yyerror_handler(Context *ctx, const char *s) {
-  fprintf(stderr, "Syntax error: line %d: %s\n", yylineno, s);
-  reset_parse_context(ctx);
+void
+yyerror_handler (Context *ctx, const char *s)
+{
+  fprintf (stderr, "Syntax error: line %d: %s\n", yylineno, s);
+  reset_parse_context (ctx);
 }
 
 // clang-format off

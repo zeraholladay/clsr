@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "debug.h"
 #include "error.h"
@@ -8,16 +9,26 @@
 #include "safe_str.h"
 #include "types.h"
 
+#define PRINT(node)                                                           \
+  do                                                                          \
+    {                                                                         \
+      StrFn to_str_fn = type (node)->str_fn;                                  \
+      char *str = to_str_fn (node);                                           \
+      printf ("%s\n", str);                                                   \
+      free (str);                                                             \
+    }                                                                         \
+  while (0)
+
 #define NIL_STR "NIL"
 #define T_STR "T"
 
 #define T (&t_node)
 #define NIL (&nil_node)
 
-static Node nil_node
+Node nil_node
     = { .type = TYPE_NIL, .as.list = { .first = NULL, .rest = NULL } };
 
-static Node t_node = { .type = TYPE_SYMBOL, .as.symbol = T_STR };
+Node t_node = { .type = TYPE_SYMBOL, .as.symbol = T_STR };
 
 static Node *apply (Node *fn, Node *expr, Context *ctx);
 static Node *funcall (Node *fn, Node *arglist, Context *ctx);
@@ -340,10 +351,7 @@ eval_print (Node *args, Context *ctx)
       return NULL;
     }
 
-  StrFn fn = type (FIRST (args))->str_fn;
-  char *str = fn (FIRST (args));
-  printf ("%s\n", str);
-  free (str);
+  PRINT (FIRST (args));
   return T;
 }
 
@@ -432,7 +440,6 @@ eval_program (Node *program, Context *ctx)
   for (Node *expr = FIRST (program); !IS_EMPTY_LIST (expr);
        expr = FIRST (program))
     {
-
       result = eval (expr, ctx);
       program = REST (program);
     }

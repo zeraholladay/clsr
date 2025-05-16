@@ -12,8 +12,6 @@
 #define LIST1(item, ctx) (CONS (item, EMPTY_LIST (ctx), ctx))
 #define LIST2(first, rest, ctx) (CONS (first, LIST1 (rest, ctx), ctx))
 
-#define PRINT(node, ctx) eval_print (node, ctx)
-
 #define IS_EMPTY_LIST(node)                                                   \
   (!node || (IS_NIL (node))                                                   \
    || (IS_LIST (node) && !FIRST (node) && !REST (node)))

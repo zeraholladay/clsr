@@ -245,6 +245,8 @@ In no particular order:
 1. ~~Equality~~
 1. ~~lambda~~
 1. Boolean operators
+1. IF needs to be a special form
+1. Broke EQ.
 1. Test math
 1. Real Exceptions
 1. ~~Error status and messages~~

@@ -87,7 +87,7 @@ expr
   | literal_expr
   | QUOTE expr
     {
-      Node *quote = cons_prim (CTX_POOL (ctx), KEYWORD (QUOTE));
+      Node *quote = cons_prim (&CTX_POOL (ctx), KEYWORD (QUOTE));
       $$ = LIST2 (quote, $2, ctx);
     }
   ;
@@ -114,15 +114,15 @@ list_expr
 literal_expr
   : SYMBOL
     {
-      $$ = cons_symbol (CTX_POOL (ctx), $1);
+      $$ = cons_symbol (&CTX_POOL (ctx), $1);
     }
   | PRIMITIVE
     {
-      $$ = cons_prim (CTX_POOL (ctx), $1);
+      $$ = cons_prim (&CTX_POOL (ctx), $1);
     }
   | INTEGER
     {
-      $$ = cons_integer (CTX_POOL (ctx), $1);
+      $$ = cons_integer (&CTX_POOL (ctx), $1);
     }
   ;
 
@@ -140,7 +140,7 @@ list_form
 lambda_form
   : LAMBDA '(' lambda_param_form ')' exprs
     {
-      $$ = cons_lambda (CTX_POOL (ctx), $3, $5, CTX_ENV (ctx));
+      $$ = cons_lambda (&CTX_POOL (ctx), $3, $5, CTX_ENV (ctx));
     }
   ;
 

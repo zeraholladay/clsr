@@ -31,6 +31,7 @@ FUNCALL, eval_funcall, -1
 IF,      NULL,          0
 LAMBDA,  NULL,          0
 LEN,     eval_len,      1
+NIL,     NULL,          0
 LIST,    eval_list,    -1
 PAIR,    eval_pair,     2
 PRINT,   eval_print,    1
@@ -38,6 +39,7 @@ QUOTE,   NULL,          0
 REST,    eval_rest,     1
 SET,     eval_set,      2
 STR,     eval_str,      1
+T,       NULL,          0
 ADD,     eval_add,     -1
 SUB,     eval_sub,     -1
 MUL,     eval_mul,     -1

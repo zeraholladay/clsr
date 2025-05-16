@@ -50,8 +50,9 @@ Context *ctx
 %type <node> lambda_form lambda_param_form // special form
 %type <node> if_form  // special form
 
-%token ERROR IF LAMBDA QUOTE
-%token <keyword> PRIMITIVE
+%token NIL_TOKEN T_TOKEN
+%token ERROR LAMBDA QUOTE
+%token <keyword> IF PRIMITIVE
 %token <integer> INTEGER
 %token <symbol>  SYMBOL
 
@@ -65,7 +66,7 @@ program
     }
   | exprs error
     {
-      CTX_PARSE_ROOT (ctx) = NULL;
+      CTX_PARSE_ROOT (ctx) = NIL;
       yyerror (ctx, "Parse error\n");
       YYABORT;
     }
@@ -74,7 +75,7 @@ program
 exprs
   : /* empty */
     {
-      $$ = CONS (NULL, NULL, ctx);
+      $$ = NIL;
     }
   | expr exprs
     {
@@ -95,7 +96,7 @@ expr
 list_expr
   : '(' ')'
     {
-      $$ = EMPTY_LIST (ctx);
+      $$ = NIL;
     }
   | '(' list_form ')'
     {
@@ -112,7 +113,15 @@ list_expr
   ;
 
 literal_expr
-  : SYMBOL
+  : NIL_TOKEN
+    {
+      $$ = NIL;
+    }
+  | T_TOKEN
+    {
+      $$ = T;
+    }
+  | SYMBOL
     {
       $$ = cons_symbol (&CTX_POOL (ctx), $1);
     }
@@ -146,7 +155,7 @@ lambda_form
 
 lambda_param_form
     : /* empty */ {
-        $$ = CONS (NULL, NULL, ctx);
+        $$ = NIL;
     }
     | SYMBOL lambda_param_form {
         Node *sym_node = cons_symbol( &CTX_POOL (ctx), $1);
@@ -155,19 +164,17 @@ lambda_param_form
   ;
 
 if_form
-  : IF list_expr list_expr list_expr
+  : IF expr expr expr
     {
-      Node *pred_expr = $2;
-      Node *then_expr = $3;
-      Node *else_expr = $4;
-      $$ = CONS ( pred_expr, CONS (then_expr, else_expr, ctx), ctx);
+      Node *if_symbol = cons_prim (&CTX_POOL (ctx), $1);
+      Node *expr = CONS ( $2, LIST2 ($3, $4, ctx), ctx);
+      $$ = CONS (if_symbol, expr, ctx);
     }
-  | IF list_expr list_expr
+  | IF expr expr
     {
-      Node *pred_expr = $2;
-      Node *then_expr = $3;
-      Node *else_expr = EMPTY_LIST (ctx);
-      $$ = CONS ( pred_expr, CONS (then_expr, else_expr, ctx), ctx);
+      Node *if_symbol = cons_prim (&CTX_POOL (ctx), $1);
+      Node *expr = CONS ( $2, LIST1 ($3, ctx), ctx);
+      $$ = CONS (if_symbol, expr, ctx);
     }
   ;
 
@@ -178,7 +185,7 @@ if_form
     reset_parse_context (Context *ctx)
 {
   /* assumes pool has already been allocated. */
-  CTX_PARSE_ROOT (ctx) = NULL;
+  CTX_PARSE_ROOT (ctx) = NIL;
 }
 
 void

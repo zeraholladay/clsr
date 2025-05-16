@@ -82,23 +82,20 @@ START_TEST (test_quote)
 
   // NULL program
   eval_result = run_eval_program ("()");
-  ck_assert (!eval_result);
-
-  eval_result = run_eval_program ("'()");
-  ck_assert (IS_EMPTY_LIST (eval_result));
+  ck_assert (eval_result);
 
   eval_result = run_eval_program ("'(foo)");
-  ck_assert (!IS_EMPTY_LIST (eval_result));
+  ck_assert (!IS_NIL (eval_result));
   car = FIRST (eval_result);
   cdr = REST (eval_result);
   ck_assert_str_eq (GET_SYMBOL (car), "foo");
-  ck_assert (IS_EMPTY_LIST (cdr));
+  ck_assert (IS_NIL (cdr));
 
   eval_result = run_eval_program ("'(foo bar)");
-  ck_assert (!IS_EMPTY_LIST (eval_result));
+  ck_assert (!IS_NIL (eval_result));
   car = FIRST (eval_result);
   cdr = REST (eval_result);
-  ck_assert (!IS_EMPTY_LIST (cdr));
+  ck_assert (!IS_NIL (cdr));
   ck_assert_str_eq (GET_SYMBOL (car), "foo");
   ck_assert_str_eq (GET_SYMBOL (FIRST (cdr)), "bar");
 }
@@ -113,17 +110,17 @@ START_TEST (test_cons)
   Node *cdr = NULL;
 
   eval_result = run_eval_program ("(cons 'foo 'bar)");
-  ck_assert (!IS_EMPTY_LIST (eval_result));
+  ck_assert (!IS_NIL (eval_result));
   car = FIRST (eval_result);
   cdr = REST (eval_result);
   ck_assert_str_eq (GET_SYMBOL (car), "foo");
   ck_assert_str_eq (GET_SYMBOL (cdr), "bar");
 
   eval_result = run_eval_program ("(cons 'foo '(bar))");
-  ck_assert (!IS_EMPTY_LIST (eval_result));
+  ck_assert (!IS_NIL (eval_result));
   car = FIRST (eval_result);
   cdr = REST (eval_result);
-  ck_assert (!IS_EMPTY_LIST (cdr));
+  ck_assert (!IS_NIL (cdr));
   ck_assert_str_eq (GET_SYMBOL (FIRST (cdr)), "bar");
 }
 END_TEST
@@ -154,7 +151,7 @@ START_TEST (test_first)
   Node *eval_result = NULL;
 
   eval_result = run_eval_program ("(first '())");
-  ck_assert (IS_EMPTY_LIST (eval_result));
+  ck_assert (IS_NIL (eval_result));
 
   eval_result = run_eval_program ("(first '(foo bar))");
   ck_assert (IS_SYMBOL (eval_result));
@@ -177,7 +174,7 @@ START_TEST (test_rest)
   Node *eval_result = NULL;
 
   eval_result = run_eval_program ("(rest '())");
-  ck_assert (IS_EMPTY_LIST (eval_result));
+  ck_assert (IS_NIL (eval_result));
 
   eval_result = run_eval_program ("(rest '(foo bar))");
   ck_assert (IS_LIST (eval_result));
@@ -236,7 +233,7 @@ START_TEST (test_lambda)
 
   // run
   eval_result = run_eval_program ("((lambda () ()))");
-  ck_assert (IS_EMPTY_LIST (eval_result));
+  ck_assert (IS_NIL (eval_result));
 
   // run
   eval_result = run_eval_program ("((lambda () (cons 'a 'b) 42))");
@@ -352,11 +349,11 @@ START_TEST (test_apply)
   Node *cdr = NULL;
 
   eval_result = run_eval_program ("(apply (lambda () ()) '())");
-  ck_assert (IS_EMPTY_LIST (eval_result));
+  ck_assert (IS_NIL (eval_result));
 
   eval_result
       = run_eval_program ("(apply (lambda (a b) (cons a b)) '(foo bar))");
-  ck_assert (!IS_EMPTY_LIST (eval_result));
+  ck_assert (!IS_NIL (eval_result));
   car = FIRST (eval_result);
   cdr = REST (eval_result);
   ck_assert_str_eq (GET_SYMBOL (car), "foo");
@@ -386,11 +383,11 @@ START_TEST (test_funcall)
   Node *cdr = NULL;
 
   eval_result = run_eval_program ("(funcall (lambda () ()))");
-  ck_assert (IS_EMPTY_LIST (eval_result));
+  ck_assert (IS_NIL (eval_result));
 
   eval_result
       = run_eval_program ("(funcall (lambda (a b) (cons a b)) 'foo 'bar)");
-  ck_assert (!IS_EMPTY_LIST (eval_result));
+  ck_assert (!IS_NIL (eval_result));
   car = FIRST (eval_result);
   cdr = REST (eval_result);
   ck_assert_str_eq (GET_SYMBOL (car), "foo");

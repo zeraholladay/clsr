@@ -41,7 +41,15 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
                     if (keyword)
                       {
                         yylval.keyword = keyword;
-                        if (keyword == KEYWORD (LAMBDA))
+                        if (keyword == KEYWORD (NIL))
+                          {
+                            return NIL_TOKEN;
+                          }
+                        else if (keyword == KEYWORD (T))
+                          {
+                            return T_TOKEN;
+                          }
+                        else if (keyword == KEYWORD (LAMBDA))
                           {
                             return LAMBDA;
                           }

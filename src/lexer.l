@@ -22,44 +22,73 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
 %%
 
 <INITIAL>{
-    "'"             { return QUOTE; }
-    "("             { return '('; }
-    ")"             { return ')'; }
-    {NUM}           { yylval.integer = atoll(yytext); return INTEGER; }
-    {ID}            {
-                    const Keyword *keyword = keyword_lookup(yytext, yyleng);
-                    if (keyword) {
+  "'"             {
+                    return QUOTE;
+                  }
+  "("             {
+                    return '(';
+                  }
+  ")"             {
+                    return ')';
+                  }
+  {NUM}           {
+                    yylval.integer = atoll (yytext);
+                    return INTEGER;
+                  }
+
+  {ID}            {
+                    const Keyword *keyword = keyword_lookup (yytext, yyleng);
+                    if (keyword)
+                      {
                         yylval.keyword = keyword;
-                        return (keyword != KEYWORD(LAMBDA)) ? PRIMITIVE : LAMBDA;
-                    }
-                    yylval.symbol = sym_save(&CTX_SYMTAB(ctx), yytext, yyleng);
-                    return SYMBOL;
-                    }
-    [+\-*/]         {
+                        if (keyword == KEYWORD (LAMBDA))
+                          {
+                            return LAMBDA;
+                          }
+                        else if (keyword == KEYWORD (IF))
+                          {
+                            return IF;
+                          }
+                        else
+                          {
+                            return PRIMITIVE ;
+                          }
+                      }
+                    else
+                      {
+                        yylval.symbol = sym_save (&CTX_SYMTAB(ctx), yytext, yyleng);
+                        return SYMBOL;
+                      }
+                  }
+
+  [+\-*/]         {
                     int op = yytext[0];
-                    switch (op) {
+                    switch (op)
+                      {
                         case '+':
-                            yylval.keyword = KEYWORD(ADD);
-                            break;
+                          yylval.keyword = KEYWORD(ADD);
+                          break;
                         case '-':
-                            yylval.keyword = KEYWORD(SUB);
-                            break;
+                          yylval.keyword = KEYWORD(SUB);
+                          break;
                         case '*':
-                            yylval.keyword = KEYWORD(MUL);
-                            break;
+                          yylval.keyword = KEYWORD(MUL);
+                          break;
                         case '/':
-                            yylval.keyword = KEYWORD(DIV);
-                            break;
+                          yylval.keyword = KEYWORD(DIV);
+                          break;
                         default:
-                            return ERROR;
-                            break;
-                        }
+                          return ERROR;
+                          break;
+                      }
                     return PRIMITIVE;
-                    }
-    {WS}            { /* ignore */ }
-    {NL}            { /* ignore */ }
-    ;[^\n]*         { /* ignore */ }
-    .               { return ERROR; }
+                  }
+  {WS}            { /* ignore */ }
+  {NL}            { /* ignore */ }
+  ;[^\n]*         { /* ignore */ }
+  .               {
+                    return ERROR;
+                  }
 }
 
 %%

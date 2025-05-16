@@ -1,6 +1,5 @@
 // clang-format off
 %{
-// clang-format on
 #include <stdio.h>
 
 #include "eval.h"
@@ -15,33 +14,43 @@
     }                                                                         \
   while (0)
 
-  int yylex (Context * ctx);
-  void yyerror_handler (Context * ctx, const char *s);
+int yylex (Context * ctx);
+void yyerror_handler (Context * ctx, const char *s);
 
-  extern int yylineno;
-  // clang-format off
+extern int yylineno;
+// clang-format off
 %}
 
-%code requires {
+%code requires
+{
 #include "types.h"
 
 void reset_parse_context(Context *ctx);
 }
 
-%lex-param   {Context *ctx}
-%parse-param {Context *ctx}
+%lex-param
+{
+Context *ctx
+}
 
-%union {
-    Integer integer;
-    const char *symbol;
-    const struct Keyword *keyword;
-    struct Node *node;
+%parse-param
+{
+Context *ctx
+}
+
+%union
+{
+  Integer integer;
+  const char *symbol;
+  const struct Keyword *keyword;
+  struct Node *node;
 }
 
 %type <node> program exprs expr list_expr list_form literal_expr
-%type <node> lambda_form param_form
+%type <node> lambda_form lambda_param_form // special form
+%type <node> if_form  // special form
 
-%token ERROR LAMBDA QUOTE
+%token ERROR IF LAMBDA QUOTE
 %token <keyword> PRIMITIVE
 %token <integer> INTEGER
 %token <symbol>  SYMBOL
@@ -49,83 +58,118 @@ void reset_parse_context(Context *ctx);
 %%
 
 program
-    : exprs {
-        CTX_PARSE_ROOT (ctx) = $1;
-        YYACCEPT;
+  : exprs
+    {
+      CTX_PARSE_ROOT (ctx) = $1;
+      YYACCEPT;
     }
-    | exprs error {
-        CTX_PARSE_ROOT (ctx) = NULL;
-        yyerror (ctx, "Parse error\n");
-        YYABORT;
+  | exprs error
+    {
+      CTX_PARSE_ROOT (ctx) = NULL;
+      yyerror (ctx, "Parse error\n");
+      YYABORT;
     }
-    ;
+  ;
 
 exprs
-    : /* empty */ {
-        $$ = CONS (NULL, NULL, ctx);
+  : /* empty */
+    {
+      $$ = CONS (NULL, NULL, ctx);
     }
-    | expr exprs {
-        $$ = CONS ($1, $2, ctx);
+  | expr exprs
+    {
+      $$ = CONS ($1, $2, ctx);
     }
-    ;
+  ;
 
 expr
-    : list_expr
-    | literal_expr
-    | QUOTE expr {
-        Node *quote = cons_prim (&CTX_POOL (ctx), KEYWORD (QUOTE));
-        $$ = LIST2 (quote, $2, ctx);
+  : list_expr
+  | literal_expr
+  | QUOTE expr
+    {
+      Node *quote = cons_prim (CTX_POOL (ctx), KEYWORD (QUOTE));
+      $$ = LIST2 (quote, $2, ctx);
     }
-    ;
+  ;
 
 list_expr
-    : '(' ')' {
-        $$ = EMPTY_LIST (ctx);
+  : '(' ')'
+    {
+      $$ = EMPTY_LIST (ctx);
     }
-    | '(' list_form ')' {
-        $$ = $2;
+  | '(' list_form ')'
+    {
+      $$ = $2;
     }
-    | '(' lambda_form ')' {
-        $$ = LIST1 ($2, ctx);
+  | '(' lambda_form ')'
+    {
+      $$ = LIST1 ($2, ctx);
     }
-    ;
+  | '(' if_form ')'
+    {
+      $$ = LIST1 ($2, ctx);
+    }
+  ;
 
 literal_expr
-    : SYMBOL {
-        $$ = cons_symbol (&CTX_POOL (ctx), $1);
+  : SYMBOL
+    {
+      $$ = cons_symbol (CTX_POOL (ctx), $1);
     }
-    | PRIMITIVE {
-        $$ = cons_prim (&CTX_POOL (ctx), $1);
+  | PRIMITIVE
+    {
+      $$ = cons_prim (CTX_POOL (ctx), $1);
     }
-    | INTEGER {
-        $$ = cons_integer (&CTX_POOL (ctx), $1);
+  | INTEGER
+    {
+      $$ = cons_integer (CTX_POOL (ctx), $1);
     }
-    ;
+  ;
 
 list_form
-    : expr {
-        $$ = LIST1 ($1, ctx);
+  : expr
+    {
+      $$ = LIST1 ($1, ctx);
     }
-    | expr list_form {
-        $$ = CONS ($1, $2, ctx);
+  | expr list_form
+    {
+      $$ = CONS ($1, $2, ctx);
     }
-    ;
+  ;
 
 lambda_form
-    : LAMBDA '(' param_form ')' exprs {
-        $$ = cons_lambda (&CTX_POOL (ctx), $3, $5, CTX_ENV (ctx));
+  : LAMBDA '(' lambda_param_form ')' exprs
+    {
+      $$ = cons_lambda (CTX_POOL (ctx), $3, $5, CTX_ENV (ctx));
     }
-    ;
+  ;
 
-param_form
+lambda_param_form
     : /* empty */ {
         $$ = CONS (NULL, NULL, ctx);
     }
-    | SYMBOL param_form {
+    | SYMBOL lambda_param_form {
         Node *sym_node = cons_symbol( &CTX_POOL (ctx), $1);
         $$ = CONS (sym_node, $2, ctx);
     }
-    ;
+  ;
+
+if_form
+  : IF list_expr list_expr list_expr
+    {
+      Node *pred_expr = $2;
+      Node *then_expr = $3;
+      Node *else_expr = $4;
+      $$ = CONS ( pred_expr, CONS (then_expr, else_expr, ctx), ctx);
+    }
+  | IF list_expr list_expr
+    {
+      Node *pred_expr = $2;
+      Node *then_expr = $3;
+      Node *else_expr = EMPTY_LIST (ctx);
+      $$ = CONS ( pred_expr, CONS (then_expr, else_expr, ctx), ctx);
+    }
+  ;
 
 %%
     // clang-format on

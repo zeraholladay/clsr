@@ -91,11 +91,11 @@ struct Node
 
 // coredef.c
 const Type *type (Node *self);
-Node *cons_prim (Pool *p, const Keyword *keyword);
-Node *cons_lambda (Pool *p, Node *params, Node *body, Env *env);
-Node *cons_integer (Pool *p, Integer i);
-Node *cons_list (Pool *p, Node *car, Node *cdr);
-Node *cons_string (Pool *p, char *str);
-Node *cons_symbol (Pool *p, const char *sym);
+Node *cons_prim (Pool **p, const Keyword *keyword);
+Node *cons_lambda (Pool **p, Node *params, Node *body, Env *env);
+Node *cons_integer (Pool **p, Integer i);
+Node *cons_list (Pool **p, Node *car, Node *cdr);
+Node *cons_string (Pool **p, char *str);
+Node *cons_symbol (Pool **p, const char *sym);
 
 #endif

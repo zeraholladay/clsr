@@ -33,27 +33,29 @@ apply (Node *fn, Node *expr, Context *ctx)
 {
   const Primitive *prim = GET_PRIMITIVE (fn);
 
-  // (funcall f arg1 arg2 ...)
   if (prim == KEYWORD (FUNCALL))
     {
+      // (funcall f arg1 arg2 ...)
       Node *fn2 = eval (FIRST (REST (expr)), ctx);
       Node *rest_args = eval_list (REST (REST (expr)), ctx);
 
       return funcall (fn2, rest_args, ctx);
     }
-
-  // (apply f arglist)
-  if (prim == KEYWORD (APPLY))
+  else if (prim == KEYWORD (APPLY))
     {
+      // (apply f arglist)
       Node *fn2 = eval (FIRST (REST (expr)), ctx);
       Node *rest_args = eval (FIRST (REST (REST (expr))), ctx);
 
       return funcall (fn2, rest_args, ctx);
     }
+  else
+    {
+      // (fun arg1 arg2 ... )
+      Node *rest_args = eval_list (REST (expr), ctx);
 
-  // (fun arg1 arg2 ... )
-  Node *rest_args = eval_list (REST (expr), ctx);
-  return funcall (fn, rest_args, ctx);
+      return funcall (fn, rest_args, ctx);
+    }
 }
 
 static Node *
@@ -126,7 +128,7 @@ length (Node *list)
 
   for (Node *cdr = REST (list); cdr; cdr = REST (cdr))
     ++i;
-    
+
   return i;
 }
 
@@ -300,7 +302,7 @@ eval_len (Node *args, Context *ctx)
       return NULL;
     }
 
-  return cons_integer (CTX_POOL (ctx), length (first));
+  return cons_integer (&CTX_POOL (ctx), length (first));
 }
 
 Node *
@@ -378,7 +380,7 @@ eval_set (Node *args, Context *ctx)
 Node *
 eval_str (Node *args, Context *ctx)
 {
-  return cons_string (CTX_POOL (ctx), type (args)->str_fn (args));
+  return cons_string (&CTX_POOL (ctx), type (args)->str_fn (args));
 }
 
 Node *

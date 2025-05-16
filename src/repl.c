@@ -49,7 +49,7 @@ clsr_destroy (Context *ctx)
 {
   reset_parse_context (ctx);
   free (CTX_ENV (ctx)), CTX_ENV (ctx) = NULL;
-  pool_destroy (&CTX_POOL (ctx));
+  pool_destroy_hier (&CTX_POOL (ctx));
 }
 
 static void

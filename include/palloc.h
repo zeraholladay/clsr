@@ -9,17 +9,19 @@ typedef struct Wrapper
   void *ptr;
 } Wrapper;
 
-typedef struct
+typedef struct Pool
 {
   Wrapper *free_list, *pool;
-  size_t count, stride;
+  size_t count, stride, size;
+  struct Pool *prev, *next;
 } Pool;
 
 Pool *pool_init (size_t count, size_t size);
 void pool_destroy (Pool **p);
+void pool_destroy_hier (Pool **head);
 void *pool_alloc (Pool *p);
+void *pool_alloc_hier (Pool **head);
 void pool_free (Pool *p, void *ptr);
-unsigned int pool_reset_from_mark (Pool *p, Wrapper *mark);
 void pool_reset_all (Pool *p);
 
 #endif

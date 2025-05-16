@@ -36,6 +36,9 @@ pool_init (size_t count, size_t size)
 
   p->count = count;
   p->stride = stride;
+  p->size = size;
+  p->next = p->prev = NULL;
+
   pool_reset_all (p);
 
   return p;
@@ -48,6 +51,20 @@ pool_destroy (Pool **p)
   free (*p), *p = NULL;
 }
 
+void
+pool_destroy_hier (Pool **head)
+{
+  Pool *next;
+
+  for (Pool *cur = *head; cur; cur = next)
+    {
+      next = cur->next;
+      pool_destroy (&cur);
+    }
+
+  *head = NULL;
+}
+
 void *
 pool_alloc (Pool *p)
 {
@@ -56,9 +73,37 @@ pool_alloc (Pool *p)
       palloc_oom_handler (p, OOM_LOCATION "free_list empty");
       return NULL;
     }
+
   Wrapper *wrapper = p->free_list;
   p->free_list = wrapper->next_free;
+
   return &wrapper->ptr;
+}
+
+void *
+pool_alloc_hier (Pool **head)
+{
+  Pool *cur = *head;
+
+  if (cur->free_list)
+    {
+      return pool_alloc (cur);
+    }
+
+  Pool *new_pool = pool_init (cur->count, cur->size);
+
+  if (!new_pool)
+    {
+      palloc_oom_handler (NULL, OOM_LOCATION);
+      return NULL;
+    }
+
+  new_pool->prev = NULL;
+  new_pool->next = *head;
+  cur->prev = new_pool;
+  *head = new_pool;
+
+  return pool_alloc (new_pool);
 }
 
 void
@@ -67,27 +112,6 @@ pool_free (Pool *p, void *ptr)
   Wrapper *wrapper = (Wrapper *)((void *)ptr - offsetof (Wrapper, ptr));
   wrapper->next_free = p->free_list;
   p->free_list = wrapper;
-}
-
-unsigned int
-pool_reset_from_mark (Pool *p, Wrapper *mark)
-{
-  if (!mark || !p->free_list)
-    return 0;
-
-  Wrapper *cur = mark;
-  Wrapper *stop_at = p->free_list;
-
-  unsigned int num_freed;
-
-  for (num_freed = 0; cur != stop_at; ++num_freed)
-    {
-      Wrapper *next = cur->next_free;
-      pool_free (p, &cur->ptr);
-      cur = next;
-    }
-
-  return num_freed;
 }
 
 void

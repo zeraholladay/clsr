@@ -7,7 +7,7 @@
 #define FIRST(node) ((node)->as.list.first)
 #define REST(node) ((node)->as.list.rest)
 
-#define CONS(first, rest, ctx) (cons_list (CTX_POOL (ctx), first, rest))
+#define CONS(first, rest, ctx) (cons_list (&CTX_POOL (ctx), first, rest))
 #define EMPTY_LIST(ctx) (CONS (NULL, NULL, ctx))
 #define LIST1(item, ctx) (CONS (item, EMPTY_LIST (ctx), ctx))
 #define LIST2(first, rest, ctx) (CONS (first, LIST1 (rest, ctx), ctx))

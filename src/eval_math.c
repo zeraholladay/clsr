@@ -37,7 +37,7 @@ eval_add (Node *args, Context *ctx)
       sum += GET_INTEGER (FIRST (cur));
     }
 
-  return cons_integer (CTX_POOL (ctx), sum);
+  return cons_integer (&CTX_POOL (ctx), sum);
 }
 
 Node *
@@ -74,7 +74,7 @@ eval_sub (Node *args, Context *ctx)
       total -= GET_INTEGER (FIRST (cur));
     }
 
-  return cons_integer (CTX_POOL (ctx), total);
+  return cons_integer (&CTX_POOL (ctx), total);
 }
 
 Node *
@@ -111,7 +111,7 @@ eval_mul (Node *args, Context *ctx)
       result *= GET_INTEGER (FIRST (cur));
     }
 
-  return cons_integer (CTX_POOL (ctx), result);
+  return cons_integer (&CTX_POOL (ctx), result);
 }
 
 Node *
@@ -154,5 +154,5 @@ eval_div (Node *args, Context *ctx)
       result /= GET_INTEGER (FIRST (cur));
     }
 
-  return cons_integer (CTX_POOL (ctx), result);
+  return cons_integer (&CTX_POOL (ctx), result);
 }

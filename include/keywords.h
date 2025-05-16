@@ -14,7 +14,7 @@ typedef struct Keyword
 {
   const char *name;
   struct Node *(*fn) (struct Node *, struct Context *);
-  int arity;
+  int arity, token;
 } Keyword;
 
 /* KEYWORD.gperf */

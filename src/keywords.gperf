@@ -1,12 +1,11 @@
 // clang-format off
 %{
-// clang-format off
 #include <string.h>
 
 #include "eval.h"
 #include "eval_math.h"
 #include "keywords.h"
-// clang-format off
+#include "parser.h"
 %}
 
 %includes
@@ -16,37 +15,35 @@
 %struct-type
 %ignore-case
 %define lookup-function-name keyword_lookup
-%define initializer-suffix ,0,0
+%define initializer-suffix ,0,0,0
 %define slot-name name
 
 struct Keyword;
 
 %%
-APPLY,   eval_apply,    2
-CONS,    eval_cons,     2
-EQ,      eval_eq,       2
-EVAL,    eval,          1
-FIRST,   eval_first,    1
-FUNCALL, eval_funcall, -1
-IF,      NULL,          0
-LAMBDA,  NULL,          0
-LEN,     eval_len,      1
-NIL,     NULL,          0
-LIST,    eval_list,    -1
-PAIR,    eval_pair,     2
-PRINT,   eval_print,    1
-QUOTE,   NULL,          0
-REST,    eval_rest,     1
-SET,     eval_set,      2
-STR,     eval_str,      1
-T,       NULL,          0
-ADD,     eval_add,     -1
-SUB,     eval_sub,     -1
-MUL,     eval_mul,     -1
-DIV,     eval_div,     -1
+APPLY,   eval_apply,    2,  PRIMITIVE
+CONS,    eval_cons,     2,  PRIMITIVE
+EQ,      eval_eq,       2,  PRIMITIVE
+EVAL,    eval,          1,  PRIMITIVE
+FIRST,   eval_first,    1,  PRIMITIVE
+FUNCALL, eval_funcall, -1,  PRIMITIVE
+IF,      NULL,          0,  IF
+LAMBDA,  NULL,          0,  LAMBDA
+LEN,     eval_len,      1,  PRIMITIVE
+NIL,     NULL,          0,  NIL_
+LIST,    eval_list,    -1,  PRIMITIVE
+PAIR,    eval_pair,     2,  PRIMITIVE
+PRINT,   eval_print,    1,  PRIMITIVE
+QUOTE,   NULL,          0,  QUOTE
+REST,    eval_rest,     1,  PRIMITIVE
+SET,     eval_set,      2,  PRIMITIVE
+STR,     eval_str,      1,  PRIMITIVE
+T,       NULL,          0,  T_
+ADD,     eval_add,     -1,  PRIMITIVE
+SUB,     eval_sub,     -1,  PRIMITIVE
+MUL,     eval_mul,     -1,  PRIMITIVE
+DIV,     eval_div,     -1,  PRIMITIVE
 %%
-
-// clang-format off
 
 #define PRIN_FN_TAB_NUM                                                       \
   ((int)(sizeof (keyword_table) / sizeof (keyword_table[0])))
@@ -73,4 +70,3 @@ is_keyword_strncmp (const char *text, int state)
     }
   return NULL;
 }
-//clang-format off

@@ -50,11 +50,15 @@ Context *ctx
 %type <node> lambda_form lambda_param_form // special form
 %type <node> if_form  // special form
 
-%token NIL_TOKEN T_TOKEN
-%token ERROR LAMBDA QUOTE
-%token <keyword> IF PRIMITIVE
-%token <integer> INTEGER
-%token <symbol>  SYMBOL
+%token ERROR                // error state
+%token NIL                  // NIL singleton
+%token T                    // T singleton
+%token <keyword> IF         // Symbol and special form
+%token <keyword> QUOTE      // Symbol and special form
+%token LAMBDA               // Lambda type and special form
+%token <keyword> PRIMITIVE  // Primitive types (callable)
+%token <integer> INTEGER    // Integers
+%token <symbol>  SYMBOL     // Symbols
 
 %%
 
@@ -88,7 +92,7 @@ expr
   | literal_expr
   | QUOTE expr
     {
-      Node *quote = cons_prim (&CTX_POOL (ctx), KEYWORD (QUOTE));
+      Node *quote = cons_prim (&CTX_POOL (ctx), $1);
       $$ = LIST2 (quote, $2, ctx);
     }
   ;
@@ -113,11 +117,11 @@ list_expr
   ;
 
 literal_expr
-  : NIL_TOKEN
+  : NIL
     {
       $$ = NIL;
     }
-  | T_TOKEN
+  | T
     {
       $$ = T;
     }

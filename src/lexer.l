@@ -41,26 +41,7 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
                     if (keyword)
                       {
                         yylval.keyword = keyword;
-                        if (keyword == KEYWORD (NIL))
-                          {
-                            return NIL_TOKEN;
-                          }
-                        else if (keyword == KEYWORD (T))
-                          {
-                            return T_TOKEN;
-                          }
-                        else if (keyword == KEYWORD (LAMBDA))
-                          {
-                            return LAMBDA;
-                          }
-                        else if (keyword == KEYWORD (IF))
-                          {
-                            return IF;
-                          }
-                        else
-                          {
-                            return PRIMITIVE ;
-                          }
+                        return keyword->token;
                       }
                     else
                       {
@@ -89,7 +70,7 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
                           return ERROR;
                           break;
                       }
-                    return PRIMITIVE;
+                    return yylval.keyword->token;
                   }
   {WS}            { /* ignore */ }
   {NL}            { /* ignore */ }

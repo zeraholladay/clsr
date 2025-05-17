@@ -77,7 +77,7 @@ static int
 list_eq (Node *self, Node *other)
 {
   return type_eq (self, other)
-         && ((IS_EMPTY_LIST (self) && IS_EMPTY_LIST (other))
+         && ((IS_NIL (self) && IS_NIL (other))
              || GET_LIST (self) == GET_LIST (other));
 }
 
@@ -108,7 +108,7 @@ list_tostr (Node *self)
         }
     }
 
-  if (cur)
+  if (!IS_NIL (cur))
     {
       total += hl_append_strdup (hl, ".");
       total += hl_append_strdup (hl, type (cur)->str_fn (cur));

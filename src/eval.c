@@ -6,6 +6,7 @@
 #include "error.h"
 #include "eval.h"
 #include "keywords.h"
+#include "parser.h"
 #include "safe_str.h"
 #include "types.h"
 
@@ -22,9 +23,6 @@
 #define NIL_STR "NIL"
 #define T_STR "T"
 
-#define T (&t_node)
-#define NIL (&nil_node)
-
 Node nil_node
     = { .type = TYPE_NIL, .as.list = { .first = NULL, .rest = NULL } };
 
@@ -35,7 +33,7 @@ static Node *funcall (Node *fn, Node *arglist, Context *ctx);
 static Node *funcall_builtin (Node *fn, Node *args, Context *ctx);
 static Node *funcall_lambda (Node *fn, Node *args, Context *ctx);
 static size_t length (Node *list);
-static Node *lookup_sym (Node *node, Context *ctx);
+static Node *lookup (Node *node, Context *ctx);
 static Node *pair (Node *l1, Node *l2, Context *ctx);
 static Node *set (Node *car, Node *cdr, Context *ctx);
 
@@ -82,7 +80,7 @@ funcall (Node *fn, Node *arglist, Context *ctx)
       return funcall_lambda (fn, arglist, ctx);
     }
 
-  raise (ERR_INTERNAL, DEBUG_LOCATION);
+  raise (ERR_NOT_A_FUNCTION, type (fn)->str_fn (fn));
   return NULL;
 }
 
@@ -91,6 +89,12 @@ funcall_builtin (Node *fn, Node *arglist, Context *ctx)
 {
   const Primitive *prim = GET_PRIMITIVE (fn);
   int received = (int)length (arglist);
+
+  if (!IS_PRIMITIVE (fn) || !prim->fn || prim->token != INTRINSIC_PRIMITIVE)
+    {
+      raise (ERR_NOT_A_FUNCTION, type (fn)->str_fn (fn));
+      return NULL;
+    }
 
   if (prim->arity > 0 && prim->arity != received)
     {
@@ -122,7 +126,7 @@ funcall_lambda (Node *fn, Node *args, Context *ctx)
 
   Node *pairs = pair (GET_LAMBDA_PARAMS (fn), args, ctx);
 
-  while (!IS_EMPTY_LIST (pairs))
+  while (!IS_NIL (pairs))
     {
       Node *pair = FIRST (pairs);
       set (FIRST (pair), FIRST (REST (pair)), &new_ctx);
@@ -144,32 +148,19 @@ length (Node *list)
 }
 
 static Node *
-lookup_reserved_sym (const char *symstr)
+lookup (Node *node, Context *ctx)
 {
   static const struct
   {
     const char *name;
     size_t len;
     Node *value;
-  } table[] = {
-    { NIL_STR, sizeof (NIL_STR), NIL },
+  } kywd_tab[] = {
     { T_STR, sizeof (T_STR), T },
   };
 
-  for (size_t i = 0; i < sizeof (table) / sizeof (*table); ++i)
-    {
-      if (!safe_strncmp_minlen (symstr, table[i].name, table[i].len))
-        {
-          return table[i].value;
-        }
-    }
+  const size_t kywd_tab_len = sizeof (kywd_tab) / sizeof (*kywd_tab);
 
-  return NULL;
-}
-
-static Node *
-lookup_sym (Node *node, Context *ctx)
-{
   if (!IS_SYMBOL (node))
     {
       raise (ERR_INTERNAL, __func__);
@@ -178,11 +169,19 @@ lookup_sym (Node *node, Context *ctx)
 
   const char *symstr = GET_SYMBOL (node);
 
-  Node *reserved = lookup_reserved_sym (symstr);
+  // Is it a singleton symbol?
+  for (size_t i = 0; i < kywd_tab_len; ++i)
+    {
+      const char *name = kywd_tab[i].name;
+      size_t len = kywd_tab[i].len;
 
-  if (reserved)
-    return reserved;
+      if (!safe_strncmp_minlen (symstr, name, len))
+        {
+          return kywd_tab[i].value;
+        }
+    }
 
+  // else lookup in the env
   rb_node *n = env_lookup (CTX_ENV (ctx), symstr);
 
   if (!n)
@@ -197,8 +196,8 @@ lookup_sym (Node *node, Context *ctx)
 static Node *
 pair (Node *list1, Node *list2, Context *ctx)
 {
-  if (IS_EMPTY_LIST (list1) || IS_EMPTY_LIST (list2))
-    return CONS (NULL, NULL, ctx);
+  if (IS_NIL (list1) || IS_NIL (list2))
+    return NIL;
 
   Node *first_pair = LIST2 (FIRST (list1), FIRST (list2), ctx);
   Node *rest_pairs = pair (REST (list1), REST (list2), ctx);
@@ -218,7 +217,7 @@ set (Node *first, Node *rest, Context *ctx)
   const char *symstr = GET_SYMBOL (first);
   size_t len = strlen (symstr);
 
-  if (keyword_lookup (symstr, len) || lookup_reserved_sym (symstr))
+  if (keyword_lookup (symstr, len))
     {
       raise (ERR_INVALID_ARG, __func__);
       return NULL;
@@ -261,13 +260,15 @@ Node *
 eval_first (Node *args, Context *ctx)
 {
   (void)ctx;
-  if (!IS_LIST (FIRST (args)))
+  if (!LISTP (FIRST (args)))
     {
       raise (ERR_INVALID_ARG, __func__);
       return NULL;
     }
 
-  return FIRST (FIRST (args));
+  Node *first = FIRST (FIRST (args));
+
+  return first ? first : NIL;
 }
 
 Node *
@@ -276,7 +277,7 @@ eval_funcall (Node *args, Context *ctx)
   Node *fn_node = FIRST (args);
   Node *arglist = REST (args);
 
-  if (!(IS_LAMBDA (fn_node) || IS_PRIMITIVE (fn_node)) || !IS_LIST (arglist))
+  if (!(IS_LAMBDA (fn_node) || IS_PRIMITIVE (fn_node)) || !LISTP (arglist))
     {
       raise (ERR_INVALID_ARG, __func__);
       return NULL;
@@ -286,28 +287,11 @@ eval_funcall (Node *args, Context *ctx)
 }
 
 Node *
-eval_if (Node *args, Context *ctx)
-{
-  Node *condition = FIRST (args);
-  Node *then_expr = FIRST (REST (args));
-  Node *else_expr = FIRST (REST (REST (args)));
-
-  EqFn eq_fn = type (T)->eq_fn;
-
-  if (eq_fn (condition, T))
-    {
-      return eval (then_expr, ctx);
-    }
-
-  return eval (else_expr, ctx);
-}
-
-Node *
 eval_len (Node *args, Context *ctx)
 {
   Node *first = FIRST (args);
 
-  if (!IS_LIST (args))
+  if (!LISTP (args))
     {
       raise (ERR_INVALID_ARG, __func__);
       return NULL;
@@ -319,8 +303,8 @@ eval_len (Node *args, Context *ctx)
 Node *
 eval_list (Node *args, Context *ctx)
 {
-  if (IS_EMPTY_LIST (args))
-    return CONS (NULL, NULL, ctx);
+  if (IS_NIL (args))
+    return NIL;
 
   Node *car = eval (FIRST (args), ctx);
   Node *cdr = eval_list (REST (args), ctx);
@@ -331,7 +315,7 @@ eval_list (Node *args, Context *ctx)
 Node *
 eval_pair (Node *args, Context *ctx)
 {
-  if (!IS_LIST (FIRST (args)) || !IS_LIST (FIRST (REST (args))))
+  if (!LISTP (FIRST (args)) || !LISTP (FIRST (REST (args))))
     {
       raise (ERR_INVALID_ARG, __func__);
       return NULL;
@@ -345,7 +329,7 @@ eval_print (Node *args, Context *ctx)
 {
   (void)ctx;
 
-  if (!IS_LIST (args))
+  if (!LISTP (args))
     {
       raise (ERR_INVALID_ARG, __func__);
       return NULL;
@@ -362,7 +346,7 @@ eval_rest (Node *args, Context *ctx)
 
   Node *first = FIRST (args);
 
-  if (!IS_LIST (first))
+  if (!LISTP (first))
     {
       raise (ERR_INVALID_ARG, __func__);
       return NULL;
@@ -395,16 +379,16 @@ Node *
 eval (Node *expr, Context *ctx)
 {
   if (IS_SYMBOL (expr))
-    return lookup_sym (expr, ctx);
+    return lookup (expr, ctx);
 
-  if (!IS_LIST (expr))
+  if (!LISTP (expr))
     return expr;
 
-  if (IS_LIST (expr))
+  if (LISTP (expr))
     {
-      if (IS_EMPTY_LIST (expr))
+      if (IS_NIL (expr))
         {
-          return expr;
+          return NIL;
         }
 
       if (IS_LAMBDA (FIRST (expr)))
@@ -415,14 +399,28 @@ eval (Node *expr, Context *ctx)
       Node *fn = eval (FIRST (expr), ctx);
       const Primitive *prim = GET_PRIMITIVE (fn);
 
-      if (prim == KEYWORD (QUOTE))
+      if (IS_PRIMITIVE (fn) && prim->token == QUOTE_PRIMITIVE)
         {
           return FIRST (REST (expr));
         }
 
-      if (prim == KEYWORD (EVAL))
+      if (IS_PRIMITIVE (fn) && prim->token == EVAL_PRIMITIVE)
         {
           return eval (eval (FIRST (REST (expr)), ctx), ctx);
+        }
+
+      if (IS_PRIMITIVE (fn) && prim->token == IF_PRIMITIVE)
+        {
+          Node *pred_expr = FIRST (REST (expr));
+
+          if (IS_NIL (eval (pred_expr, ctx)))
+            {
+              return eval (FIRST (REST (REST (expr))), ctx);
+            }
+          else
+            {
+              return eval (FIRST (REST (REST (REST (expr)))), ctx);
+            }
         }
 
       return apply (fn, expr, ctx);
@@ -435,14 +433,14 @@ eval (Node *expr, Context *ctx)
 Node *
 eval_program (Node *program, Context *ctx)
 {
-  Node *result = NULL;
+  Node *result = NIL;
 
-  for (Node *expr = FIRST (program); !IS_EMPTY_LIST (expr);
-       expr = FIRST (program))
+  do
     {
-      result = eval (expr, ctx);
+      result = eval (FIRST (program), ctx);
       program = REST (program);
     }
+  while (!IS_NIL (program));
 
   return result;
 }

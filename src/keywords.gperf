@@ -1,12 +1,11 @@
 // clang-format off
 %{
-// clang-format off
 #include <string.h>
 
 #include "eval.h"
 #include "eval_math.h"
 #include "keywords.h"
-// clang-format off
+#include "parser.h"
 %}
 
 %includes
@@ -16,35 +15,35 @@
 %struct-type
 %ignore-case
 %define lookup-function-name keyword_lookup
-%define initializer-suffix ,0,0
+%define initializer-suffix ,0,0,0
 %define slot-name name
 
 struct Keyword;
 
 %%
-APPLY,   eval_apply,   2
-CONS,    eval_cons,    2
-EQ,      eval_eq,      2
-EVAL,    eval,         1
-FIRST,   eval_first,   1
-FUNCALL, eval_funcall, -1
-IF,      eval_if,      3
-LAMBDA,  NULL,         0
-LEN,     eval_len,     1
-LIST,    eval_list,   -1
-PAIR,    eval_pair,    2
-PRINT,   eval_print,   1
-QUOTE,   NULL,         0
-REST,    eval_rest,    1
-SET,     eval_set,     2
-STR,     eval_str,     1
-ADD,     eval_add,    -1
-SUB,     eval_sub,    -1
-MUL,     eval_mul,    -1
-DIV,     eval_div,    -1
+APPLY,   eval_apply,    2, INTRINSIC_PRIMITIVE
+CONS,    eval_cons,     2, INTRINSIC_PRIMITIVE
+EQ,      eval_eq,       2, INTRINSIC_PRIMITIVE
+EVAL,    eval,          1, EVAL_PRIMITIVE
+FIRST,   eval_first,    1, INTRINSIC_PRIMITIVE
+FUNCALL, eval_funcall, -1, INTRINSIC_PRIMITIVE
+IF,      NULL,          0, IF_PRIMITIVE
+LAMBDA,  NULL,          0, LAMBDA_PRIMITIVE
+LEN,     eval_len,      1, INTRINSIC_PRIMITIVE
+NIL,     NULL,          0, NIL_TOKEN
+LIST,    eval_list,    -1, INTRINSIC_PRIMITIVE
+PAIR,    eval_pair,     2, INTRINSIC_PRIMITIVE
+PRINT,   eval_print,    1, INTRINSIC_PRIMITIVE
+QUOTE,   NULL,          0, QUOTE_PRIMITIVE
+REST,    eval_rest,     1, INTRINSIC_PRIMITIVE
+SET,     eval_set,      2, INTRINSIC_PRIMITIVE
+STR,     eval_str,      1, INTRINSIC_PRIMITIVE
+T,       NULL,          0, T_TOKEN
+ADD,     eval_add,     -1, INTRINSIC_PRIMITIVE
+SUB,     eval_sub,     -1, INTRINSIC_PRIMITIVE
+MUL,     eval_mul,     -1, INTRINSIC_PRIMITIVE
+DIV,     eval_div,     -1, INTRINSIC_PRIMITIVE
 %%
-
-// clang-format off
 
 #define PRIN_FN_TAB_NUM                                                       \
   ((int)(sizeof (keyword_table) / sizeof (keyword_table[0])))
@@ -71,4 +70,3 @@ is_keyword_strncmp (const char *text, int state)
     }
   return NULL;
 }
-//clang-format off

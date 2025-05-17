@@ -11,7 +11,6 @@
 
 #define IS_TYPE(node, kind) ((node) != NULL && (node)->type == (kind))
 
-#define IS_NIL(node) IS_TYPE ((node), TYPE_NIL)
 #define IS_SYMBOL(node) IS_TYPE ((node), TYPE_SYMBOL)
 #define IS_INTEGER(node) IS_TYPE ((node), TYPE_INTEGER)
 #define IS_STRING(node) IS_TYPE ((node), TYPE_STRING)

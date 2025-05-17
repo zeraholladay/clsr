@@ -12,7 +12,7 @@ eval_add (Node *args, Context *ctx)
       return NULL;
     }
 
-  if (IS_EMPTY_LIST (args))
+  if (IS_NIL (args))
     {
       raise (ERR_INVALID_ARG_LENGTH, "add: expected >= 1 arguments");
       return NULL;
@@ -26,7 +26,7 @@ eval_add (Node *args, Context *ctx)
 
   Integer sum = GET_INTEGER (FIRST (args));
 
-  for (Node *cur = REST (args); !IS_EMPTY_LIST (cur); cur = REST (cur))
+  for (Node *cur = REST (args); !IS_NIL (cur); cur = REST (cur))
     {
       if (!IS_INTEGER (FIRST (cur)))
         {
@@ -49,7 +49,7 @@ eval_sub (Node *args, Context *ctx)
       return NULL;
     }
 
-  if (IS_EMPTY_LIST (args))
+  if (IS_NIL (args))
     {
       raise (ERR_INVALID_ARG_LENGTH, "sub: expected >= 1 arguments");
       return NULL;
@@ -63,7 +63,7 @@ eval_sub (Node *args, Context *ctx)
 
   Integer total = GET_INTEGER (FIRST (args));
 
-  for (Node *cur = REST (args); !IS_EMPTY_LIST (cur); cur = REST (cur))
+  for (Node *cur = REST (args); !IS_NIL (cur); cur = REST (cur))
     {
       if (!IS_INTEGER (FIRST (cur)))
         {
@@ -86,7 +86,7 @@ eval_mul (Node *args, Context *ctx)
       return NULL;
     }
 
-  if (IS_EMPTY_LIST (args))
+  if (IS_NIL (args))
     {
       raise (ERR_INVALID_ARG_LENGTH, "mul: expected >= 1 arguments");
       return NULL;
@@ -100,7 +100,7 @@ eval_mul (Node *args, Context *ctx)
 
   Integer result = GET_INTEGER (FIRST (args));
 
-  for (Node *cur = REST (args); !IS_EMPTY_LIST (cur); cur = REST (cur))
+  for (Node *cur = REST (args); !IS_NIL (cur); cur = REST (cur))
     {
       if (!IS_INTEGER (FIRST (cur)))
         {
@@ -123,7 +123,7 @@ eval_div (Node *args, Context *ctx)
       return NULL;
     }
 
-  if (IS_EMPTY_LIST (args))
+  if (IS_NIL (args))
     {
       raise (ERR_INVALID_ARG_LENGTH, "div: expected >= 1 arguments");
       return NULL;
@@ -137,7 +137,7 @@ eval_div (Node *args, Context *ctx)
 
   Integer result = GET_INTEGER (FIRST (args));
 
-  for (Node *cur = REST (args); !IS_EMPTY_LIST (cur); cur = REST (cur))
+  for (Node *cur = REST (args); !IS_NIL (cur); cur = REST (cur))
     {
       if (!IS_INTEGER (FIRST (cur)))
         {

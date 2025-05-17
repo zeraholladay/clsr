@@ -413,7 +413,7 @@ eval (Node *expr, Context *ctx)
           return eval_or (REST (expr), ctx);
         }
 
-      // IF
+      // IF (clean up)
       if (IS_PRIMITIVE (fn) && prim->token == IF_PRIMITIVE)
         {
           Node *pred_expr = FIRST (REST (expr));
@@ -424,7 +424,8 @@ eval (Node *expr, Context *ctx)
             }
           else
             {
-              return eval (FIRST (REST (REST (REST (expr)))), ctx);
+              Node *else_expr = FIRST (REST (REST (REST (expr))));
+              return else_expr ? eval (else_expr, ctx) : NIL;
             }
         }
 

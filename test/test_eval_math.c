@@ -49,6 +49,42 @@ run_eval_program (const char *input)
   return eval_result;
 }
 
+START_TEST (test_gt)
+{
+  Node *eval_result = NULL;
+
+  eval_result = run_eval_program ("(gt 10 5 2)");
+  ck_assert_str_eq (GET_SYMBOL (eval_result), "T");
+
+  eval_result = run_eval_program ("(gt 5)");
+  ck_assert_str_eq (GET_SYMBOL (eval_result), "T");
+
+  eval_result = run_eval_program ("(gt 2 3)");
+  ck_assert (IS_NIL (eval_result));
+
+  eval_result = run_eval_program ("(gt 3 3)");
+  ck_assert (IS_NIL (eval_result));
+}
+END_TEST
+
+START_TEST (test_lt)
+{
+  Node *eval_result = NULL;
+
+  eval_result = run_eval_program ("(lt 1 2 3)");
+  ck_assert_str_eq (GET_SYMBOL (eval_result), "T");
+
+  eval_result = run_eval_program ("(lt 5)");
+  ck_assert_str_eq (GET_SYMBOL (eval_result), "T");
+
+  eval_result = run_eval_program ("(lt 3 2)");
+  ck_assert (IS_NIL (eval_result));
+
+  eval_result = run_eval_program ("(lt 4 4)");
+  ck_assert (IS_NIL (eval_result));
+}
+END_TEST
+
 START_TEST (test_add)
 {
   Node *eval_result = NULL;
@@ -125,7 +161,8 @@ eval_math_suite (void)
   TCase *tc_core = tcase_create ("Core");
   tcase_add_checked_fixture (tc_core, setup, teardown);
 
-  /* Add these to your suite: */
+  tcase_add_test (tc_core, test_gt);
+  tcase_add_test (tc_core, test_lt);
   tcase_add_test (tc_core, test_add);
   tcase_add_test (tc_core, test_sub);
   tcase_add_test (tc_core, test_mul);

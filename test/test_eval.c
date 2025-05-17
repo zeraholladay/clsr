@@ -223,6 +223,52 @@ START_TEST (test_pair)
 }
 END_TEST
 
+START_TEST (test_if)
+{
+  Node *eval_result = NULL;
+
+  eval_result = run_eval_program ("(if T 1 2)");
+  ck_assert_int_eq (GET_INTEGER (eval_result), 1);
+
+  eval_result = run_eval_program ("(if NIL 1 2)");
+  ck_assert_int_eq (GET_INTEGER (eval_result), 2);
+
+  eval_result = run_eval_program ("(if T 42)");
+  ck_assert_int_eq (GET_INTEGER (eval_result), 42);
+
+  eval_result = run_eval_program ("(if NIL 42)");
+  ck_assert (IS_NIL (eval_result));
+
+  eval_result = run_eval_program ("(if (< 2 3) 'yes 'no)");
+  ck_assert_str_eq (GET_SYMBOL (eval_result), "yes");
+}
+END_TEST
+
+START_TEST (test_list)
+{
+  Node *eval_result = NULL;
+
+  eval_result = run_eval_program ("(list)");
+  ck_assert (IS_NIL (eval_result));
+
+  eval_result = run_eval_program ("(list 7)");
+  ck_assert_int_eq (GET_INTEGER (FIRST (eval_result)), 7);
+  ck_assert (IS_NIL (REST (eval_result)));
+
+  eval_result = run_eval_program ("(list 1 2 3)");
+  ck_assert_int_eq (GET_INTEGER (FIRST (eval_result)), 1);
+  ck_assert_int_eq (GET_INTEGER (FIRST (REST (eval_result))), 2);
+  ck_assert_int_eq (GET_INTEGER (FIRST (REST (REST (eval_result)))), 3);
+  ck_assert (IS_NIL (REST (REST (REST (eval_result)))));
+
+  eval_result = run_eval_program ("(list 'a 'b)");
+  Node *second = FIRST (REST (eval_result));
+  ck_assert_str_eq (GET_SYMBOL (FIRST (eval_result)), "a");
+  ck_assert_str_eq (GET_SYMBOL (second), "b");
+  ck_assert (IS_NIL (REST (REST (eval_result))));
+}
+END_TEST
+
 START_TEST (test_lambda)
 {
   Node *eval_result = NULL;
@@ -360,6 +406,8 @@ eval_suite (void)
   tcase_add_test (tc_core, test_rest);
   tcase_add_test (tc_core, test_len);
   tcase_add_test (tc_core, test_pair);
+  tcase_add_test (tc_core, test_if);
+  tcase_add_test (tc_core, test_list);
   tcase_add_test (tc_core, test_lambda);
   tcase_add_test (tc_core, test_apply);
   tcase_add_test (tc_core, test_funcall);

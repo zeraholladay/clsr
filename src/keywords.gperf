@@ -29,9 +29,11 @@ EQ,      eval_eq,       2, INTRINSIC_PRIMITIVE
 EVAL,    eval,          1, EVAL_PRIMITIVE
 FIRST,   eval_first,    1, INTRINSIC_PRIMITIVE
 FUNCALL, eval_funcall, -1, INTRINSIC_PRIMITIVE
+GT,      eval_gt,      -1, INTRINSIC_PRIMITIVE
 IF,      NULL,          0, IF_PRIMITIVE
 LAMBDA,  NULL,          0, LAMBDA_PRIMITIVE
 LEN,     eval_len,      1, INTRINSIC_PRIMITIVE
+LT,      eval_lt,      -1, INTRINSIC_PRIMITIVE
 NIL,     NULL,          0, NIL_TOKEN
 NOT,     eval_not,      1, INTRINSIC_PRIMITIVE
 LIST,    eval_list,    -1, INTRINSIC_PRIMITIVE

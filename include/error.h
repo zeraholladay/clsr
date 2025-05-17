@@ -3,6 +3,7 @@
 
 typedef enum
 {
+  ERR_NOT_A_FUNCTION,     // Function DNE
   ERR_INTERNAL,           // Internal error (bug)
   ERR_SYMBOL_NOT_FOUND,   // Symbol undefined
   ERR_INVALID_ARG,        // Invalid type or value for argument
@@ -18,6 +19,7 @@ typedef enum
 
 static const char *error_messages[]
     = { [ERR_INTERNAL] = "Internal error occurred",
+        [ERR_NOT_A_FUNCTION] = "No such function",
         [ERR_SYMBOL_NOT_FOUND] = "Could not resolve symbol",
         [ERR_INVALID_ARG] = "Invalid argument type or value",
         [ERR_MISSING_ARG] = "Missing required argument",

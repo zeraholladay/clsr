@@ -23,7 +23,8 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
 
 <INITIAL>{
   "'"             {
-                    return QUOTE;
+                    yylval.keyword = KEYWORD(QUOTE);
+                    return QUOTE_PRIMITIVE;
                   }
   "("             {
                     return '(';

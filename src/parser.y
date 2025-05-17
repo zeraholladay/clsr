@@ -47,18 +47,19 @@ Context *ctx
 }
 
 %type <node> program exprs expr list_expr list_form literal_expr
-%type <node> lambda_form lambda_param_form // special form
-%type <node> if_form  // special form
+%type <node> lambda_form lambda_param_form
+%type <node> if_form
 
-%token ERROR                // error state
-%token NIL                  // NIL singleton
-%token T                    // T singleton
-%token <keyword> IF         // Symbol and special form
-%token <keyword> QUOTE      // Symbol and special form
-%token LAMBDA               // Lambda type and special form
-%token <keyword> PRIMITIVE  // Primitive types (callable)
-%token <integer> INTEGER    // Integers
-%token <symbol>  SYMBOL     // Symbols
+%token ERROR                          // error state
+%token NIL_TOKEN                      // NIL singleton
+%token T_TOKEN                        // T singleton
+%token LAMBDA_PRIMITIVE               // Lambda type and special form
+%token <keyword> IF_PRIMITIVE         // Symbol and special form
+%token <keyword> QUOTE_PRIMITIVE      // Symbol and special form
+%token <keyword> INTRINSIC_PRIMITIVE  // Primitive types (callable)
+%token <keyword> EVAL_PRIMITIVE       // Special Code for Eval
+%token <integer> INTEGER              // Integers
+%token <symbol>  SYMBOL               // Symbols
 
 %%
 
@@ -90,7 +91,7 @@ exprs
 expr
   : list_expr
   | literal_expr
-  | QUOTE expr
+  | QUOTE_PRIMITIVE expr
     {
       Node *quote = cons_prim (&CTX_POOL (ctx), $1);
       $$ = LIST2 (quote, $2, ctx);
@@ -117,11 +118,11 @@ list_expr
   ;
 
 literal_expr
-  : NIL
+  : NIL_TOKEN
     {
       $$ = NIL;
     }
-  | T
+  | T_TOKEN
     {
       $$ = T;
     }
@@ -129,7 +130,11 @@ literal_expr
     {
       $$ = cons_symbol (&CTX_POOL (ctx), $1);
     }
-  | PRIMITIVE
+  | INTRINSIC_PRIMITIVE
+    {
+      $$ = cons_prim (&CTX_POOL (ctx), $1);
+    }
+  | EVAL_PRIMITIVE
     {
       $$ = cons_prim (&CTX_POOL (ctx), $1);
     }
@@ -151,7 +156,7 @@ list_form
   ;
 
 lambda_form
-  : LAMBDA '(' lambda_param_form ')' exprs
+  : LAMBDA_PRIMITIVE '(' lambda_param_form ')' exprs
     {
       $$ = cons_lambda (&CTX_POOL (ctx), $3, $5, CTX_ENV (ctx));
     }
@@ -168,13 +173,13 @@ lambda_param_form
   ;
 
 if_form
-  : IF expr expr expr
+  : IF_PRIMITIVE expr expr expr
     {
       Node *if_symbol = cons_prim (&CTX_POOL (ctx), $1);
       Node *expr = CONS ( $2, LIST2 ($3, $4, ctx), ctx);
       $$ = CONS (if_symbol, expr, ctx);
     }
-  | IF expr expr
+  | IF_PRIMITIVE expr expr
     {
       Node *if_symbol = cons_prim (&CTX_POOL (ctx), $1);
       Node *expr = CONS ( $2, LIST1 ($3, ctx), ctx);

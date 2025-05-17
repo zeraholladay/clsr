@@ -6,6 +6,7 @@
 #include "error.h"
 #include "eval.h"
 #include "keywords.h"
+#include "parser.h"
 #include "safe_str.h"
 #include "types.h"
 
@@ -32,7 +33,7 @@ static Node *funcall (Node *fn, Node *arglist, Context *ctx);
 static Node *funcall_builtin (Node *fn, Node *args, Context *ctx);
 static Node *funcall_lambda (Node *fn, Node *args, Context *ctx);
 static size_t length (Node *list);
-static Node *lookup_sym (Node *node, Context *ctx);
+static Node *lookup (Node *node, Context *ctx);
 static Node *pair (Node *l1, Node *l2, Context *ctx);
 static Node *set (Node *car, Node *cdr, Context *ctx);
 
@@ -79,10 +80,7 @@ funcall (Node *fn, Node *arglist, Context *ctx)
       return funcall_lambda (fn, arglist, ctx);
     }
 
-  printf ("here\n");
-  PRINT (fn);
-
-  raise (ERR_INTERNAL, DEBUG_LOCATION);
+  raise (ERR_NOT_A_FUNCTION, type (fn)->str_fn (fn));
   return NULL;
 }
 
@@ -91,6 +89,12 @@ funcall_builtin (Node *fn, Node *arglist, Context *ctx)
 {
   const Primitive *prim = GET_PRIMITIVE (fn);
   int received = (int)length (arglist);
+
+  if (!IS_PRIMITIVE (fn) || !prim->fn || prim->token != INTRINSIC_PRIMITIVE)
+    {
+      raise (ERR_NOT_A_FUNCTION, type (fn)->str_fn (fn));
+      return NULL;
+    }
 
   if (prim->arity > 0 && prim->arity != received)
     {
@@ -144,32 +148,19 @@ length (Node *list)
 }
 
 static Node *
-lookup_reserved_sym (const char *symstr)
+lookup (Node *node, Context *ctx)
 {
   static const struct
   {
     const char *name;
     size_t len;
     Node *value;
-  } table[] = {
-    { NIL_STR, sizeof (NIL_STR), NIL },
+  } kywd_tab[] = {
     { T_STR, sizeof (T_STR), T },
   };
 
-  for (size_t i = 0; i < sizeof (table) / sizeof (*table); ++i)
-    {
-      if (!safe_strncmp_minlen (symstr, table[i].name, table[i].len))
-        {
-          return table[i].value;
-        }
-    }
+  const size_t kywd_tab_len = sizeof (kywd_tab) / sizeof (*kywd_tab);
 
-  return NULL;
-}
-
-static Node *
-lookup_sym (Node *node, Context *ctx)
-{
   if (!IS_SYMBOL (node))
     {
       raise (ERR_INTERNAL, __func__);
@@ -178,11 +169,19 @@ lookup_sym (Node *node, Context *ctx)
 
   const char *symstr = GET_SYMBOL (node);
 
-  Node *reserved = lookup_reserved_sym (symstr);
+  // Is it a singleton symbol?
+  for (size_t i = 0; i < kywd_tab_len; ++i)
+    {
+      const char *name = kywd_tab[i].name;
+      size_t len = kywd_tab[i].len;
 
-  if (reserved)
-    return reserved;
+      if (!safe_strncmp_minlen (symstr, name, len))
+        {
+          return kywd_tab[i].value;
+        }
+    }
 
+  // else lookup in the env
   rb_node *n = env_lookup (CTX_ENV (ctx), symstr);
 
   if (!n)
@@ -218,7 +217,7 @@ set (Node *first, Node *rest, Context *ctx)
   const char *symstr = GET_SYMBOL (first);
   size_t len = strlen (symstr);
 
-  if (keyword_lookup (symstr, len) || lookup_reserved_sym (symstr))
+  if (keyword_lookup (symstr, len))
     {
       raise (ERR_INVALID_ARG, __func__);
       return NULL;
@@ -380,7 +379,7 @@ Node *
 eval (Node *expr, Context *ctx)
 {
   if (IS_SYMBOL (expr))
-    return lookup_sym (expr, ctx);
+    return lookup (expr, ctx);
 
   if (!LISTP (expr))
     return expr;
@@ -400,17 +399,17 @@ eval (Node *expr, Context *ctx)
       Node *fn = eval (FIRST (expr), ctx);
       const Primitive *prim = GET_PRIMITIVE (fn);
 
-      if (prim == KEYWORD (QUOTE))
+      if (IS_PRIMITIVE (fn) && prim->token == QUOTE_PRIMITIVE)
         {
           return FIRST (REST (expr));
         }
 
-      if (prim == KEYWORD (EVAL))
+      if (IS_PRIMITIVE (fn) && prim->token == EVAL_PRIMITIVE)
         {
           return eval (eval (FIRST (REST (expr)), ctx), ctx);
         }
 
-      if (prim == KEYWORD (IF))
+      if (IS_PRIMITIVE (fn) && prim->token == IF_PRIMITIVE)
         {
           Node *pred_expr = FIRST (REST (expr));
 

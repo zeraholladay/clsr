@@ -21,28 +21,28 @@
 struct Keyword;
 
 %%
-APPLY,   eval_apply,    2,  PRIMITIVE
-CONS,    eval_cons,     2,  PRIMITIVE
-EQ,      eval_eq,       2,  PRIMITIVE
-EVAL,    eval,          1,  PRIMITIVE
-FIRST,   eval_first,    1,  PRIMITIVE
-FUNCALL, eval_funcall, -1,  PRIMITIVE
-IF,      NULL,          0,  IF
-LAMBDA,  NULL,          0,  LAMBDA
-LEN,     eval_len,      1,  PRIMITIVE
-NIL,     NULL,          0,  NIL_
-LIST,    eval_list,    -1,  PRIMITIVE
-PAIR,    eval_pair,     2,  PRIMITIVE
-PRINT,   eval_print,    1,  PRIMITIVE
-QUOTE,   NULL,          0,  QUOTE
-REST,    eval_rest,     1,  PRIMITIVE
-SET,     eval_set,      2,  PRIMITIVE
-STR,     eval_str,      1,  PRIMITIVE
-T,       NULL,          0,  T_
-ADD,     eval_add,     -1,  PRIMITIVE
-SUB,     eval_sub,     -1,  PRIMITIVE
-MUL,     eval_mul,     -1,  PRIMITIVE
-DIV,     eval_div,     -1,  PRIMITIVE
+APPLY,   eval_apply,    2, INTRINSIC_PRIMITIVE
+CONS,    eval_cons,     2, INTRINSIC_PRIMITIVE
+EQ,      eval_eq,       2, INTRINSIC_PRIMITIVE
+EVAL,    eval,          1, EVAL_PRIMITIVE
+FIRST,   eval_first,    1, INTRINSIC_PRIMITIVE
+FUNCALL, eval_funcall, -1, INTRINSIC_PRIMITIVE
+IF,      NULL,          0, IF_PRIMITIVE
+LAMBDA,  NULL,          0, LAMBDA_PRIMITIVE
+LEN,     eval_len,      1, INTRINSIC_PRIMITIVE
+NIL,     NULL,          0, NIL_TOKEN
+LIST,    eval_list,    -1, INTRINSIC_PRIMITIVE
+PAIR,    eval_pair,     2, INTRINSIC_PRIMITIVE
+PRINT,   eval_print,    1, INTRINSIC_PRIMITIVE
+QUOTE,   NULL,          0, QUOTE_PRIMITIVE
+REST,    eval_rest,     1, INTRINSIC_PRIMITIVE
+SET,     eval_set,      2, INTRINSIC_PRIMITIVE
+STR,     eval_str,      1, INTRINSIC_PRIMITIVE
+T,       NULL,          0, T_TOKEN
+ADD,     eval_add,     -1, INTRINSIC_PRIMITIVE
+SUB,     eval_sub,     -1, INTRINSIC_PRIMITIVE
+MUL,     eval_mul,     -1, INTRINSIC_PRIMITIVE
+DIV,     eval_div,     -1, INTRINSIC_PRIMITIVE
 %%
 
 #define PRIN_FN_TAB_NUM                                                       \

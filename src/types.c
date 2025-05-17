@@ -108,7 +108,7 @@ list_tostr (Node *self)
         }
     }
 
-  if (cur)
+  if (!IS_NIL (cur))
     {
       total += hl_append_strdup (hl, ".");
       total += hl_append_strdup (hl, type (cur)->str_fn (cur));

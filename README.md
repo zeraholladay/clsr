@@ -244,7 +244,10 @@ In no particular order:
 1. ~~Fix T/NIL~~
 1. ~~Equality~~
 1. ~~lambda~~
+1. Internal call stack.
 1. Boolean operators
+1. env_ memory allocation.
+1. Generic type-based allocator
 1. ~~IF needs to be a special form~~
 1. ~~Broke EQ.~~
 1. Test math

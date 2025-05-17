@@ -22,7 +22,6 @@ extern Node nil_node;
 
 Node *eval_apply (Node *args, Context *ctx);
 Node *eval_cons (Node *args, Context *ctx);
-Node *eval_eq (Node *args, Context *ctx);
 Node *eval_first (Node *args, Context *ctx);
 Node *eval_funcall (Node *args, Context *ctx);
 Node *eval_len (Node *args, Context *ctx);

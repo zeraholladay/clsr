@@ -244,18 +244,23 @@ In no particular order:
 1. ~~Fix T/NIL~~
 1. ~~Equality~~
 1. ~~lambda~~
-1. Boolean operators
+1. Internal call stack.
+1. ~~Boolean operators (AND, OR, NOT)~~
+1. ~~gt, lt.~~
+1. env_ memory allocation.
+1. Generic type-based allocator
+1. Add and mul should return 1 when no args.
 1. ~~IF needs to be a special form~~
 1. ~~Broke EQ.~~
-1. Test math
+1. ~~Test math~~
 1. Real Exceptions
 1. ~~Error status and messages~~
 1. Memory management (tracking)
 1. I/O subsystem
 1. ~~Refactor Primitives to Enum~~
 1. Docs/README.md
-1. Test list
-1. Test IF
+1. ~~Test list~~
+1. ~~Test IF~~
 1. Test heaplist
 1. ~~Repr/str is a mess~~
 1. Define/def

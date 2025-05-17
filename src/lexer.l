@@ -51,10 +51,16 @@ ID       [a-zA-Z_][a-zA-Z0-9_]*
                       }
                   }
 
-  [+\-*/]         {
+  [+\-*/><]       {
                     int op = yytext[0];
                     switch (op)
                       {
+                        case '>':
+                          yylval.keyword = KEYWORD(GT);
+                          break;
+                        case '<':
+                          yylval.keyword = KEYWORD(LT);
+                          break;
                         case '+':
                           yylval.keyword = KEYWORD(ADD);
                           break;

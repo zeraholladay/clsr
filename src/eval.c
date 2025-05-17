@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "error.h"
 #include "eval.h"
+#include "eval_bool.h"
 #include "keywords.h"
 #include "parser.h"
 #include "safe_str.h"
@@ -117,7 +118,7 @@ funcall_lambda (Node *fn, Node *args, Context *ctx)
     {
       ErrorCode err
           = (received < expected) ? ERR_MISSING_ARG : ERR_UNEXPECTED_ARG;
-      raise (err, __func__);
+      raise (err, "funcall/lambda");
       return NULL;
     }
 
@@ -163,7 +164,7 @@ lookup (Node *node, Context *ctx)
 
   if (!IS_SYMBOL (node))
     {
-      raise (ERR_INTERNAL, __func__);
+      raise (ERR_INTERNAL, DEBUG_LOCATION);
       return NULL;
     }
 
@@ -210,7 +211,7 @@ set (Node *first, Node *rest, Context *ctx)
 {
   if (!IS_SYMBOL (first))
     {
-      raise (ERR_INVALID_ARG, __func__);
+      raise (ERR_INVALID_ARG, "set");
       return NULL;
     }
 
@@ -219,7 +220,7 @@ set (Node *first, Node *rest, Context *ctx)
 
   if (keyword_lookup (symstr, len))
     {
-      raise (ERR_INVALID_ARG, __func__);
+      raise (ERR_INVALID_ARG, "set");
       return NULL;
     }
 
@@ -240,29 +241,12 @@ eval_cons (Node *args, Context *ctx)
 }
 
 Node *
-eval_eq (Node *args, Context *ctx)
-{
-  (void)ctx;
-  Node *first = FIRST (args);
-  Node *second = FIRST (REST (args));
-
-  EqFn fn = type (first)->eq_fn;
-
-  if (fn (FIRST (args), second))
-    {
-      return T;
-    }
-
-  return NIL;
-}
-
-Node *
 eval_first (Node *args, Context *ctx)
 {
   (void)ctx;
   if (!LISTP (FIRST (args)))
     {
-      raise (ERR_INVALID_ARG, __func__);
+      raise (ERR_INVALID_ARG, "first");
       return NULL;
     }
 
@@ -279,7 +263,7 @@ eval_funcall (Node *args, Context *ctx)
 
   if (!(IS_LAMBDA (fn_node) || IS_PRIMITIVE (fn_node)) || !LISTP (arglist))
     {
-      raise (ERR_INVALID_ARG, __func__);
+      raise (ERR_INVALID_ARG, "funcall");
       return NULL;
     }
 
@@ -293,7 +277,7 @@ eval_len (Node *args, Context *ctx)
 
   if (!LISTP (args))
     {
-      raise (ERR_INVALID_ARG, __func__);
+      raise (ERR_INVALID_ARG, "len");
       return NULL;
     }
 
@@ -317,7 +301,7 @@ eval_pair (Node *args, Context *ctx)
 {
   if (!LISTP (FIRST (args)) || !LISTP (FIRST (REST (args))))
     {
-      raise (ERR_INVALID_ARG, __func__);
+      raise (ERR_INVALID_ARG, "pair");
       return NULL;
     }
 
@@ -331,7 +315,7 @@ eval_print (Node *args, Context *ctx)
 
   if (!LISTP (args))
     {
-      raise (ERR_INVALID_ARG, __func__);
+      raise (ERR_INVALID_ARG, "print");
       return NULL;
     }
 
@@ -348,7 +332,7 @@ eval_rest (Node *args, Context *ctx)
 
   if (!LISTP (first))
     {
-      raise (ERR_INVALID_ARG, __func__);
+      raise (ERR_INVALID_ARG, "rest");
       return NULL;
     }
 
@@ -362,7 +346,7 @@ eval_set (Node *args, Context *ctx)
 {
   if (!IS_SYMBOL (FIRST (args)))
     {
-      raise (ERR_INVALID_ARG, __func__);
+      raise (ERR_INVALID_ARG, "rest");
       return NULL;
     }
 
@@ -388,6 +372,7 @@ eval (Node *expr, Context *ctx)
 
   if (LISTP (expr))
     {
+      // Special forms:
 
       // NIL
       if (IS_NIL (expr))
@@ -416,7 +401,19 @@ eval (Node *expr, Context *ctx)
           return eval (eval (FIRST (REST (expr)), ctx), ctx);
         }
 
-      // IF
+      // AND
+      if (IS_PRIMITIVE (fn) && prim->token == AND_PRIMITIVE)
+        {
+          return eval_and (REST (expr), ctx);
+        }
+
+      // OR
+      if (IS_PRIMITIVE (fn) && prim->token == OR_PRIMITIVE)
+        {
+          return eval_or (REST (expr), ctx);
+        }
+
+      // IF (clean up)
       if (IS_PRIMITIVE (fn) && prim->token == IF_PRIMITIVE)
         {
           Node *pred_expr = FIRST (REST (expr));
@@ -427,9 +424,12 @@ eval (Node *expr, Context *ctx)
             }
           else
             {
-              return eval (FIRST (REST (REST (REST (expr)))), ctx);
+              Node *else_expr = FIRST (REST (REST (REST (expr))));
+              return else_expr ? eval (else_expr, ctx) : NIL;
             }
         }
+
+      // not a special form
 
       return apply (fn, expr, ctx);
     }

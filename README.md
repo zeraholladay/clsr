@@ -245,9 +245,11 @@ In no particular order:
 1. ~~Equality~~
 1. ~~lambda~~
 1. Internal call stack.
-1. Boolean operators
+1. ~~Boolean operators (AND, OR, NOT)~~
+1. gt, lt.
 1. env_ memory allocation.
 1. Generic type-based allocator
+1. Add and mul should return 1 when no args.
 1. ~~IF needs to be a special form~~
 1. ~~Broke EQ.~~
 1. Test math

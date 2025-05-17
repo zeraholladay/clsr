@@ -46,21 +46,42 @@ Context *ctx
   struct Node *node;
 }
 
-%type <node> program exprs expr list_expr list_form literal_expr
-%type <node> lambda_form lambda_param_form
-%type <node> if_form
+%token ERROR
+// Literal singletons
+%token NIL_TOKEN
+%token T_TOKEN
+// Numeric and symbol literals
+%token <integer> INTEGER
+%token <symbol>  SYMBOL
+// primitive procedures (has eval_)
+%token <keyword> INTRINSIC_PRIMITIVE
+// Built-in special‐forms
+%token <keyword> IF_PRIMITIVE
+%token <keyword> QUOTE_PRIMITIVE
+%token <keyword> LAMBDA_PRIMITIVE
+%token <keyword> EVAL_PRIMITIVE
+%token <keyword> AND_PRIMITIVE
+%token <keyword> OR_PRIMITIVE
 
-%token ERROR                          // error state
-%token NIL_TOKEN                      // NIL singleton
-%token T_TOKEN                        // T singleton
-%token LAMBDA_PRIMITIVE               // Lambda type and special form
-%token <keyword> IF_PRIMITIVE         // Symbol and special form
-%token <keyword> QUOTE_PRIMITIVE      // Symbol and special form
-%token <keyword> INTRINSIC_PRIMITIVE  // Primitive types (callable)
-%token <keyword> EVAL_PRIMITIVE       // Special Code for Eval
-%token <integer> INTEGER              // Integers
-%token <symbol>  SYMBOL               // Symbols
-
+%type <node>
+  program
+%type <node>
+  exprs
+  expr
+%type <node>
+  list_expr
+  quote_expr
+%type <node>
+  list_form
+  lambda_form
+  lambda_param_form
+  if_form
+%type <node>
+  if_atom
+  quote_atom
+  atom
+%type <keyword>
+  primitive_atom
 %%
 
 program
@@ -90,12 +111,8 @@ exprs
 
 expr
   : list_expr
-  | literal_expr
-  | QUOTE_PRIMITIVE expr
-    {
-      Node *quote = cons_prim (&CTX_POOL (ctx), $1);
-      $$ = LIST2 (quote, $2, ctx);
-    }
+  | quote_expr
+  | atom
   ;
 
 list_expr
@@ -117,7 +134,21 @@ list_expr
     }
   ;
 
-literal_expr
+quote_expr
+  : quote_atom expr
+    {
+      $$ = LIST2 ($1, $2, ctx);
+    }
+  ;
+
+quote_atom
+  : QUOTE_PRIMITIVE
+    {
+      $$ = cons_prim (&CTX_POOL (ctx), $1);
+    }
+  ;
+
+atom
   : NIL_TOKEN
     {
       $$ = NIL;
@@ -130,18 +161,21 @@ literal_expr
     {
       $$ = cons_symbol (&CTX_POOL (ctx), $1);
     }
-  | INTRINSIC_PRIMITIVE
-    {
-      $$ = cons_prim (&CTX_POOL (ctx), $1);
-    }
-  | EVAL_PRIMITIVE
-    {
-      $$ = cons_prim (&CTX_POOL (ctx), $1);
-    }
   | INTEGER
     {
       $$ = cons_integer (&CTX_POOL (ctx), $1);
     }
+  | primitive_atom 
+    {
+      $$ = cons_prim (&CTX_POOL (ctx), $1);
+    }
+  ;
+
+primitive_atom
+  : INTRINSIC_PRIMITIVE
+  | EVAL_PRIMITIVE
+  | AND_PRIMITIVE
+  | OR_PRIMITIVE
   ;
 
 list_form
@@ -173,17 +207,22 @@ lambda_param_form
   ;
 
 if_form
-  : IF_PRIMITIVE expr expr expr
+  : if_atom expr expr expr
     {
-      Node *if_symbol = cons_prim (&CTX_POOL (ctx), $1);
       Node *expr = CONS ( $2, LIST2 ($3, $4, ctx), ctx);
-      $$ = CONS (if_symbol, expr, ctx);
+      $$ = CONS ($1, expr, ctx);
     }
-  | IF_PRIMITIVE expr expr
+  | if_atom expr expr
     {
-      Node *if_symbol = cons_prim (&CTX_POOL (ctx), $1);
       Node *expr = LIST2 ($2, $3, ctx);
-      $$ = CONS (if_symbol, expr, ctx);
+      $$ = CONS ($1, expr, ctx);
+    }
+  ;
+
+if_atom
+  : IF_PRIMITIVE
+    {
+      $$ = cons_prim (&CTX_POOL (ctx), $1);
     }
   ;
 

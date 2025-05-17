@@ -22,6 +22,7 @@
 struct Keyword;
 
 %%
+AND,     eval_and,     -1, AND_PRIMITIVE
 APPLY,   eval_apply,    2, INTRINSIC_PRIMITIVE
 CONS,    eval_cons,     2, INTRINSIC_PRIMITIVE
 EQ,      eval_eq,       2, INTRINSIC_PRIMITIVE
@@ -32,7 +33,9 @@ IF,      NULL,          0, IF_PRIMITIVE
 LAMBDA,  NULL,          0, LAMBDA_PRIMITIVE
 LEN,     eval_len,      1, INTRINSIC_PRIMITIVE
 NIL,     NULL,          0, NIL_TOKEN
+NOT,     eval_not,      1, INTRINSIC_PRIMITIVE
 LIST,    eval_list,    -1, INTRINSIC_PRIMITIVE
+OR,      eval_or,      -1, OR_PRIMITIVE
 PAIR,    eval_pair,     2, INTRINSIC_PRIMITIVE
 PRINT,   eval_print,    1, INTRINSIC_PRIMITIVE
 QUOTE,   NULL,          0, QUOTE_PRIMITIVE

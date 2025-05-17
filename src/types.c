@@ -161,12 +161,12 @@ lambda_eq (Node *self, Node *other)
 static char *
 lambda_tostr (Node *self)
 {
-  const char *fmt = "(LAMBDA %s %s)";
+  const char *fmt = "(#LAMBDA %s %s)";
 
   char *params_str
       = type (GET_LAMBDA_PARAMS (self))->str_fn (GET_LAMBDA_PARAMS (self));
-  char *body_str
-      = type (GET_LAMBDA_BODY (self))->str_fn (GET_LAMBDA_BODY (self));
+  char *body_str = type (GET_LAMBDA_BODY (self))
+                       ->str_fn (GET_LAMBDA_BODY (self)); // FIXME
 
   size_t total = strlen (fmt) + NULLABLE_STRLEN (params_str)
                  + NULLABLE_STRLEN (body_str);

@@ -378,19 +378,24 @@ eval_str (Node *args, Context *ctx)
 Node *
 eval (Node *expr, Context *ctx)
 {
+  // SYMBOLS
   if (IS_SYMBOL (expr))
     return lookup (expr, ctx);
 
+  // LITERALS: NUMBERS, STRINGS, ETC.
   if (!LISTP (expr))
     return expr;
 
   if (LISTP (expr))
     {
+
+      // NIL
       if (IS_NIL (expr))
         {
           return NIL;
         }
 
+      // LAMBDA
       if (IS_LAMBDA (FIRST (expr)))
         {
           return FIRST (expr);
@@ -399,21 +404,24 @@ eval (Node *expr, Context *ctx)
       Node *fn = eval (FIRST (expr), ctx);
       const Primitive *prim = GET_PRIMITIVE (fn);
 
+      // QUOTE
       if (IS_PRIMITIVE (fn) && prim->token == QUOTE_PRIMITIVE)
         {
           return FIRST (REST (expr));
         }
 
+      // EVAL
       if (IS_PRIMITIVE (fn) && prim->token == EVAL_PRIMITIVE)
         {
           return eval (eval (FIRST (REST (expr)), ctx), ctx);
         }
 
+      // IF
       if (IS_PRIMITIVE (fn) && prim->token == IF_PRIMITIVE)
         {
           Node *pred_expr = FIRST (REST (expr));
 
-          if (IS_NIL (eval (pred_expr, ctx)))
+          if (!IS_NIL (eval (pred_expr, ctx)))
             {
               return eval (FIRST (REST (REST (expr))), ctx);
             }

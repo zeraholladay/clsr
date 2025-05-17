@@ -113,7 +113,7 @@ list_expr
     }
   | '(' if_form ')'
     {
-      $$ = LIST1 ($2, ctx);
+      $$ = $2;
     }
   ;
 
@@ -182,7 +182,7 @@ if_form
   | IF_PRIMITIVE expr expr
     {
       Node *if_symbol = cons_prim (&CTX_POOL (ctx), $1);
-      Node *expr = CONS ( $2, LIST1 ($3, ctx), ctx);
+      Node *expr = LIST2 ($2, $3, ctx);
       $$ = CONS (if_symbol, expr, ctx);
     }
   ;

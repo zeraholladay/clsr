@@ -36,7 +36,7 @@ typedef struct
   union
   {
     rb_node *tree;
-    List *hash[];
+    List **hash;
   };
 } Dict;
 

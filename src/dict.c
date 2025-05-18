@@ -3,40 +3,116 @@
 
 typedef int (*DictInsertFn) (Dict *, const char *, void *);
 
+static inline unsigned long hash (const char *key);
+static void hash_destroy (Dict *dict);
+static void tree_destroy (Dict *dict);
+static int insert_hash (Dict *dict, const char *key, void *val);
+static int insert_tree (Dict *dict, const char *key, void *val);
+static KeyValue *hash_lookup (Dict *dict, const char *key);
+static rb_node *tree_lookup (Dict *dict, const char *key);
+static KeyValue *hash_remove (Dict *dict, const char *key);
+static rb_node *tree_remove (Dict *dict, const char *key);
+
 static inline unsigned long
 hash (const char *key)
 {
   return djb2 (key) % DICT_HASH_SIZE;
 }
 
+static void
+hash_destroy (Dict *dict)
+{
+  if (!dict)
+    return;
+
+  for (size_t i = 0; i < DICT_HASH_SIZE; ++i)
+    {
+      List *list = dict->hash[i];
+
+      if (list)
+        {
+          for (size_t j = 0; j < list->count; ++j)
+            {
+              if (list->items[j])
+                {
+                  free (list->items[j]);
+                  list->items[j] = NULL;
+                }
+            }
+          list_free (list);
+        }
+    }
+  free (dict->hash);
+  free (dict);
+}
+
+static void
+tree_destroy (Dict *dict)
+{
+  if (!dict)
+    return;
+
+  Stack tmp_stack = {}, stack = {};
+
+  stack_init (&tmp_stack, 32);
+  stack_init (&stack, 32);
+
+  rb_post_order_iter (dict->tree, &tmp_stack, &stack);
+
+  while (stack.data_size)
+    {
+      free (stack_pop (&stack));
+    }
+
+  stack_free (&tmp_stack);
+  stack_free (&stack);
+}
+
 static int
 insert_hash (Dict *dict, const char *key, void *val)
 {
-  unsigned long i = hash (key);
-  List *list = dict->hash[i];
+  KeyValue *kv = hash_lookup (dict, key);
 
-  if (!list || !(list = list_alloc ()))
+  if (kv)
     {
-      return -1;
+      kv->val = val;
+      return 0;
+    }
+
+  unsigned long i = hash (key);
+
+  if (!dict->hash[i])
+    {
+      dict->hash[i] = list_alloc ();
+
+      if (!dict->hash[i])
+        return -1;
     }
 
   KeyValue *item = malloc (sizeof *(item));
 
   if (!item)
     {
-      free (list);
+      free (dict->hash[i]);
       return -1;
     }
 
   item->key = key;
   item->val = val;
 
-  return list_append (list, item);
+  return list_append (dict->hash[i], item);
 }
 
 static int
 insert_tree (Dict *dict, const char *key, void *val)
 {
+  rb_node *node = tree_lookup(dict, key);
+
+  if (node)
+    {
+      RB_VAL(node) = val;
+    }
+
   size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
   rb_node *n = rb_alloc ();
 
@@ -165,7 +241,7 @@ dict_alloc (DictType type, const KeyValue *kv, size_t n)
     {
     case DICT_HASH:
       insert_fn = insert_hash;
-      *dict->hash = calloc (DICT_HASH_SIZE, sizeof *(dict->hash));
+      dict->hash = calloc (DICT_HASH_SIZE, sizeof *(dict->hash));
       break;
     case DICT_TREE:
       insert_fn = insert_tree;
@@ -176,7 +252,7 @@ dict_alloc (DictType type, const KeyValue *kv, size_t n)
       break;
     }
 
-  if (!*dict->hash || !dict->tree)
+  if (!dict->hash || !dict->tree)
     {
       free (dict);
       return NULL;
@@ -198,40 +274,16 @@ dict_alloc (DictType type, const KeyValue *kv, size_t n)
 void
 dict_destroy (Dict *dict)
 {
+  if (!dict)
+    return;
+
   if (dict->type == DICT_HASH) // TODO: refactor
     {
-      for (size_t i = 0; i < DICT_HASH_SIZE; ++i)
-        {
-          List *list = dict->hash[i];
-          for (size_t j = 0; j < list->count; j++)
-            {
-              if (list->items[j])
-                {
-                  free (list->items[j]);
-                  list->items[j] = NULL;
-                }
-            }
-          list_free (list);
-        }
-      free (dict->hash);
-      free (dict);
+      hash_destroy (dict);
     }
   else if (dict->type == DICT_TREE) // TODO: refactor
     {
-      Stack tmp_stack = {}, stack = {};
-
-      stack_init (&tmp_stack, 32);
-      stack_init (&stack, 32);
-
-      rb_post_order_iter (dict->tree, &tmp_stack, &stack);
-
-      while (stack.data_size)
-        {
-          free (stack_pop (&stack));
-        }
-
-      stack_free (&tmp_stack);
-      stack_free (&stack);
+      tree_destroy (dict);
     }
 }
 

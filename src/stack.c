@@ -6,7 +6,7 @@
 extern oom_handler_t stack_oom_handler;
 
 static int
-stack_realloc (Stack *stack, unsigned int count)
+stack_realloc (Stack *stack, size_t count)
 {
   uintptr_t *new_ptr = realloc (stack->data, (count) * sizeof *(stack->data));
   if (!new_ptr)
@@ -19,7 +19,7 @@ stack_realloc (Stack *stack, unsigned int count)
 }
 
 void
-stack_init (Stack *stack, unsigned int count)
+stack_init (Stack *stack, size_t count)
 {
   if (stack_realloc (stack, count))
     stack_oom_handler (stack, OOM_LOCATION);

@@ -14,5 +14,6 @@ HeapList *hl_alloc (void);
 void hl_free (HeapList *hl);
 int hl_append (HeapList *hl, void *item);
 size_t hl_append_strdup (HeapList *hl, char *str);
+void hl_remove_index (HeapList *hl, size_t i);
 
 #endif

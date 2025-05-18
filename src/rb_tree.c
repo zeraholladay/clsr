@@ -2,6 +2,7 @@
 
 #include "rb_tree.h"
 #include "safe_str.h"
+#include "stack.h"
 
 #define RB_BLACK 0
 #define RB_RED 1
@@ -333,4 +334,26 @@ rb_remove (rb_node **root, rb_node *n)
     }
 
   return n;
+}
+
+void
+rb_post_order_iter (rb_node *root, Stack *tmp_stack, Stack *stack)
+{
+  if (!root)
+    return;
+
+  stack_push (tmp_stack, root);
+
+  while (tmp_stack->data_size)
+    {
+      rb_node *n = stack_pop (tmp_stack);
+
+      stack_push (stack, n);
+
+      if (n->left)
+        stack_push (tmp_stack, n->left);
+
+      if (n->right)
+        stack_push (tmp_stack, n->right);
+    }
 }

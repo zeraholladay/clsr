@@ -103,3 +103,17 @@ hl_append_strdup (HeapList *hl, char *str)
 
   return len;
 }
+
+void
+hl_remove_index (HeapList *hl, size_t i)
+{
+  if (i >= hl->count)
+    return;
+
+  for (size_t j = i + 1; j < hl->count; ++j)
+    {
+      hl->items[j - 1] = hl->items[j];
+    }
+
+  hl->count--;
+}

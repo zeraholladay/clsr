@@ -234,6 +234,7 @@ type (Node *self)
 {
   if (!self || IS_NIL (self))
     return &type_tab[TYPE_NIL];
+
   return &type_tab[self->type];
 }
 

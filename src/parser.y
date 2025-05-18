@@ -227,10 +227,8 @@ if_atom
   ;
 
 %%
-    // clang-format on
-
-    void
-    reset_parse_context (Context *ctx)
+void
+reset_parse_context (Context *ctx)
 {
   /* assumes pool has already been allocated. */
   CTX_PARSE_ROOT (ctx) = NIL;

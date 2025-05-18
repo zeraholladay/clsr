@@ -253,10 +253,10 @@ In no particular order:
 1. ~~IF needs to be a special form~~
 1. ~~Broke EQ.~~
 1. ~~Test math~~
-1. Real Exceptions
+1. Real exceptions
 1. ~~Error status and messages~~
 1. Memory management (tracking)
-1. I/O subsystem
+1. I/O subsystem (printf is ugly)
 1. ~~Refactor Primitives to Enum~~
 1. Docs/README.md
 1. ~~Test list~~
@@ -270,7 +270,7 @@ In no particular order:
 1. Fix yyarse after pool forever.
 1. Parse errors (exceptions first)
 1. GC
-1. repl I/O from files
+1. ~~repl I/O from files~~    
 1. ~~Bug squashing~~
 1. Max symbol size
 1. Rename `set` to `let` & add `define`

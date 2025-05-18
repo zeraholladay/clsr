@@ -1,12 +1,19 @@
 #include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "eval.h"
 #include "parser.h"
 #include "readline.h"
 #include "sym_save.h"
 #include "types.h"
+
+extern char *optarg;
+extern int optind;
+extern int optopt;
+extern int opterr;
+extern int optreset;
 
 #ifndef OBJ_POOL_CAPACITY
 #define OBJ_POOL_CAPACITY 4096
@@ -52,7 +59,7 @@ clsr_destroy (Context *ctx)
   pool_destroy_hier (&CTX_POOL (ctx));
 }
 
-static void
+int
 clsr_eval_program (Context *ctx)
 {
   if (setjmp (eval_error_jmp) == 0)
@@ -62,14 +69,15 @@ clsr_eval_program (Context *ctx)
       Node *node = eval_str (eval_result, ctx);
       printf ("%s\n", GET_STRING (node));
       free (node->as.string); // FIXME with GC
+      return 0;
     }
+
+  return 1;
 }
 
 int
-clsr_repl (void)
+clsr_repl (Context *ctx)
 {
-  Context ctx = {};
-  clsr_init (&ctx);
   rl_init ();
 
   char full_input[REPL_BUF_SIZ];
@@ -85,34 +93,100 @@ clsr_repl (void)
 
       yyin = fmemopen ((void *)full_input, len, "r");
 
-      reset_parse_context (&ctx);
-      int parse_status = yyparse (&ctx);
+      reset_parse_context (ctx);
+      int parse_status = yyparse (ctx);
 
       yylex_destroy ();
       fclose (yyin);
 
       if (parse_status)
         {
-          fprintf (stderr, "Parse failed\n");
+          perror ("Parse failed");
           continue; // TODO: syntax error
         }
 
-      clsr_eval_program (&ctx);
+      clsr_eval_program (ctx);
     }
+
+  return 0;
+}
+
+int
+clsr_main (int argc, char **argv)
+{
+  int run_repl = 0;
+  int opt;
+
+  while ((opt = getopt (argc, argv, "ih")) != -1)
+    {
+      switch (opt)
+        {
+        case 'i':
+          run_repl = 1;
+          break;
+        case 'h': // fall through for now
+        case '?':
+        default:
+          fprintf (stderr, "Usage: %s [-i] [-h] f1...\n", argv[0]);
+          return 1;
+        }
+    }
+
+  argc -= optind;
+  argv += optind;
+
+  if (!argc)
+    run_repl = 1;
+
+  Context ctx = {};
+  clsr_init (&ctx);
+
+  for (int i = 0; i < argc; ++i)
+    {
+      yyin = fopen (argv[i], "r");
+
+      if (!yyin)
+        {
+          perror ("fopen");
+          return 1;
+        }
+
+      int parse_status = yyparse (&ctx);
+
+      fclose (yyin);
+
+      if (parse_status)
+        {
+          perror ("Parse failed");
+          break; // TODO: syntax error
+        }
+
+      int eval_status = clsr_eval_program (&ctx);
+
+      if (eval_status)
+        {
+          perror ("Eval failed.");
+          break;
+        }
+    }
+
+  if (run_repl)
+    clsr_repl (&ctx);
+
   return 0;
 }
 
 #else
 
-extern int clsr_repl (void);
+#include "repl.h"
 
 int
-main (void)
+main (int argc, char **argv)
 {
 #if YYDEBUG
   yydebug = YYDEBUG;
 #endif
-  return clsr_repl ();
+  return clsr_main (argc, argv);
 }
 
 #endif

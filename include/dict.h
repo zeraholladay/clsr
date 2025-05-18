@@ -3,7 +3,7 @@
 
 #include <stdarg.h>
 
-#include "heap_list.h"
+#include "list.h"
 #include "rb_tree.h"
 
 #ifndef DICT_HASH_SIZE
@@ -36,7 +36,7 @@ typedef struct
   union
   {
     rb_node *tree;
-    HeapList *hash[];
+    List *hash[];
   };
 } Dict;
 

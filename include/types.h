@@ -58,12 +58,6 @@ typedef long long Integer;
 
 typedef struct
 {
-  Node *first;
-  Node *rest;
-} List;
-
-typedef struct
-{
   Node *params;
   Node *body;
   Env *env;
@@ -80,7 +74,11 @@ struct Node
     const char *symbol;
 
     // Composite structures
-    List list;
+    struct
+    {
+      Node *first;
+      Node *rest;
+    } list;
 
     // Function-like values
     const Primitive *primitive;

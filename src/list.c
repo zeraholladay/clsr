@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "heap_list.h"
+#include "list.h"
 #include "oom_handlers.h"
 #include "safe_str.h"
 
@@ -11,52 +11,52 @@
 extern oom_handler_t heap_list_oom_handler;
 
 // thanks python
-HeapList *
-hl_alloc (void)
+List *
+list_alloc (void)
 {
-  HeapList *hl = calloc (1, sizeof (HeapList));
+  List *list = calloc (1, sizeof (List));
 
-  if (!hl)
+  if (!list)
     {
       heap_list_oom_handler (NULL, OOM_LOCATION);
       return NULL;
     }
 
-  hl->items = calloc (HEAP_LIST_INIT_CAPACITY, sizeof *(hl->items));
+  list->items = calloc (HEAP_LIST_INIT_CAPACITY, sizeof *(list->items));
 
-  if (!hl->items)
+  if (!list->items)
     {
-      free (hl), hl = NULL;
+      free (list), list = NULL;
       heap_list_oom_handler (NULL, OOM_LOCATION);
       return NULL;
     }
 
-  hl->capacity = HEAP_LIST_INIT_CAPACITY;
-  hl->count = 0;
+  list->capacity = HEAP_LIST_INIT_CAPACITY;
+  list->count = 0;
 
-  return hl;
+  return list;
 }
 
 void
-hl_free (HeapList *hl)
+list_free (List *list)
 {
-  if (!hl)
+  if (!list)
     return;
-  free (hl->items);
-  free (hl);
+  free (list->items);
+  free (list);
 }
 
 static int
-_hl_resize (HeapList *hl, size_t min_capacity)
+_list_resize (List *list, size_t min_capacity)
 {
-  size_t new_capacity = hl->capacity;
+  size_t new_capacity = list->capacity;
 
   while (new_capacity < min_capacity)
     {
       new_capacity += (new_capacity >> 3) + (new_capacity < 9 ? 3 : 6);
     }
 
-  void **new_nodes = realloc (hl->items, new_capacity * sizeof (void *));
+  void **new_nodes = realloc (list->items, new_capacity * sizeof (void *));
 
   if (!new_nodes)
     {
@@ -64,26 +64,27 @@ _hl_resize (HeapList *hl, size_t min_capacity)
       return -1;
     }
 
-  hl->items = new_nodes;
-  hl->capacity = new_capacity;
+  list->items = new_nodes;
+  list->capacity = new_capacity;
 
   return 0;
 }
 
 int
-hl_append (HeapList *hl, void *item)
+list_append (List *list, void *item)
 {
-  if ((hl->count >= hl->capacity) && (_hl_resize (hl, hl->count + 1) != 0))
+  if ((list->count >= list->capacity)
+      && (_list_resize (list, list->count + 1) != 0))
     {
       heap_list_oom_handler (NULL, OOM_LOCATION);
       return -1;
     }
-  hl->items[hl->count++] = item;
+  list->items[list->count++] = item;
   return 0;
 }
 
 size_t
-hl_append_strdup (HeapList *hl, char *str)
+list_append_strdup (List *list, char *str)
 {
   size_t len = NULLABLE_STRLEN (str);
   char *dup = safe_strndup (str, len);
@@ -95,7 +96,7 @@ hl_append_strdup (HeapList *hl, char *str)
       return 0;
     }
 
-  if (hl_append (hl, dup))
+  if (list_append (list, dup))
     {
       heap_list_oom_handler (NULL, OOM_LOCATION);
       return 0;
@@ -105,15 +106,15 @@ hl_append_strdup (HeapList *hl, char *str)
 }
 
 void
-hl_remove_index (HeapList *hl, size_t i)
+list_remove_index (List *list, size_t i)
 {
-  if (i >= hl->count)
+  if (i >= list->count)
     return;
 
-  for (size_t j = i + 1; j < hl->count; ++j)
+  for (size_t j = i + 1; j < list->count; ++j)
     {
-      hl->items[j - 1] = hl->items[j];
+      list->items[j - 1] = list->items[j];
     }
 
-  hl->count--;
+  list->count--;
 }

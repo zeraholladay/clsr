@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "eval.h"
-#include "heap_list.h"
+#include "list.h"
 #include "safe_str.h"
 #include "types.h"
 
@@ -84,16 +84,16 @@ list_eq (Node *self, Node *other)
 static char *
 list_tostr (Node *self)
 {
-  HeapList *hl = NULL;
+  List *list = NULL;
   size_t total = 0;
   Node *cur;
 
-  hl = hl_alloc ();
+  list = list_alloc ();
 
-  if (!hl)
+  if (!list)
     return NULL;
 
-  total += hl_append_strdup (hl, "(");
+  total += list_append_strdup (list, "(");
 
   for (cur = self; IS_LIST (cur); cur = REST (cur))
     {
@@ -101,20 +101,20 @@ list_tostr (Node *self)
 
       if (car)
         {
-          total += hl_append_strdup (hl, type (car)->str_fn (car));
+          total += list_append_strdup (list, type (car)->str_fn (car));
 
           if (FIRST (cdr))
-            total += hl_append_strdup (hl, " ");
+            total += list_append_strdup (list, " ");
         }
     }
 
   if (!IS_NIL (cur))
     {
-      total += hl_append_strdup (hl, ".");
-      total += hl_append_strdup (hl, type (cur)->str_fn (cur));
+      total += list_append_strdup (list, ".");
+      total += list_append_strdup (list, type (cur)->str_fn (cur));
     }
 
-  total += hl_append_strdup (hl, ")");
+  total += list_append_strdup (list, ")");
 
   // merge down into a single str
 
@@ -124,14 +124,14 @@ list_tostr (Node *self)
   if (!str)
     return NULL;
 
-  for (size_t i = 0; i < hl->count; ++i)
+  for (size_t i = 0; i < list->count; ++i)
     {
-      for (char *src = hl->items[i]; (*dst = *src); ++src, ++dst)
+      for (char *src = list->items[i]; (*dst = *src); ++src, ++dst)
         ;
-      free (hl->items[i]);
+      free (list->items[i]);
     }
 
-  hl_free (hl);
+  list_free (list);
 
   return str;
 }

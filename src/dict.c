@@ -13,9 +13,9 @@ static int
 insert_hash (Dict *dict, const char *key, void *val)
 {
   unsigned long i = hash (key);
-  HeapList *hl = dict->hash[i];
+  List *list = dict->hash[i];
 
-  if (!hl || !(hl = hl_alloc ()))
+  if (!list || !(list = list_alloc ()))
     {
       return -1;
     }
@@ -24,14 +24,14 @@ insert_hash (Dict *dict, const char *key, void *val)
 
   if (!item)
     {
-      free (hl);
+      free (list);
       return -1;
     }
 
   item->key = key;
   item->val = val;
 
-  return hl_append (hl, item);
+  return list_append (list, item);
 }
 
 static int
@@ -59,16 +59,16 @@ hash_lookup (Dict *dict, const char *key)
 {
   size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
   unsigned long i = hash (key);
-  HeapList *hl = dict->hash[i];
+  List *list = dict->hash[i];
 
-  if (!hl)
+  if (!list)
     {
       return NULL;
     }
 
-  for (size_t i = 0; i < hl->count; ++i)
+  for (size_t i = 0; i < list->count; ++i)
     {
-      KeyValue *kv = hl->items[i];
+      KeyValue *kv = list->items[i];
 
       if (!safe_strncmp_minlen (key, kv->key, len + 1))
         {
@@ -91,20 +91,20 @@ hash_remove (Dict *dict, const char *key)
 {
   size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
   unsigned long i = hash (key);
-  HeapList *hl = dict->hash[i];
+  List *list = dict->hash[i];
 
-  if (!hl)
+  if (!list)
     {
       return NULL;
     }
 
-  for (size_t i = 0; i < hl->count; ++i)
+  for (size_t i = 0; i < list->count; ++i)
     {
-      KeyValue *kv = hl->items[i];
+      KeyValue *kv = list->items[i];
 
       if (!safe_strncmp_minlen (key, kv->key, len + 1))
         {
-          hl_remove_index (hl, i);
+          list_remove_index (list, i);
           return kv;
         }
     }
@@ -202,16 +202,16 @@ dict_destroy (Dict *dict)
     {
       for (size_t i = 0; i < DICT_HASH_SIZE; ++i)
         {
-          HeapList *hl = dict->hash[i];
-          for (size_t j = 0; j < hl->count; j++)
+          List *list = dict->hash[i];
+          for (size_t j = 0; j < list->count; j++)
             {
-              if (hl->items[j])
+              if (list->items[j])
                 {
-                  free (hl->items[j]);
-                  hl->items[j] = NULL;
+                  free (list->items[j]);
+                  list->items[j] = NULL;
                 }
             }
-          hl_free (hl);
+          list_free (list);
         }
       free (dict->hash);
       free (dict);

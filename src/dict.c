@@ -279,11 +279,11 @@ dict_destroy (Dict *dict)
   if (!dict)
     return;
 
-  if (dict->type == DICT_HASH) // TODO: refactor
+  if (dict->type == DICT_HASH)
     {
       hash_destroy (dict);
     }
-  else if (dict->type == DICT_TREE) // TODO: refactor
+  else if (dict->type == DICT_TREE)
     {
       tree_destroy (dict);
     }

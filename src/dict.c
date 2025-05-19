@@ -13,6 +13,23 @@ static rb_node *tree_lookup (Dict *dict, const char *key);
 static KeyValue *hash_remove (Dict *dict, const char *key);
 static rb_node *tree_remove (Dict *dict, const char *key);
 
+// bins[]
+//     An array of length N (always a power of two)
+//     Each slot holds either:
+//         -1 (meaning “never used”),
+//         -2 (a “tombstone” for a deleted entry), or
+//         A nonnegative integer i indexing into the entries[] array.
+
+// struct entry {
+//   VALUE key;
+//   VALUE value;
+//   st_index_t hash;  // cached hash
+// };
+
+// idx = key_hash & (bins_size – 1);
+// do {
+//   idx = (idx + 1) & (bins_size – 1);
+// } while (bins[idx] != EMPTY && !key_eq(…));
 static inline unsigned long
 hash (const char *key)
 {

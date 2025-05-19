@@ -18,26 +18,16 @@
 #define DICT_ALLOC_VA_LIST_MAX 32
 #endif
 
-typedef enum
-{
-  DICT_HASH,
-  DICT_TREE,
-} DictType;
-
 typedef struct
 {
+  unsigned long hash_key;
   const char *key;
   void *val;
 } KeyValue;
 
 typedef struct
 {
-  DictType type;
-  union
-  {
-    rb_node *tree;
-    List **hash;
-  };
+  int bins[DICT_HASH_SIZE]
 } Dict;
 
 Dict *dict_alloc_va_list (DictType type, const char *key, ...);

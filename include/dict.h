@@ -4,34 +4,33 @@
 #include <stdarg.h>
 
 #include "list.h"
-#include "rb_tree.h"
 
-#ifndef DICT_HASH_SIZE
-#define DICT_HASH_SIZE 8
+#ifndef DICT_INIT_CAP
+#define DICT_INIT_CAP 8
 #endif
 
 #ifndef DICT_STR_MAX_LEN
 #define DICT_STR_MAX_LEN 256
 #endif
 
-#ifndef DICT_ALLOC_VA_LIST_MAX
-#define DICT_ALLOC_VA_LIST_MAX 32
-#endif
+#define DICT_ENTITY(k, v) { .hash_key = 0, .key = key, .val = val }
 
 typedef struct
 {
   unsigned long hash_key;
   const char *key;
   void *val;
-} KeyValue;
+} DictEntity;
 
 typedef struct
 {
-  int bins[DICT_HASH_SIZE]
+  size_t count, capacity;
+  List *list;
+  int *bins;
 } Dict;
 
-Dict *dict_alloc_va_list (DictType type, const char *key, ...);
-Dict *dict_alloc (DictType type, const KeyValue *key_val, size_t n);
+Dict *dict_alloc_va_list (const char *key, ...);
+Dict *dict_alloc (const DictEntity *key_val, size_t n);
 void dict_destroy (Dict *dict);
 
 void dict_del (Dict *dict, const char *key);

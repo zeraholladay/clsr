@@ -1,285 +1,92 @@
 #include "dict.h"
 #include "safe_str.h"
 
-typedef int (*DictInsertFn) (Dict *, const char *, void *);
+#define EMPTY -1
+#define TOMBSTONE -2
 
-static inline unsigned long hash (const char *key);
-static void hash_destroy (Dict *dict);
-static void tree_destroy (Dict *dict);
-static int insert_hash (Dict *dict, const char *key, void *val);
-static int insert_tree (Dict *dict, const char *key, void *val);
-static KeyValue *hash_lookup (Dict *dict, const char *key);
-static rb_node *tree_lookup (Dict *dict, const char *key);
-static KeyValue *hash_remove (Dict *dict, const char *key);
-static rb_node *tree_remove (Dict *dict, const char *key);
+#define HASH(str) (djb2 (key))
+#define LIST_IDX(d_ptr, i) ((DictEntity *)((d_ptr)->list->items[i]))
+#define STR_EQ(s1, s2, len) (!safe_strncmp_minlen (s1, s2, len + 1))
 
-// bins[]
-//     An array of length N (always a power of two)
-//     Each slot holds either:
-//         -1 (meaning “never used”),
-//         -2 (a “tombstone” for a deleted entry), or
-//         A nonnegative integer i indexing into the entries[] array.
-
-// struct entry {
-//   VALUE key;
-//   VALUE value;
-//   st_index_t hash;  // cached hash
-// };
-
-// idx = key_hash & (bins_size – 1);
-// do {
-//   idx = (idx + 1) & (bins_size – 1);
-// } while (bins[idx] != EMPTY && !key_eq(…));
-static inline unsigned long
-hash (const char *key)
+static size_t
+get_bins_idx (Dict *dict, unsigned long hash_key, const char *key, size_t len)
 {
-  return djb2 (key) % DICT_HASH_SIZE;
-}
+  size_t start_bin_idx, bin_idx;
+  ssize_t first_tombstone = -1;
 
-static void
-hash_destroy (Dict *dict)
-{
-  if (!dict)
-    return;
+  start_bin_idx = bin_idx = hash_key & (dict->capacity - 1);
 
-  for (size_t i = 0; i < DICT_HASH_SIZE; ++i)
+  do
     {
-      List *list = dict->hash[i];
-
-      if (list)
+      if (dict->bins[bin_idx] == EMPTY)
         {
-          for (size_t j = 0; j < list->count; ++j)
-            {
-              if (list->items[j])
-                {
-                  free (list->items[j]);
-                  list->items[j] = NULL;
-                }
-            }
-          list_free (list);
+          return (first_tombstone >= 0) ? (size_t)first_tombstone : bin_idx;
         }
-    }
-  free (dict->hash);
-  free (dict);
-}
-
-static void
-tree_destroy (Dict *dict)
-{
-  if (!dict)
-    return;
-
-  Stack tmp_stack = {}, stack = {};
-
-  stack_init (&tmp_stack, 32);
-  stack_init (&stack, 32);
-
-  rb_post_order_iter (dict->tree, &tmp_stack, &stack);
-
-  rb_node *node;
-
-  while ((node = stack_pop (&stack)))
-    {
-      free (node);
-    }
-
-  stack_free (&tmp_stack);
-  stack_free (&stack);
-}
-
-static int
-insert_hash (Dict *dict, const char *key, void *val)
-{
-  KeyValue *kv = hash_lookup (dict, key);
-
-  if (kv)
-    {
-      kv->val = val;
-      return 0;
-    }
-
-  unsigned long i = hash (key);
-
-  if (!dict->hash[i])
-    {
-      dict->hash[i] = list_alloc ();
-
-      if (!dict->hash[i])
-        return -1;
-    }
-
-  KeyValue *item = malloc (sizeof *(item));
-
-  if (!item)
-    {
-      free (dict->hash[i]);
-      return -1;
-    }
-
-  item->key = key;
-  item->val = val;
-
-  return list_append (dict->hash[i], item);
-}
-
-static int
-insert_tree (Dict *dict, const char *key, void *val)
-{
-  rb_node *node = tree_lookup (dict, key);
-
-  if (node)
-    {
-      RB_VAL (node) = val;
-      return 0;
-    }
-
-  size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
-  rb_node *n = rb_alloc ();
-
-  if (!n)
-    {
-      return -1;
-    }
-
-  RB_KEY (n) = key;
-  RB_KEY_LEN (n) = len;
-  RB_VAL (n) = val;
-
-  rb_insert (&dict->tree, n); // void
-
-  return 0;
-}
-
-static KeyValue *
-hash_lookup (Dict *dict, const char *key)
-{
-  size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
-  unsigned long i = hash (key);
-  List *list = dict->hash[i];
-
-  if (!list)
-    {
-      return NULL;
-    }
-
-  for (size_t i = 0; i < list->count; ++i)
-    {
-      KeyValue *kv = list->items[i];
-
-      if (!safe_strncmp_minlen (key, kv->key, len + 1))
+      else if (dict->bins[bin_idx] == TOMBSTONE)
         {
-          return kv;
+          if (first_tombstone == -1)
+            first_tombstone = bin_idx;
         }
-    }
-
-  return NULL;
-}
-
-static rb_node *
-tree_lookup (Dict *dict, const char *key)
-{
-  size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
-  return rb_lookup (dict->tree, key, len);
-}
-
-static KeyValue *
-hash_remove (Dict *dict, const char *key)
-{
-  size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
-  unsigned long i = hash (key);
-  List *list = dict->hash[i];
-
-  if (!list)
-    {
-      return NULL;
-    }
-
-  for (size_t i = 0; i < list->count; ++i)
-    {
-      KeyValue *kv = list->items[i];
-
-      if (!safe_strncmp_minlen (key, kv->key, len + 1))
+      else if (STR_EQ (key, LIST_IDX (dict, dict->bins[bin_idx])->key, len))
         {
-          list_remove_index (list, i);
-          return kv;
+          return bin_idx;
         }
+      bin_idx = (bin_idx + 1) & (dict->capacity - 1);
     }
+  while (bin_idx != start_bin_idx);
 
-  return NULL;
+  // TODO & FIXME: all bins are occupied or all bins are tombstones: resize
+  return first_tombstone >= 0 ? (size_t)first_tombstone : start_bin_idx;
 }
 
-static rb_node *
-tree_remove (Dict *dict, const char *key)
+static DictEntity *
+remove (Dict *dict, const char *key)
 {
-  rb_node *node = tree_lookup (dict, key);
-
-  if (!node)
-    {
-      return NULL;
-    }
-
-  return rb_remove (&dict->tree, node);
 }
 
 Dict *
-dict_alloc_va_list (DictType type, const char *key, ...)
+dict_alloc_va_list (const char *key, ...)
 {
-  KeyValue kv[DICT_ALLOC_VA_LIST_MAX] = {};
-  size_t i = 0;
+  Dict *dict = dict_alloc (NULL, 0);
   va_list ap;
 
   va_start (ap, key);
   for (const char *k = key; k; k = va_arg (ap, const char *))
     {
-      kv[i].key = k;
-      kv[i].val = va_arg (ap, void *);
-      if (++i >= DICT_ALLOC_VA_LIST_MAX - 1)
-        {
-          va_end (ap);
-          return NULL;
-        }
+      dict_insert (dict, k, va_arg (ap, void *));
     }
   va_end (ap);
 
-  return dict_alloc (type, kv, i);
+  return dict;
 }
 
 Dict *
-dict_alloc (DictType type, const KeyValue *kv, size_t n)
+dict_alloc (const DictEntity *entity, size_t n)
 {
-  DictInsertFn insert_fn;
-  Dict *dict = calloc (1, sizeof *(dict));
+  Dict *dict
+      = calloc (1, sizeof *(dict) + (DICT_INIT_CAP * sizeof *(dict->bins)));
 
   if (!dict)
     {
       return NULL;
     }
 
-  dict->type = type;
+  // empty all
+  for (size_t i = 0; i < dict->capacity; ++i)
+    dict->bins[i] = -1;
 
-  switch (type)
+  dict->capacity = DICT_INIT_CAP;
+  dict->list = list_alloc ();
+
+  if (!dict->list)
     {
-    case DICT_HASH:
-      insert_fn = insert_hash;
-      dict->hash = calloc (DICT_HASH_SIZE, sizeof *(dict->hash));
-      if (!dict->hash)
-        {
-          free (dict);
-          return NULL;
-        }
-      break;
-    case DICT_TREE:
-      insert_fn = insert_tree;
-      dict->tree = NULL;
-      break;
-    default:
+      free (dict);
       return NULL;
-      break;
     }
 
   for (size_t i = 0; i < n; i++)
     {
-      int res = insert_fn (dict, kv[i].key, kv[i].val);
+      int res = dict_insert (dict, entity[i].key, entity[i].val);
 
       if (res)
         {
@@ -293,95 +100,79 @@ dict_alloc (DictType type, const KeyValue *kv, size_t n)
 void
 dict_destroy (Dict *dict)
 {
-  if (!dict)
-    return;
-
-  if (dict->type == DICT_HASH)
-    {
-      hash_destroy (dict);
-    }
-  else if (dict->type == DICT_TREE)
-    {
-      tree_destroy (dict);
-    }
 }
 
 void
 dict_del (Dict *dict, const char *key)
 {
-  KeyValue *kv;
-  rb_node *node;
-
-  switch (dict->type)
-    {
-    case DICT_HASH:
-      kv = hash_remove (dict, key);
-      if (kv)
-        {
-          free (kv);
-        }
-      break;
-    case DICT_TREE:
-      node = tree_remove (dict, key);
-      if (node)
-        {
-          free (node);
-        }
-      break;
-    default:
-      break;
-    }
 }
 
 int
 dict_insert (Dict *dict, const char *key, void *val)
 {
-  DictInsertFn insert_fn;
-
-  switch (dict->type)
+  if (!dict || !dict->list || !key)
     {
-    case DICT_HASH:
-      insert_fn = insert_hash;
-      break;
-    case DICT_TREE:
-      insert_fn = insert_tree;
-      break;
-    default:
-      break;
+      return -1;
     }
 
-  return insert_fn (dict, key, val);
+  if ((dict->count + 1) * 5 > dict->capacity * 4)
+    {
+      grow_dict (&dict);
+    }
+
+  unsigned long hash_key = hash (key);
+  size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
+  size_t bin_idx = get_bins_idx (dict, hash_key, key, len);
+
+  int bin_val = dict->bins[bin_idx];
+
+  if (bin_val >= 0)
+    {
+      LIST_IDX (dict, bin_val)->val = val;
+      return dict->count;
+    }
+
+  // new
+  DictEntity *entity = malloc (sizeof *(entity));
+
+  if (!entity)
+    {
+      return -1;
+    }
+
+  entity->hash_key = hash_key;
+  entity->key = key;
+  entity->val = val;
+
+  int list_idx = list_append (dict->list, entity);
+
+  if (list_idx < 0)
+    {
+      free (entity);
+      return -1;
+    }
+
+  dict->bins[bin_idx] = list_idx;
+
+  return ++(dict->count);
 }
 
-int
-dict_lookup (Dict *dict, const char *key, void **val)
+DictEntity *
+dict_lookup (Dict *dict, const char *key)
 {
-  KeyValue *kv = NULL;
-  rb_node *node = NULL;
-
-  switch (dict->type)
+  if (!dict || !dict->list || !key)
     {
-    case DICT_HASH:
-      kv = hash_lookup (dict, key);
-
-      if (kv)
-        {
-          *val = kv->val;
-          return 0;
-        }
-      break;
-    case DICT_TREE:
-      node = tree_lookup (dict, key);
-
-      if (node)
-        {
-          *val = RB_VAL (node);
-          return 0;
-        }
-      break;
-    default:
-      break;
+      return NULL;
     }
 
-  return -1;
+  size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
+  size_t bins_idx = get_bins_idx (dict, hash (key), key, len);
+  int bin_val = dict->bins[bins_idx];
+
+  if (bin_val >= 0)
+    {
+      return LIST_IDX (dict, bin_val);
+    }
+
+  return NULL;
 }

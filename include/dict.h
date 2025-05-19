@@ -7,7 +7,7 @@
 #include "rb_tree.h"
 
 #ifndef DICT_HASH_SIZE
-#define DICT_HASH_SIZE 256
+#define DICT_HASH_SIZE  8
 #endif
 
 #ifndef DICT_STR_MAX_LEN

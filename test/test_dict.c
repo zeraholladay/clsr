@@ -110,21 +110,27 @@ START_TEST (test_delete_nonexistent)
 }
 END_TEST
 
-
-START_TEST(test_initialization)
+START_TEST (test_initialization)
 {
-  static KeyValue kvs[] = {
-    { "alpha",   (void *)(intptr_t) 42    },
-    { "beta",    (void *)(intptr_t) 100   },
-    { "gamma",   (void *)(intptr_t) -7    },
-    { "delta",   (void *)   "hello"       },
-    { "epsilon", (void *)(intptr_t) 99999 }
-};
+  static KeyValue kvs[] = { { "alpha", (void *)(intptr_t)42 },
+                            { "beta", (void *)(intptr_t)100 },
+                            { "gamma", (void *)(intptr_t)-7 },
+                            { "delta", (void *)"hello" },
+                            { "epsilon", (void *)(intptr_t)99999 } };
+  void *out;
 
-  Dict *local_hash_dict = dict_alloc (DICT_HASH, kv, 5);
+  // hash
+  Dict *local_hash_dict = dict_alloc (DICT_HASH, kvs, 5);
   ck_assert_ptr_nonnull (local_hash_dict);
-}
+  ck_assert_int_eq (dict_lookup (local_hash_dict, "delta", &out), 0);
+  ck_assert_str_eq (out, "hello");
 
+  // tree
+  Dict *local_tree_dict = dict_alloc (DICT_HASH, kvs, 5);
+  ck_assert_ptr_nonnull (local_tree_dict);
+  ck_assert_int_eq (dict_lookup (local_tree_dict, "delta", &out), 0);
+  ck_assert_str_eq (out, "hello");
+}
 
 START_TEST (test_multiple_entries)
 {

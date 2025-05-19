@@ -40,21 +40,6 @@ typedef struct
   };
 } Dict;
 
-// va_arg wrapper around dict_alloc
-// dict_alloc_va_list(
-//     "width",  80,
-//     "height", 24,
-//     "color",  0xFF0000,
-//     NULL      /* terminator */
-// );
-// dict_alloc((kv_t[]){
-//     { "width",  80 },
-//     { "height", 24 },
-//     { "color",  0xFF0000 }
-// },
-// 3
-// );
-
 Dict *dict_alloc_va_list (DictType type, const char *key, ...);
 Dict *dict_alloc (DictType type, const KeyValue *key_val, size_t n);
 void dict_destroy (Dict *dict);

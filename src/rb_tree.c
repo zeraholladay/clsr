@@ -344,10 +344,11 @@ rb_post_order_iter (rb_node *root, Stack *tmp_stack, Stack *stack)
 
   stack_push (tmp_stack, root);
 
-  while (tmp_stack->data_size)
-    {
-      rb_node *n = stack_pop (tmp_stack);
+  rb_node *n;
+  ;
 
+  while ((n = stack_pop (tmp_stack)))
+    {
       stack_push (stack, n);
 
       if (n->left)

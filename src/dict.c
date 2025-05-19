@@ -1,4 +1,3 @@
-#include "debug.h"
 #include "dict.h"
 #include "safe_str.h"
 
@@ -60,9 +59,11 @@ tree_destroy (Dict *dict)
 
   rb_post_order_iter (dict->tree, &tmp_stack, &stack);
 
-  while (stack.data_size)
+  rb_node *node;
+
+  while ((node = stack_pop (&stack)))
     {
-      free (stack_pop (&stack));
+      free (node);
     }
 
   stack_free (&tmp_stack);
@@ -107,11 +108,11 @@ insert_hash (Dict *dict, const char *key, void *val)
 static int
 insert_tree (Dict *dict, const char *key, void *val)
 {
-  rb_node *node = tree_lookup(dict, key);
+  rb_node *node = tree_lookup (dict, key);
 
   if (node)
     {
-      RB_VAL(node) = val;
+      RB_VAL (node) = val;
       return 0;
     }
 
@@ -213,9 +214,9 @@ dict_alloc_va_list (DictType type, const char *key, ...)
   va_start (ap, key);
   for (const char *k = key; k; k = va_arg (ap, const char *))
     {
-      kv[i].key = key;
+      kv[i].key = k;
       kv[i].val = va_arg (ap, void *);
-      if (++i >= DICT_ALLOC_VA_LIST_MAX)
+      if (++i >= DICT_ALLOC_VA_LIST_MAX - 1)
         {
           va_end (ap);
           return NULL;
@@ -245,10 +246,10 @@ dict_alloc (DictType type, const KeyValue *kv, size_t n)
       insert_fn = insert_hash;
       dict->hash = calloc (DICT_HASH_SIZE, sizeof *(dict->hash));
       if (!dict->hash)
-      {
-        free (dict);
-        return NULL;
-      }
+        {
+          free (dict);
+          return NULL;
+        }
       break;
     case DICT_TREE:
       insert_fn = insert_tree;

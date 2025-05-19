@@ -18,6 +18,7 @@ void
 teardown (void)
 {
   dict_destroy (hash_dict);
+  dict_destroy (tree_dict);
 }
 
 static const char *keys[] = { "alpha", "beta", "gamma", "delta" };
@@ -101,7 +102,7 @@ START_TEST (test_delete_nonexistent)
   // Still returns not found
   ck_assert_int_eq (dict_lookup (hash_dict, "nope", &out), -1);
 
-    // tree
+  // tree
   // Deleting a missing key should be safe
   dict_del (tree_dict, "nope");
   // Still returns not found
@@ -143,6 +144,35 @@ START_TEST (test_multiple_entries)
 }
 END_TEST
 
+START_TEST (test_initialization_va_list)
+{
+  void *out;
+
+  // hash
+  Dict *local_hash_dict = dict_alloc_va_list (DICT_HASH, "foo", (intptr_t)-42,
+                                              "bar", (intptr_t)42, NULL);
+  ck_assert_ptr_nonnull (local_hash_dict);
+  ck_assert_int_eq (dict_lookup (local_hash_dict, "foo", &out), 0);
+  ck_assert_ptr_nonnull (local_hash_dict);
+  ck_assert_int_eq (dict_lookup (local_hash_dict, "bar", &out), 0);
+  ck_assert_int_eq ((intptr_t)out, 42);
+
+  dict_destroy (local_hash_dict);
+
+  // dict
+  Dict *local_tree_dict = dict_alloc_va_list (DICT_TREE, "foo", (intptr_t)-42,
+                                              "bar", (intptr_t)42, NULL);
+  ck_assert_ptr_nonnull (local_tree_dict);
+
+  ck_assert_ptr_nonnull (local_tree_dict);
+  ck_assert_int_eq (dict_lookup (local_tree_dict, "foo", &out), 0);
+  ck_assert_ptr_nonnull (local_tree_dict);
+  ck_assert_int_eq (dict_lookup (local_tree_dict, "bar", &out), 0);
+  ck_assert_int_eq ((intptr_t)out, 42);
+
+  dict_destroy (local_tree_dict);
+}
+
 Suite *
 dict_suite (void)
 {
@@ -155,6 +185,7 @@ dict_suite (void)
   tcase_add_test (tc, test_delete_existing);
   tcase_add_test (tc, test_delete_nonexistent);
   tcase_add_test (tc, test_multiple_entries);
+  tcase_add_test (tc, test_initialization_va_list);
 
   suite_add_tcase (s, tc);
   return s;

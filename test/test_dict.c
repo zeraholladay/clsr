@@ -110,6 +110,22 @@ START_TEST (test_delete_nonexistent)
 }
 END_TEST
 
+
+START_TEST(test_initialization)
+{
+  static KeyValue kvs[] = {
+    { "alpha",   (void *)(intptr_t) 42    },
+    { "beta",    (void *)(intptr_t) 100   },
+    { "gamma",   (void *)(intptr_t) -7    },
+    { "delta",   (void *)   "hello"       },
+    { "epsilon", (void *)(intptr_t) 99999 }
+};
+
+  Dict *local_hash_dict = dict_alloc (DICT_HASH, kv, 5);
+  ck_assert_ptr_nonnull (local_hash_dict);
+}
+
+
 START_TEST (test_multiple_entries)
 {
   void *out;
@@ -185,6 +201,7 @@ dict_suite (void)
   tcase_add_test (tc, test_delete_existing);
   tcase_add_test (tc, test_delete_nonexistent);
   tcase_add_test (tc, test_multiple_entries);
+  tcase_add_test (tc, test_initialization);
   tcase_add_test (tc, test_initialization_va_list);
 
   suite_add_tcase (s, tc);

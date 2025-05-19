@@ -351,9 +351,9 @@ rb_post_order_iter (rb_node *root, Stack *tmp_stack, Stack *stack)
       stack_push (stack, n);
 
       if (n->left)
-        stack_push (tmp_stack, RB_LEFT(n));
+        stack_push (tmp_stack, RB_LEFT (n));
 
       if (n->right)
-        stack_push (tmp_stack, RB_RIGHT(n));
+        stack_push (tmp_stack, RB_RIGHT (n));
     }
 }

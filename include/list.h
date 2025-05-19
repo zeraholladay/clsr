@@ -13,7 +13,6 @@ typedef struct
 List *list_alloc (void);
 void list_free (List *list);
 int list_append (List *list, void *item);
-size_t list_append_strdup (List *list, char *str);
 void list_remove_index (List *list, size_t i);
 
 #endif

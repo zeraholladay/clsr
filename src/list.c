@@ -83,28 +83,6 @@ list_append (List *list, void *item)
   return 0;
 }
 
-size_t
-list_append_strdup (List *list, char *str)
-{
-  size_t len = NULLABLE_STRLEN (str);
-  char *dup = safe_strndup (str, len);
-
-  if (!dup)
-    {
-      heap_list_oom_handler (NULL, OOM_LOCATION);
-      free (dup);
-      return 0;
-    }
-
-  if (list_append (list, dup))
-    {
-      heap_list_oom_handler (NULL, OOM_LOCATION);
-      return 0;
-    }
-
-  return len;
-}
-
 void
 list_remove_index (List *list, size_t i)
 {

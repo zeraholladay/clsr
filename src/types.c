@@ -14,6 +14,27 @@
 #define INTEGER_TYPE_STR_MAX_SIZE                                             \
   ((size_t)(sizeof (Integer) * CHAR_BIT * LOG10_2 + 3))
 
+// helper
+size_t
+list_append_strdup (List *list, char *str)
+{
+  size_t len = NULLABLE_STRLEN (str);
+  char *dup = safe_strndup (str, len);
+
+  if (!dup)
+    {
+      free (dup);
+      return 0;
+    }
+
+  if (list_append (list, dup))
+    {
+      return 0;
+    }
+
+  return len;
+}
+
 // Type eq
 static inline int
 type_eq (Node *self, Node *other)

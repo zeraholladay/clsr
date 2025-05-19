@@ -1,0 +1,19 @@
+#ifndef LIST_H
+#define LIST_H
+
+#include <stdlib.h>
+
+typedef struct
+{
+  size_t count;
+  size_t capacity;
+  void **items;
+} List;
+
+List *list_alloc (void);
+void list_free (List *list);
+int list_append (List *list, void *item);
+size_t list_append_strdup (List *list, char *str);
+void list_remove_index (List *list, size_t i);
+
+#endif

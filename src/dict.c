@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "dict.h"
 #include "safe_str.h"
 
@@ -111,6 +112,7 @@ insert_tree (Dict *dict, const char *key, void *val)
   if (node)
     {
       RB_VAL(node) = val;
+      return 0;
     }
 
   size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
@@ -242,20 +244,19 @@ dict_alloc (DictType type, const KeyValue *kv, size_t n)
     case DICT_HASH:
       insert_fn = insert_hash;
       dict->hash = calloc (DICT_HASH_SIZE, sizeof *(dict->hash));
+      if (!dict->hash)
+      {
+        free (dict);
+        return NULL;
+      }
       break;
     case DICT_TREE:
       insert_fn = insert_tree;
-      dict->tree = rb_alloc ();
+      dict->tree = NULL;
       break;
     default:
       return NULL;
       break;
-    }
-
-  if (!dict->hash || !dict->tree)
-    {
-      free (dict);
-      return NULL;
     }
 
   for (size_t i = 0; i < n; i++)

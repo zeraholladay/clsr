@@ -345,16 +345,15 @@ rb_post_order_iter (rb_node *root, Stack *tmp_stack, Stack *stack)
   stack_push (tmp_stack, root);
 
   rb_node *n;
-  ;
 
   while ((n = stack_pop (tmp_stack)))
     {
       stack_push (stack, n);
 
       if (n->left)
-        stack_push (tmp_stack, n->left);
+        stack_push (tmp_stack, RB_LEFT(n));
 
       if (n->right)
-        stack_push (tmp_stack, n->right);
+        stack_push (tmp_stack, RB_RIGHT(n));
     }
 }

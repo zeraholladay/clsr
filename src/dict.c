@@ -13,21 +13,24 @@ get_bins_idx (Dict *dict, unsigned long hash_key, const char *key, size_t len)
 {
   size_t start_bin_idx, bin_idx;
   ssize_t first_tombstone = -1;
+  int *bins = dict->bins, bin_val;
 
   start_bin_idx = bin_idx = hash_key & (dict->capacity - 1);
 
   do
     {
-      if (dict->bins[bin_idx] == EMPTY)
+      bin_val = bins[bin_idx];
+
+      if (bin_val == EMPTY)
         {
           return (first_tombstone >= 0) ? (size_t)first_tombstone : bin_idx;
         }
-      else if (dict->bins[bin_idx] == TOMBSTONE)
+      else if (bin_val == TOMBSTONE)
         {
           if (first_tombstone == -1)
             first_tombstone = bin_idx;
         }
-      else if (STR_EQ (key, LIST_IDX (dict, dict->bins[bin_idx])->key, len))
+      else if (STR_EQ (key, LIST_IDX (dict, bin_val)->key, len))
         {
           return bin_idx;
         }
@@ -39,9 +42,63 @@ get_bins_idx (Dict *dict, unsigned long hash_key, const char *key, size_t len)
   return first_tombstone >= 0 ? (size_t)first_tombstone : start_bin_idx;
 }
 
-static DictEntity *
-remove (Dict *dict, const char *key)
+static int *
+alloc_bins (size_t capacity)
 {
+  int *bins = malloc (capacity * sizeof *(bins));
+  if (!bins)
+    {
+      return NULL;
+    }
+
+  for (size_t i = 0; i < capacity; ++i)
+    bins[i] = EMPTY;
+
+  return bins;
+}
+
+static int
+grow_bins (Dict *dict)
+{
+  int *old_bins, old_bin_val;
+  size_t new_capacity = dict->capacity * 2;
+  size_t old_capacity;
+
+  int *new_bins = alloc_bins (new_capacity);
+  if (!new_bins)
+    {
+      return -1;
+    }
+
+  old_capacity = dict->capacity;
+  dict->capacity = new_capacity;
+
+  old_bins = dict->bins;
+  dict->bins = new_bins;
+
+  // reindex
+  for (size_t i = 0; i < old_capacity; ++i)
+    {
+      old_bin_val = old_bins[i];
+
+      if (old_bin_val == EMPTY || old_bin_val == TOMBSTONE)
+        {
+          continue;
+        }
+
+      DictEntity *entity = LIST_IDX (dict, old_bin_val);
+
+      unsigned long hash_key = entity->hash_key;
+      const char *key = entity->key;
+      size_t len = entity->len;
+
+      size_t new_bins_idx = get_bins_idx (dict, hash_key, key, len);
+
+      new_bins[new_bins_idx] = old_bin_val;
+    }
+
+  free (old_bins);
+  return 0;
 }
 
 Dict *
@@ -61,34 +118,37 @@ dict_alloc_va_list (const char *key, ...)
 }
 
 Dict *
-dict_alloc (const DictEntity *entity, size_t n)
+dict_alloc (const DictEntity *entities, size_t n)
 {
-  Dict *dict
-      = calloc (1, sizeof *(dict) + (DICT_INIT_CAP * sizeof *(dict->bins)));
-
+  Dict *dict = malloc (sizeof *(dict));
   if (!dict)
     {
       return NULL;
     }
 
-  // empty all
-  for (size_t i = 0; i < dict->capacity; ++i)
-    dict->bins[i] = -1;
-
+  dict->count = 0;
   dict->capacity = DICT_INIT_CAP;
-  dict->list = list_alloc ();
 
+  dict->bins = alloc_bins (dict->capacity);
+  if (!dict->bins)
+    {
+      free (dict);
+      return NULL;
+    }
+
+  dict->list = list_alloc ();
   if (!dict->list)
     {
+      free (dict->bins);
       free (dict);
       return NULL;
     }
 
   for (size_t i = 0; i < n; i++)
     {
-      int res = dict_insert (dict, entity[i].key, entity[i].val);
+      int res = dict_insert (dict, entities[i].key, entities[i].val);
 
-      if (res)
+      if (res < 0)
         {
           return NULL;
         }
@@ -100,27 +160,42 @@ dict_alloc (const DictEntity *entity, size_t n)
 void
 dict_destroy (Dict *dict)
 {
+  List *list = dict->list;
+
+  for (size_t i = 0; i < list->count; ++i)
+    {
+      free (list->items[i]);
+    }
+
+  free (dict);
 }
 
 void
 dict_del (Dict *dict, const char *key)
 {
+  size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
+  size_t bins_idx = get_bins_idx (dict, HASH (key), key, len);
+  int bin_val = dict->bins[bins_idx];
+
+  if (bin_val >= 0)
+    {
+      dict->count--;
+      dict->bins[bins_idx] = TOMBSTONE;
+    }
 }
 
 int
 dict_insert (Dict *dict, const char *key, void *val)
 {
-  if (!dict || !dict->list || !key)
+  if ((dict->count + 1) * 5 > dict->capacity * 4) // 80% >
     {
-      return -1;
+      if (grow_bins (dict))
+        {
+          return -1;
+        }
     }
 
-  if ((dict->count + 1) * 5 > dict->capacity * 4)
-    {
-      grow_dict (&dict);
-    }
-
-  unsigned long hash_key = hash (key);
+  unsigned long hash_key = HASH (key);
   size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
   size_t bin_idx = get_bins_idx (dict, hash_key, key, len);
 
@@ -142,6 +217,7 @@ dict_insert (Dict *dict, const char *key, void *val)
 
   entity->hash_key = hash_key;
   entity->key = key;
+  entity->len = len;
   entity->val = val;
 
   int list_idx = list_append (dict->list, entity);
@@ -153,20 +229,16 @@ dict_insert (Dict *dict, const char *key, void *val)
     }
 
   dict->bins[bin_idx] = list_idx;
+  ++dict->count;
 
-  return ++(dict->count);
+  return dict->count;
 }
 
 DictEntity *
 dict_lookup (Dict *dict, const char *key)
 {
-  if (!dict || !dict->list || !key)
-    {
-      return NULL;
-    }
-
   size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
-  size_t bins_idx = get_bins_idx (dict, hash (key), key, len);
+  size_t bins_idx = get_bins_idx (dict, HASH (key), key, len);
   int bin_val = dict->bins[bins_idx];
 
   if (bin_val >= 0)
@@ -176,3 +248,12 @@ dict_lookup (Dict *dict, const char *key)
 
   return NULL;
 }
+
+// int main(void)
+// {
+//   Dict *dict = dict_alloc (NULL, 0);
+
+//   dict_insert (dict, "one", (void *)(intptr_t)1);
+
+//   DictEntity *entiy = dict_lookup (dict, "one");
+// }

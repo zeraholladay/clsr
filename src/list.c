@@ -79,8 +79,8 @@ list_append (List *list, void *item)
       list_oom_handler (NULL, OOM_LOCATION);
       return -1;
     }
-  list->items[list->count++] = item;
-  return list->count;
+  list->items[list->count] = item;
+  return list->count++;
 }
 
 void

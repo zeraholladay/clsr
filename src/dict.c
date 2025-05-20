@@ -248,12 +248,3 @@ dict_lookup (Dict *dict, const char *key)
 
   return NULL;
 }
-
-// int main(void)
-// {
-//   Dict *dict = dict_alloc (NULL, 0);
-
-//   dict_insert (dict, "one", (void *)(intptr_t)1);
-
-//   DictEntity *entiy = dict_lookup (dict, "one");
-// }

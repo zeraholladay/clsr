@@ -4,48 +4,37 @@
 #include <stdarg.h>
 
 #include "list.h"
-#include "rb_tree.h"
 
-#ifndef DICT_HASH_SIZE
-#define DICT_HASH_SIZE 8
+#ifndef DICT_INIT_CAP
+#define DICT_INIT_CAP 8
 #endif
 
 #ifndef DICT_STR_MAX_LEN
 #define DICT_STR_MAX_LEN 256
 #endif
 
-#ifndef DICT_ALLOC_VA_LIST_MAX
-#define DICT_ALLOC_VA_LIST_MAX 32
-#endif
-
-typedef enum
-{
-  DICT_HASH,
-  DICT_TREE,
-} DictType;
+#define DICT_ENTITY(k, v) { .hash_key = 0, .key = k, .len = 0, .val = v }
 
 typedef struct
 {
+  unsigned long hash_key;
   const char *key;
+  size_t len;
   void *val;
-} KeyValue;
+} DictEntity;
 
 typedef struct
 {
-  DictType type;
-  union
-  {
-    rb_node *tree;
-    List **hash;
-  };
+  size_t count, capacity;
+  List *list;
+  int *bins;
 } Dict;
 
-Dict *dict_alloc_va_list (DictType type, const char *key, ...);
-Dict *dict_alloc (DictType type, const KeyValue *key_val, size_t n);
+Dict *dict_alloc_va_list (const char *key, ...);
+Dict *dict_alloc (const DictEntity *entity, size_t n);
 void dict_destroy (Dict *dict);
-
 void dict_del (Dict *dict, const char *key);
 int dict_insert (Dict *dict, const char *key, void *val);
-int dict_lookup (Dict *dict, const char *key, void **val);
+DictEntity *dict_lookup (Dict *dict, const char *key);
 
 #endif

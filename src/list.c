@@ -8,9 +8,33 @@
 #define HEAP_LIST_INIT_CAPACITY 4
 #endif
 
-extern oom_handler_t heap_list_oom_handler;
+extern oom_handler_t list_oom_handler;
 
 // thanks python
+static int
+list_resize (List *list, size_t min_capacity)
+{
+  size_t new_capacity = list->capacity;
+
+  while (new_capacity < min_capacity)
+    {
+      new_capacity += (new_capacity >> 3) + (new_capacity < 9 ? 3 : 6);
+    }
+
+  void **new_nodes = realloc (list->items, new_capacity * sizeof (void *));
+
+  if (!new_nodes)
+    {
+      list_oom_handler (NULL, OOM_LOCATION);
+      return -1;
+    }
+
+  list->items = new_nodes;
+  list->capacity = new_capacity;
+
+  return 0;
+}
+
 List *
 list_alloc (void)
 {
@@ -18,7 +42,7 @@ list_alloc (void)
 
   if (!list)
     {
-      heap_list_oom_handler (NULL, OOM_LOCATION);
+      list_oom_handler (NULL, OOM_LOCATION);
       return NULL;
     }
 
@@ -27,7 +51,7 @@ list_alloc (void)
   if (!list->items)
     {
       free (list), list = NULL;
-      heap_list_oom_handler (NULL, OOM_LOCATION);
+      list_oom_handler (NULL, OOM_LOCATION);
       return NULL;
     }
 
@@ -46,41 +70,17 @@ list_free (List *list)
   free (list);
 }
 
-static int
-_list_resize (List *list, size_t min_capacity)
-{
-  size_t new_capacity = list->capacity;
-
-  while (new_capacity < min_capacity)
-    {
-      new_capacity += (new_capacity >> 3) + (new_capacity < 9 ? 3 : 6);
-    }
-
-  void **new_nodes = realloc (list->items, new_capacity * sizeof (void *));
-
-  if (!new_nodes)
-    {
-      heap_list_oom_handler (NULL, OOM_LOCATION);
-      return -1;
-    }
-
-  list->items = new_nodes;
-  list->capacity = new_capacity;
-
-  return 0;
-}
-
 int
 list_append (List *list, void *item)
 {
   if ((list->count >= list->capacity)
-      && (_list_resize (list, list->count + 1) != 0))
+      && (list_resize (list, list->count + 1) != 0))
     {
-      heap_list_oom_handler (NULL, OOM_LOCATION);
+      list_oom_handler (NULL, OOM_LOCATION);
       return -1;
     }
-  list->items[list->count++] = item;
-  return 0;
+  list->items[list->count] = item;
+  return list->count++;
 }
 
 void

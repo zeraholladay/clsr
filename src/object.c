@@ -5,19 +5,16 @@
 static Object *
 eq_wrapper (Object *self, List *args, Dict *kwags)
 {
-
 }
 
 static Object *
 init_wrapper (Object *self, List *args, Dict *kwags)
 {
-  
 }
 
 static Object *
 to_str_wrapper (Object *self, List *args, Dict *kwags)
 {
-  
 }
 
 static Atom eq_wrapper_atom = {
@@ -45,7 +42,7 @@ init_types (void)
       },
       3);
 
-  object_type = type(type_dict, "object", NULL, object_attrs);
+  object_type = type (type_dict, "object", NULL, object_attrs);
 
   return type_dict;
 }
@@ -62,7 +59,11 @@ call (const char *fn_name, Object *self, List *args, Dict *kwargs)
       return NULL;
     }
 
-  Function fn = attrs->val;
+  Atom *atom = attrs->val;
+
+  if (atom->atomic_type == TYPE_BUILTIN)
+    {
+    }
 
   return fn (self, args, kwargs);
 }
@@ -86,7 +87,7 @@ Type *
 type (Dict *type_dict, const char *type_name, List *bases, Dict *attrs)
 {
   // types are immutable for now
-  DictEntity *entity = dict_lookup(type_dict, type_name);
+  DictEntity *entity = dict_lookup (type_dict, type_name);
 
   if (entity)
     {

@@ -11,14 +11,14 @@ typedef Object *(*Function) (Object *self, List *args, Dict *kwargs);
 
 typedef enum
 {
-  TYPE_NONE,      // special constant
-  TYPE_SYMBOL,    // identifiers
-  TYPE_INTEGER,   // literal
-  TYPE_STRING,    // literal
-  TYPE_LIST,      // list
-  TYPE_DICT,      // dict
-  TYPE_BUILTIN,   // builtin fn
-  TYPE_LAMBDA     // user-defined fn
+  TYPE_NONE,    // special constant
+  TYPE_SYMBOL,  // identifiers
+  TYPE_INTEGER, // literal
+  TYPE_STRING,  // literal
+  TYPE_LIST,    // list
+  TYPE_DICT,    // dict
+  TYPE_BUILTIN, // builtin fn
+  TYPE_LAMBDA   // user-defined fn
 } Atomics;
 
 typedef struct object
@@ -28,7 +28,7 @@ typedef struct object
   {
     Function fn;
   };
-  
+
 } Atom;
 
 struct Object

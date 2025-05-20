@@ -80,7 +80,7 @@ list_append (List *list, void *item)
       return -1;
     }
   list->items[list->count] = item;
-  return list->count++;
+  return list->count++; // ie index of append
 }
 
 void

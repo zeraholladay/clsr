@@ -4,17 +4,18 @@
 #define EMPTY -1
 #define TOMBSTONE -2
 
-#define HASH(str) (djb2 (key))
+#define HASH(str) ((size_t)djb2 (key))
 #define LIST_IDX(d_ptr, i) ((DictEntity *)((d_ptr)->list->items[i]))
 #define STR_EQ(s1, s2, len) (!safe_strncmp_minlen (s1, s2, len + 1))
 
 static size_t
-get_bins_idx (Dict *dict, unsigned long hash_key, const char *key, size_t len)
+get_bins_idx (Dict *dict, size_t hash_key, const char *key, size_t len)
 {
   size_t start_bin_idx, bin_idx;
   ssize_t first_tombstone = -1;
   int *bins = dict->bins, bin_val;
 
+  // ie hash_key & 0x0111 when dict->capacity is 8
   start_bin_idx = bin_idx = hash_key & (dict->capacity - 1);
 
   do
@@ -88,7 +89,7 @@ grow_bins (Dict *dict)
 
       DictEntity *entity = LIST_IDX (dict, old_bin_val);
 
-      unsigned long hash_key = entity->hash_key;
+      size_t hash_key = entity->hash_key;
       const char *key = entity->key;
       size_t len = entity->len;
 
@@ -195,7 +196,7 @@ dict_insert (Dict *dict, const char *key, void *val)
         }
     }
 
-  unsigned long hash_key = HASH (key);
+  size_t hash_key = HASH (key);
   size_t len = safe_strnlen (key, DICT_STR_MAX_LEN);
   size_t bin_idx = get_bins_idx (dict, hash_key, key, len);
 

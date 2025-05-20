@@ -17,7 +17,7 @@
 
 typedef struct
 {
-  unsigned long hash_key;
+  size_t hash_key;
   const char *key;
   size_t len;
   void *val;

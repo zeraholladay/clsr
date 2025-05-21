@@ -171,6 +171,22 @@ dict_destroy (Dict *dict)
   free (dict);
 }
 
+DictEntity *dict_shallow_clone_entities(const DictEntity *entity, size_t n) {
+  if (!n)  // calloc behavior in undef when n = 0
+    {
+      return NULL;
+    }
+
+  DictEntity *clones = calloc(n, sizeof*(clones));
+
+  if (!clones)
+    {
+      return NULL;
+    }
+
+  return memcpy (clones, entity, n * sizeof *(entity));
+}
+
 void
 dict_del (Dict *dict, const char *key)
 {

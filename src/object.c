@@ -1,117 +1,122 @@
 #include "stdlib.h"
 
 #include "object.h"
+#include "safe_str.h"
 
-static Object *
-eq_wrapper (Object *self, List *args, Dict *kwags)
+typedef struct ClassEntry
 {
-}
+  List *bases;
+  Dict *attrs;
+} ClassEntry;
 
-static Object *
-init_wrapper (Object *self, List *args, Dict *kwags)
+static DictEntity *
+clone_dict_entries(DictEntity *entries[], size_t n)
 {
-}
+  DictEntity *clones[] = dict_shallow_clone_entities(entries, n);
 
-static Object *
-to_str_wrapper (Object *self, List *args, Dict *kwags)
-{
-}
-
-static Atom eq_wrapper_atom = {
-  .atomic_type = TYPE_BUILTIN,
-  .fn = eq_wrapper,
-};
-
-static Type *object_type = NULL;
-
-Dict *
-init_types (void)
-{
-  Dict *type_dict = dict_alloc (NULL, 0);
-
-  if (!type_dict)
+  if (!clones)
     {
       return NULL;
     }
 
-  Dict *object_attrs = dict_alloc (
+  for (size_t i = 0; i < n; ++i)
+    {
+      clones[i]->key = safe_strndup(entries[i]->key, DICT_STR_MAX_LEN);  //TODO: symbol here
+
+      if (!clones[i]->key)
+        {
+          for (size_t j = 0; j < i - 1; ++j)
+            free(clones[j]->key);
+            
+          return NULL;
+        }
+    }
+
+  return clones;
+}
+
+Dict *
+init_class_tab (void)
+{
+  Dict *class_tab = dict_alloc (NULL, 0);
+
+  if (!class_tab)
+    {
+      return NULL;
+    }
+
+  // the object super class
+  Dict * obj_attrs = dict_alloc (
       (DictEntity[]){
-          DICT_ENTITY ("eq", &eq_wrapper_atom),
-          DICT_ENTITY ("init_fn", NULL),
+          DICT_ENTITY ("eq", NULL),
+          DICT_ENTITY ("new", NULL),
           DICT_ENTITY ("to_str", NULL),
       },
       3);
 
-  object_type = type (type_dict, "object", NULL, object_attrs);
-
-  return type_dict;
-}
-
-Object *
-call (const char *fn_name, Object *self, List *args, Dict *kwargs)
-{
-  Type *type = self->type;
-
-  DictEntity *attrs = dict_lookup (type->attrs, fn_name);
-
-  if (!attrs) // TODO: superclass
+  if (!obj_attrs)
     {
       return NULL;
     }
 
-  Atom *atom = attrs->val;
+  return dict_insert(class_tab, "object", obj_attrs);
 
-  if (atom->atomic_type == TYPE_BUILTIN)
-    {
-    }
+  // the type class
 
-  return fn (self, args, kwargs);
+  return class_tab;
 }
 
 Object *
-new (Type *type, List *args, Dict *kwargs)
+object (Class *class, Dict *attrs)
 {
-  Object *new_obj = malloc (sizeof *(new_obj));
+  Object *obj = malloc (sizeof *(obj));
 
-  if (!new_obj)
+  if (!obj)
     {
       return NULL;
     }
 
-  new_obj->type = type;
+  obj->class = class;
+  obj->attrs = attrs;
 
-  return call ("init_fn", new_obj, args, kwargs);
+  return obj;
 }
 
-Type *
-type (Dict *type_dict, const char *type_name, List *bases, Dict *attrs)
+Object *
+type (Dict *class_tab, const char *type_name, List *bases, Dict *attrs)
 {
   // types are immutable for now
-  DictEntity *entity = dict_lookup (type_dict, type_name);
+  DictEntity *entity = dict_lookup (class_tab, type_name);
 
   if (entity)
     {
       return entity->val;
     }
 
-  // otherwise create new type
-  Type *new_type = malloc (sizeof *(new_type));
+  Type *type = malloc (sizeof *(type));
 
-  if (!new_type)
+  if (!type)
     {
       return NULL;
     }
 
-  new_type->type_name = type_name;
-  new_type->bases = bases;
-  new_type->attrs = attrs;
+  type->type_name = type_name;
+  type->bases = bases;  // [] object is implicit
+  type->attrs = attrs;  // add mro
 
-  int res = dict_insert (type_dict, type_name, new_type);
-
-  if (res < 0)
+  if (0 > dict_insert (class_tab, type_name, type))
     {
       return NULL;
     }
 
-  return new_type;
+  Object *obj = object ();
+
+  if (!obj)
+    {
+      return NULL;
+    }
+
+  obj->type = type;
+
+  return obj;
 }

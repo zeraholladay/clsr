@@ -7,20 +7,26 @@
 typedef struct Object Object;
 
 typedef Object *(*eq_fn) (Object *, Object *);
-typedef Object *(*new_fn) (Object *);
-typedef Object *(*to_str_fn) (Object *);
+typedef Object *(*init_fn) (Object *, Object *args, Object *kwargs);
+typedef Object *(*new_fn) (Object *, Object *args, Object *kwargs);
+typedef Object *(*to_sym_fn) (Object *);
 
-typedef struct Type
+typedef struct Cls
 {
   const char *name;
-  eq_fn eq_fn;
-  new_fn new_fn;
-  to_str_fn to_str_fn;
-} Type;
+  Object *base, *attrs;
+  eq_fn eq;
+  init_fn init;
+  new_fn new;
+  to_sym_fn to_sym;
+} Cls;
 
 typedef struct Object
 {
-  Type *type;
+  Cls *cls;
+  Object *attrs;
 } Object;
+
+Object *sym (const char *str, size_t len);
 
 #endif

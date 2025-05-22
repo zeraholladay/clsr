@@ -4,29 +4,34 @@
 #include "dict.h"
 #include "list.h"
 
-typedef struct Object Object;
+typedef struct Obj Obj;
 
-typedef Object *(*eq_fn) (Object *, Object *);
-typedef Object *(*init_fn) (Object *, Object *args, Object *kwargs);
-typedef Object *(*new_fn) (Object *, Object *args, Object *kwargs);
-typedef Object *(*to_sym_fn) (Object *);
+typedef Obj *(*eq_fn) (Obj *, Obj *);
+typedef Obj *(*init_fn) (Obj *, Obj *args, Obj *kwargs);
+typedef Obj *(*new_fn) (Obj *, Obj *args, Obj *kwargs);
+typedef Obj *(*to_sym_fn) (Obj *);
 
 typedef struct Cls
 {
   const char *name;
-  Object *base, *attrs;
+  Obj *base, *attrs;  // attrs is a pointer to a dict.
   eq_fn eq;
   init_fn init;
   new_fn new;
   to_sym_fn to_sym;
 } Cls;
 
-typedef struct Object
+typedef struct Obj
 {
   Cls *cls;
-  Object *attrs;
-} Object;
+  union
+  {
+    Obj *attrs;  // ptr to dict
+    Dict *dict;
+  };
+} Obj;
 
-Object *sym (const char *str, size_t len);
+Obj *is (Obj *o1, Obj *o2);
+Obj *sym (const char *str, size_t len);
 
 #endif

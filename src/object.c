@@ -4,239 +4,158 @@
 #include "safe_str.h"
 #include "sym_save.h"
 
-// declarations
-static Obj *eq (Obj *self, Obj *other);
-static Obj *new (Obj *cls, Obj *args, Obj *kwargs);
-static Obj *new_nil (Obj * /*unused*/, Obj */*unused*/, Obj */*unused*/);
-static Obj *init (Obj *self, Obj *dict, Obj * /*unused*/);
-static Obj *init_cls (Obj *self, Obj *args, Obj *kwargs);
-static Obj *init_sym (Obj *self, Obj *args, Obj *kwargs);
-static Obj *to_sym (Obj *self);
-static Obj *to_sym_cls (Obj *self);
-static Obj *to_sym_nil (Obj *self);
-
-static Obj obj_cls;
-static Obj obj_nil;
-static Obj obj_obj;
-
-// static cls structs
-static Cls cls_dict = {
-  .name = "cls::dict",
-  .base = &obj_cls,
-  .attrs = NULL,
-  .eq = eq,
-  .init = init_cls,
-  .new = new,
-  .to_sym = to_sym_cls,
-};
-
-static Cls cls_cls = {
-  .name = "cls::cls",
-  .base = &obj_obj,
-  .attrs = NULL,
-  .eq = eq,
-  .init = init_cls,
-  .new = new,
-  .to_sym = to_sym_cls,
-};
-
-static Cls cls_nil = {
-  .name = "cls::nil",
-  .base = NULL,
-  .attrs = NULL,
-  .eq = eq,
-  .init = init_cls,
-  .new = new_nil,
-  .to_sym = to_sym_nil,
-};
-
-static Cls cls_obj = {
-  .name = "cls::obj",
-  .base = NULL,
-  .attrs = NULL,
-  .eq = eq,
-  .init = init,
-  .new = new,
-  .to_sym = to_sym,
-};
-
-static Cls cls_sym = {
-  .name = "cls::sym",
-  .base = &obj_cls,
-  .attrs = NULL,
-  .eq = eq,
-  .init = init_sym,
-  .new = new,
-  .to_sym = to_sym,
-};
-
-// static object singletons
-static Obj obj_nil = {
-  .cls = &cls_nil,
-  .dict = NULL,
-};
-
-static Obj obj_cls = {
-  .cls = &cls_cls,
-  .dict = NULL,
-};
-
-static Obj obj_obj = {
-  .cls = &cls_obj,
-  .dict = NULL,
-};
-
-static Obj obj_sym = {
-  .cls = &cls_sym,
-  .dict = NULL,
-};
-
-// eq
-static Obj *
+Obj *
 eq (Obj *self, Obj *other)
 {
-  return (self == other) ? &obj_obj : &obj_nil;
-}
-
-// init
-static Obj *
-init (Obj *self, Obj *attrs, Obj * unused)
-{
-  (void)unused;
-  self->attrs = attrs;
-  return self;
-}
-
-static Obj *
-init_cls (Obj *self, Obj *base, Obj *dict)
-{
-  self->cls->base = base;
-  self->cls->attrs = dict;
-  return self;
-}
-
-static Obj *
-init_sym (Obj *self, Obj *args, Obj *kwargs)
-{
-  (void)kwargs;
-  self->dict = args;
-  return self;
-}
-
-// new
-static Obj *
-new (Obj *cls, Obj *args, Obj *kwargs)
-{
-  Obj *self = malloc (sizeof *(self));
-  if (!self || !cls)
-    {
-      return &obj_nil;
-    }
-
-  self->cls = cls->cls;  // point self's class to class
-
-  return cls->cls->init (self, args, kwargs);
-}
-
-static Obj *
-new_nil (Obj * self, Obj *args, Obj *kwargs)
-{
-  (void)self;
-  (void)args;
-  (void)kwargs;
-  return &obj_nil;
-}
-
-// to_sym
-static Obj *
-to_sym (Obj *self)
-{
-  (void)self;
-  static const char *repr = "<obj obj>";
-  return sym (repr, sizeof (repr) - 1);
-}
-
-static Obj *
-to_sym_nil (Obj *self)
-{
-  (void)self;
-  static const char *repr = "<obj NIL>";
-  return sym (repr, sizeof (repr) - 1);
-}
-
-static Obj *
-to_sym_cls (Obj *self)
-{
-  (void)self;
-  static const char *repr = "<obj cls>";
-  return sym (repr, sizeof (repr) - 1);
-}
-
-// c interfaces
-Obj *
-dict (const DictEntity *entities, size_t n)
-{
-  entities = dict_shallow_clone_entities(entities, n);
-  if (!entities)
-    {
-      return &obj_nil;
-    }
-
-  Dict *dict = dict_alloc (entities, 1);
-  if (!dict)
-    {
-      free(entities);
-      return &obj_nil;
-    }
-
-  return (&obj_obj)->cls->new (&cls_dict, dict, NULL);
-}
-
-Obj *
-cls (const char *name, size_t len, Obj *base, Obj *attrs)
-{
-  // TODO base must be a Cls obj & base implicity includes obj
-  Obj *o = (&obj_cls)->cls->new (&obj_cls, base, attrs);
-  o->cls->name = sym_save_static (name, len);
-  return o;
+  return (self == other) ? obj() : nil();
 }
 
 Obj *
 is (Obj *o1, Obj *o2)
 {
-  return (o1->cls == o2->cls) ? &obj_obj : &obj_nil;
+  if (!o1 || o2)
+    {
+      return nil();
+    }
+  return (o1->cls == o2->cls) ? obj() : nil();
+}
+
+Cls *
+super (Obj *self)
+{
+  if (!self || !self->cls || !self->cls->base || !self->cls->base->cls)
+    {
+      return (Cls *) nil();
+    }
+  return self->cls->base->cls;
+}
+
+void
+init (Obj *self, Obj *args, Obj *kwargs)
+{
+  (void)self;
+  (void)args;
+  (void)kwargs;
+  self->attrs = dict_alloc(NULL, 0);
 }
 
 Obj *
-nil ()
+new (Obj *cls, Obj *args, Obj *kwargs)
 {
-  return (&obj_nil)->cls->new (NULL, NULL, NULL);
+  Obj *self = malloc (sizeof *(self));
+  if (!self || !cls)
+    {
+      return nil();
+    }
+  self->cls = cls->cls;  // point self's class to class
+  self->cls->init (self, args, kwargs);
+  return self;
 }
 
 Obj *
 obj (void)
 {
-  return (&obj_cls)->cls->new (&obj_cls, NULL, NULL);
+  static Cls cls = {
+    .name = "cls::obj",
+    .base = NULL,
+    .attrs = NULL,
+    .eq = eq,
+    .init = init,
+    .new = new,
+  };
+  cls.base = &cls;
+  return new(&cls, NULL, NULL);
 }
 
 Obj *
-sym (const char *str, size_t len)
+nil ()
 {
-  const char *sym = sym_save_static (str, len);
+  static Cls cls = {
+    .name = "cls::nil",
+    .base = NULL,
+    .attrs = NULL,
+    .eq = eq,
+    .init = NULL,
+    .new = NULL,
+  };
+  static Obj nil = {
+    .cls = &cls,
+    .attrs = NULL,
+  };
+}
 
-  if (!sym)
+Obj *
+clsr (const char *name, size_t len, Obj *base, Obj *dict)
+{
+  static Cls cls = {
+    .name = "cls::nil",
+    .base = NULL,
+    .attrs = NULL,
+    .eq = eq,
+    .init = init,
+    .new = new,
+  };
+  cls.base = obj()->cls;
+
+  Cls *new = malloc (sizeof(Cls));
+  if (!new)
     {
-      return &obj_nil;
+      return nil();
     }
 
-  Obj *args = dict ((DictEntity[]) {
-    DICT_ENTITY (SYM_SAVE_LITERAL ("sym"), (void *) sym),
-  }, 1);
-
-  if (!args)
+  if (!memcpy(new, &cls, sizeof(Cls)))
     {
-      return &obj_nil;
+      return nil();
     }
 
-  return (&obj_sym)->cls->new (&obj_sym, args, NULL);
+  new->name = name;
+  new->base = base;
+  new->attrs = dict;
+
+  return new;
+}
+
+Obj *
+dict (DictEntity *entities[], size_t n)
+{
+  Obj *new = obj();
+  if (!new)
+    {
+      return nil();
+    }
+
+  for (size_t i = 0; i < n; ++i)
+    {
+      dict_insert (new->attrs, entities[i]->key, entities[i]->val);
+    }
+
+  return new;
+}
+
+Obj *
+getattr(Obj *obj, const char *key)
+{
+  if (!obj->attrs)
+    {
+      return nil();
+    }
+
+  DictEntity *entity = dict_lookup (obj->attrs, key);
+  if (!entity)
+    {
+      return nil();
+    }
+
+  return (Obj *) entity->key;
+}
+
+Obj *
+setattr(Obj *obj, const char *key, Obj *val)
+{
+  if (0 > dict_insert (obj->attrs, key, val))
+    {
+      return nil();
+    }
+
+  return val;
 }

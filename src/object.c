@@ -7,7 +7,7 @@
 Obj *
 eq (Obj *self, Obj *other)
 {
-  return (self == other) ? obj() : nil();
+  return (self == other) ? obj () : nil ();
 }
 
 Obj *
@@ -15,19 +15,19 @@ is (Obj *o1, Obj *o2)
 {
   if (!o1 || o2)
     {
-      return nil();
+      return nil ();
     }
-  return (o1->cls == o2->cls) ? obj() : nil();
+  return (o1->cls == o2->cls) ? obj () : nil ();
 }
 
 Cls *
 super (Obj *self)
 {
-  if (!self || !self->cls || !self->cls->base || !self->cls->base->cls)
+  if (!self || !self->cls || !self->cls->cls)
     {
-      return (Cls *) nil();
+      return (Cls *)nil ();
     }
-  return self->cls->base->cls;
+  return self->cls->cls;
 }
 
 void
@@ -36,18 +36,18 @@ init (Obj *self, Obj *args, Obj *kwargs)
   (void)self;
   (void)args;
   (void)kwargs;
-  self->attrs = dict_alloc(NULL, 0);
+  self->attrs = dict_alloc (NULL, 0);
 }
 
 Obj *
-new (Obj *cls, Obj *args, Obj *kwargs)
+new (Cls *cls, Obj *args, Obj *kwargs)
 {
   Obj *self = malloc (sizeof *(self));
   if (!self || !cls)
     {
-      return nil();
+      return nil ();
     }
-  self->cls = cls->cls;  // point self's class to class
+  self->cls = cls; // point self's class to class
   self->cls->init (self, args, kwargs);
   return self;
 }
@@ -57,14 +57,14 @@ obj (void)
 {
   static Cls cls = {
     .name = "cls::obj",
-    .base = NULL,
+    .cls = NULL,
     .attrs = NULL,
     .eq = eq,
     .init = init,
     .new = new,
   };
-  cls.base = &cls;
-  return new(&cls, NULL, NULL);
+  cls.cls = &cls;
+  return new (&cls, NULL, NULL);
 }
 
 Obj *
@@ -72,7 +72,7 @@ nil ()
 {
   static Cls cls = {
     .name = "cls::nil",
-    .base = NULL,
+    .cls = NULL,
     .attrs = NULL,
     .eq = eq,
     .init = NULL,
@@ -82,46 +82,53 @@ nil ()
     .cls = &cls,
     .attrs = NULL,
   };
+  return &nil;
 }
 
 Obj *
-clsr (const char *name, size_t len, Obj *base, Obj *dict)
+clsr (const char *name, Cls *base, Obj *dict)
 {
   static Cls cls = {
-    .name = "cls::nil",
-    .base = NULL,
+    .name = "cls::cls",
+    .cls = NULL,
     .attrs = NULL,
     .eq = eq,
     .init = init,
     .new = new,
   };
-  cls.base = obj()->cls;
+  cls.cls = obj ()->cls;
 
-  Cls *new = malloc (sizeof(Cls));
-  if (!new)
+  Cls *new_cls = malloc (sizeof (Cls));
+  if (!new_cls)
     {
-      return nil();
+      return nil ();
     }
 
-  if (!memcpy(new, &cls, sizeof(Cls)))
+  memcpy (new, &cls, sizeof (Cls));
+
+  new_cls->name = name;
+  new_cls->cls = base;
+  new_cls->attrs = dict->attrs;
+
+  Obj *new_obj = obj ();
+  if (!new_obj)
     {
-      return nil();
+      free (new_cls);
+      return nil ();
     }
 
-  new->name = name;
-  new->base = base;
-  new->attrs = dict;
+  new_obj->cls = new_cls;
 
-  return new;
+  return new_obj;
 }
 
 Obj *
 dict (DictEntity *entities[], size_t n)
 {
-  Obj *new = obj();
+  Obj *new = obj ();
   if (!new)
     {
-      return nil();
+      return nil ();
     }
 
   for (size_t i = 0; i < n; ++i)
@@ -133,28 +140,28 @@ dict (DictEntity *entities[], size_t n)
 }
 
 Obj *
-getattr(Obj *obj, const char *key)
+getattr (Obj *obj, const char *key)
 {
   if (!obj->attrs)
     {
-      return nil();
+      return nil ();
     }
 
   DictEntity *entity = dict_lookup (obj->attrs, key);
   if (!entity)
     {
-      return nil();
+      return nil ();
     }
 
-  return (Obj *) entity->key;
+  return (Obj *)entity->key;
 }
 
 Obj *
-setattr(Obj *obj, const char *key, Obj *val)
+setattr (Obj *obj, const char *key, Obj *val)
 {
   if (0 > dict_insert (obj->attrs, key, val))
     {
-      return nil();
+      return nil ();
     }
 
   return val;

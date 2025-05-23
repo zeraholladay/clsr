@@ -91,3 +91,10 @@ sym_save (rb_node **root, const char *s, size_t len)
 
   return RB_KEY (node);
 }
+
+const char *
+sym_save_static (const char *s, size_t len)
+{
+  static rb_node *root = NULL;
+  return sym_save (&root, s, len);
+}
